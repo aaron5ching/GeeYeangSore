@@ -1,0 +1,94 @@
+﻿@model IEnumerable<GeeYeangSore.Models.HNews>
+@using GeeYeangSore.ViewModels
+@{
+    var newsModel = ViewData["NewsViewModel"] as NewsViewModel;
+}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租屋網站管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <section id="announcement">
+        <h2>📢請輸入公告 </h2>
+        <p>
+            公告時間為：@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        </p>
+        <div class="card-body mb-lg-2">
+            <form action="AddNews" method="post" enctype="multipart/form-data" id="newsForm">
+                公告標題：<input type="text" class="form-control" name="HTitle" id="HTitle">
+                <br>
+                公告內容：<textarea class="form-control" rows="4" name="HContent" id="HContent"></textarea>
+                <br>
+                <label for="image">選擇圖片：</label>
+                <input type="file" name="image" id="image" class="form-control">
+                <br>
+                <button type="submit" class="btn btn-primary" id="submitNews">上傳公告請按我</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="announcement">
+        <h2>📢 當前公告</h2>
+
+        @if (Model.Any())
+        {
+            foreach (var newsItem in Model)
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        已公告之標題：<h5 class="card-title">@newsItem.HTitle</h5>
+                        @* 已公告之標題：<input type="text" class="form-control" value="@newsItem.HTitle"> *@
+                        已公告之內容：<textarea class="form-control" rows="4" >@newsItem.HContent</textarea>
+
+                        @* <p class="card-text">@newsItem.HContent</p> *@
+                        <small class="text-muted">
+                            發布日期：@newsItem.HCreatedAt.ToString("yyyy-MM-dd")
+                        </small>
+
+                        <small style="margin-left: 400px;" class="text-muted">
+                            修改日期：@newsItem.HUpdatedAt.ToString("yyyy-MM-dd")
+                        </small>
+                        <form action="AddNews" method="post" enctype="multipart/form-data" id="newsForm">
+                            <button type="submit" class="btn btn-info" id="submitNews">修改內文</button>
+                        </form>
+
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                暫無公告。
+            </div>
+        }
+    </section>
+
+    <script>
+        document.getElementById("submitNews").addEventListener("click", function(event) {
+            let titleInput = document.getElementById("HTitle");
+            let contentInput = document.getElementById("HContent");
+
+            if (titleInput.value.trim() === "") {
+
+                event.preventDefault(); // 阻止表單提交
+
+                alert("失敗！請輸入公告標題！");
+            }
+
+            if (contentInput.value.trim() === "") {
+                event.preventDefault(); // 阻止表單提交
+                alert("失敗！請輸入公告內容！");
+            }
+
+        });
+    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

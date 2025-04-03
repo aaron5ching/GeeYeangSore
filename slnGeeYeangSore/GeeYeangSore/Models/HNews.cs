@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using System.ComponentModel.DataAnnotations;
 namespace GeeYeangSore.Models;
 
 public partial class HNews
