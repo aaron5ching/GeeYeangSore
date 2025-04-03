@@ -1,0 +1,73 @@
+﻿
+@{
+    ViewData["Title"] = "UserManagement";
+}
+
+@using GeeYeangSore.Areas.Admin.ViewModels
+@model List<CUserViewModels>
+
+<div class="card-body">
+    <!-- 搜尋表單保留 -->
+    <form class="mb-3">
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="請輸入房客ID或房東ID" name="id" />
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="請輸入姓名" name="name" />
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">搜尋</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 資料表格 -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>房客ID</th>
+                <th>房東ID</th>
+                <th>姓名</th>
+                <th>註冊時間</th>
+                <th>狀態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.TenantId</td>
+                    <td>@user.LandlordId</td>
+                    <td>@user.Name</td>
+                    <td>@user.RegisterDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @switch (user.Status)
+                        {
+                            case "啟用":
+                                <span class="badge bg-success">啟用</span>
+                                break;
+                            case "停用":
+                                <span class="badge bg-secondary">停用</span>
+                                break;
+                            case "黑名單":
+                                <span class="badge bg-danger">黑名單</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark">未設定</span>
+                                break;
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info">詳細</button>
+                        <button class="btn btn-sm btn-warning">編輯</button>
+                        <button class="btn btn-sm btn-danger">刪除</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
