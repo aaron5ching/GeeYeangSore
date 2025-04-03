@@ -1,0 +1,121 @@
+/* 頂部標題區 */
+/* 設定 頂部導覽列（Navbar）的樣式 */
+.navbar-custom {
+    background-color: #3CDDD2;
+    height: 56px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1050;
+}
+
+/* 設定 導覽列內 Logo 圖片 的樣式 */
+.navbar-brand img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+/* 設定 登入管理者資訊 的樣式 */
+.admin-info {
+    color: black;
+    font-weight: bold;
+}
+
+/* 頂部導覽按鈕 */
+.nav-btn {
+    background-color: transparent;
+    font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    ;
+    border: none;
+    color: #333;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    /* 移除超連結底線 */
+}
+
+    .nav-btn:hover {
+        color: #007bff !important;
+        /* 滑鼠懸停時改變文字顏色 */
+    }
+
+    .nav-btn:active {
+        color: #0056b3 !important;
+    }
+
+/* 側邊欄（Sidebar） */
+.sidebar {
+    height: 100vh;
+    background-color: #37474F;
+    transition: width 0.3s;
+    width: 200px;
+    overflow-x: hidden;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    padding-top: 10px;
+    z-index: 1000;
+}
+
+    /* 當側邊欄縮小時 */
+    .sidebar.collapsed {
+        width: 60px;
+    }
+
+/* 設定 漢堡選單按鈕（用來縮放側邊欄） */
+.menu-toggle {
+    background: none;
+    border: none;
+    font-size: 24px;
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    color: white;
+    /* 讓按鈕顯示明顯 */
+    z-index: 1100;
+    position: relative;
+}
+
+/* 設定 側邊欄內選單連結的樣式 */
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    color: white;
+}
+
+/* 側邊欄縮小時，隱藏文字 */
+.sidebar.collapsed .nav-link span {
+    display: none;
+}
+
+/* 側邊欄縮小時仍顯示 icon 並置中 */
+.sidebar.collapsed .nav-link i {
+    margin: auto;
+}
+
+/* 👉 新增的：側邊欄伸縮按鈕 */
+.sidebar-toggle-btn {
+    position: fixed;
+    top: 60px;
+    left: 200px;
+    z-index: 1101;
+    background-color: #37474F;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 0 5px 5px 0;
+    transition: left 0.3s;
+}
+
+body.sidebar-collapsed .sidebar-toggle-btn {
+    left: 60px;
+}
+/* 👉 新增的：主內容過渡動畫 */
+main.transition {
+    transition: margin-left 0.3s;
+}

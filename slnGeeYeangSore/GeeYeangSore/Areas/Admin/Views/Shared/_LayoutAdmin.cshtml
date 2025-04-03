@@ -1,0 +1,136 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 後台管理系統</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/pageframework.css" />
+</head>
+
+<body>
+    <!-- 上方導覽列 -->
+    <nav class="navbar navbar-custom px-3 d-flex justify-content-between align-items-center">
+        <a class="navbar-brand d-flex align-items-center" asp-area="Admin" asp-controller="Home" asp-action="Index">
+            <img class="rounded-circle bg-white p-1" src="~/images/logo2.png" alt="Logo">
+            <span class="text-white fw-bold ms-2">後台管理系統</span>
+        </a>
+        @{
+            var loginUser = HttpContextAccessor.HttpContext.Session.GetString("SK_LOGINED_USER");
+            var loginRole = HttpContextAccessor.HttpContext.Session.GetString("SK_LOGINED_ROLE");
+        }
+
+        @if (!string.IsNullOrEmpty(loginUser))
+        {
+            <div class="admin-info">
+                <i class="fa-solid fa-user"></i>
+                管理者：@loginUser (@loginRole)
+                <a class="btn btn-outline-light btn-sm ms-2" asp-controller="Login" asp-action="Logout" asp-area="">登出</a>
+            </div>
+        }
+        else
+        {
+            <div class="admin-info">
+                <a class="btn btn-outline-light btn-sm" asp-controller="Login" asp-action="Login">登入</a>
+            </div>
+        }
+    </nav>
+
+    <!-- 側邊欄 -->
+    <div id="adminSidebar" class="sidebar">
+        <div class="px-2 pt-3">
+            <button id="sidebarToggle" class="btn btn-sm btn-light" style="font-size: 0.8rem; padding: 4px 6px;">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <ul class="nav flex-column">
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-users"></i> <span>使用者</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Tenant" asp-action="Index">房客管理</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Landlord" asp-action="Index">房東管理</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-home"></i> <span>房源</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Listing" asp-action="Review">刊登審核</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Listing" asp-action="Index">房源列表</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-envelope"></i><span>訊息</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Message" asp-action="System">系統通知</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Message" asp-action="Private">私訊紀錄</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-credit-card"></i> <span>金流</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="TradingRecord" asp-action="Index">交易紀錄</a>
+                    </li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Finance" asp-action="Stats">金流統計</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-chart-line"></i> <span>數據分析</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Analytics" asp-action="Revenue">收入分析</a>
+                    </li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Analytics" asp-action="Users">用戶分析</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="nav-link" href="#"><i class="fa fa-cog"></i> <span>設定</span></a>
+                <ul class="nav flex-column ms-3">
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Roles">權限管理</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Info">平台資訊</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主體內容區塊 -->
+    <main id="adminMain" class="container-fluid transition" style="margin-left: 200px; padding-top: 70px;">
+        @RenderBody()
+    </main>
+
+    <footer class="footer bg-light text-center">
+        <div class="container">
+            <span class="text-muted">&copy; 2025 後台管理系統</span>
+        </div>
+    </footer>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const main = document.getElementById('adminMain');
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            const submenus = sidebar.querySelectorAll('ul ul');
+            submenus.forEach(ul => ul.style.display = 'none');
+            main.style.marginLeft = isCollapsed ? '60px' : '200px';
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+        const mainLinks = document.querySelectorAll('#adminSidebar > ul > li > a');
+        mainLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                const submenu = this.nextElementSibling;
+                if (submenu && submenu.tagName.toLowerCase() === 'ul') {
+                    e.preventDefault();
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+                }
+            });
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+
+</html>
