@@ -1,0 +1,78 @@
+﻿@using System.Diagnostics
+@model IEnumerable<GeeYeangSore.Models.HAbout>
+
+<body>
+    <!-- 顯示成功訊息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <h2>📢請上傳關於我們... </h2>
+    <section id="announcement">
+        <div class="card mb-4">
+            <div class="card-body">
+                <form action="About" method="post">
+                    標題：<p class="card-title"></p>
+                    <input class="form-control" id="HTitle" name="HTitle">
+                    內容：<p class="card-title"></p>
+                    <textarea class="form-control replyContent" name="HContent"></textarea>
+                    上傳時間：<p class="card-title"></p>
+                    <br />
+                    <button type="submit" id="submitAbout" class="btn btn-info">提交關於</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <h2>📢已上傳關於我們： </h2>
+    <section>
+        <div class="card mb-4">
+            <div class="card-body">
+                @foreach (var item in Model)
+                {
+                    <form action="UpdateAbout" method="post" enctype="multipart/form-data">
+
+                        更新標題：
+                        <input class="form-control" id="HTitle" placeholder="請輸入要更新的標題" name="HTitle" value="@item.HTitle">
+                        更新內容：
+                        <textarea class="form-control replyContent" id="HContent" name="HContent" placeholder="請輸入要更新的內容">@item.HContent</textarea>
+                        <br/>
+                        上傳時間：
+                        <p class="card-title">@item.HCreatedAt</p>
+                        更新時間：
+                        <p class="card-title">@item.HUpdatedAt</p>
+                        <br />
+                        <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                        <button type="submit" id="submitAbout" class="btn btn-info">修改關於我們</button>
+                    </form>
+
+                    <!-- 刪除的表單 -->
+                    <form action="DeleteAbout" method="post">
+                        <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                        <button type="submit" id="submitGuide"  class="btn btn-warning">刪除公告</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById("submitAbout").addEventListener("click", function(event) {
+            let titleInput = document.getElementById("HTitle");
+            let contentInput = document.getElementById("HContent");
+
+            if (titleInput.value.trim() === "") {
+                event.preventDefault(); // 阻止表單提交
+                alert("失敗！請輸入標題！");
+            }
+            if (contentInput.value.trim() === "") {
+                event.preventDefault(); // 阻止表單提交
+                alert("失敗！請輸入內容！");
+            }
+        });
+    </script>
+</body>

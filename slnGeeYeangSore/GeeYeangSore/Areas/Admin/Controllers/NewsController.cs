@@ -6,6 +6,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
+
     public class NewsController : Controller
     {
         private readonly Models.GeeYeangSoreContext _db;
@@ -19,24 +20,49 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         }
 
         //https://localhost:7022/Admin/News/News
-
         public IActionResult News()
         {
             var news = _db.HNews.ToList();
             return View(news);
         }
 
-
         [HttpPost]
-        public IActionResult UpdateNews(string H, string HContent, IFormFile image)
+        public IActionResult UpdateNews(int HNewsId, string HContent, IFormFile image)
         {
+            Console.WriteLine("TEST!");
+
+            var contact = _db.HNews.FirstOrDefault(n => n.HNewsId == HNewsId);
+
+            if (contact != null)
+            {
+
+                contact.HContent = HContent;
+                contact.HUpdatedAt=DateTime.Now;
+
+                if (image != null)
+                {
+
+                    var filePath = Path.Combine("wwwroot", "images", image.FileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        image.CopyTo(stream);
+                    }
+
+                    contact.HImagePath = filePath; 
+                }
+
+                _db.SaveChanges();
+            }
+
+
+            return Redirect("News");
 
         }
 
         [HttpPost]
-        public IActionResult AddNews(string HTitle, string HContent, IFormFile image)
+        public IActionResult News(string HTitle, string HContent, IFormFile image)
         {
-            const string imagePath= "\\images\\News";
+            const string imagePath= "/images/News";
             string imageName = Guid.NewGuid() + Path.GetExtension(image.FileName);
 
             string rootPath = _env.WebRootPath+ imagePath;
@@ -48,20 +74,34 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             string filePath = Path.Combine(rootPath, imageName);
 
-            string sqlPath = $"wwwroot\\News\\{imageName}";
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            string sqlPath = $"wwwroot/News/{imageName}";
+
+            if (image != null)
             {
-                image.CopyTo(fileStream);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    image.CopyTo(fileStream);
+                }
             }
+
 
             HNews news = new HNews
             {
                 HTitle = HTitle,
                 HContent = HContent,
-                HImagePath = imagePath +"\\"+ imageName,
+                //HImagePath = imagePath +"\\"+ imageName,
                 HCreatedAt = DateTime.Now,
                 HUpdatedAt = DateTime.Now
             };
+
+            if (image != null)
+            {
+                news.HImagePath = imagePath + "/" + imageName;
+            }
+            else
+            {
+                news.HImagePath = null;
+            }
             _db.HNews.Add(news);
             _db.SaveChanges();
             return Redirect("News");
