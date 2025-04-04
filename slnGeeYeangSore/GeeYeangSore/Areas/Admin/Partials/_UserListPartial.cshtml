@@ -1,0 +1,31 @@
+﻿@model IEnumerable<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>房客ID</th>
+            <th>房東ID</th>
+            <th>姓名</th>
+            <th>房客狀態</th>
+            <th>房東狀態</th>
+            <th>註冊日期</th>
+            <th>身份</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.TenantId</td>
+                <td>@user.LandlordId</td>
+                <td>@user.Name</td>
+                <td>@user.TenantStatus</td>
+                <td>@user.LandlordStatus</td>
+                <td>@user.RegisterDate.ToShortDateString()</td>
+                <td>
+                    @(user.IsTenant ? "房客" : "") @(user.IsLandlord ? "房東" : "")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
