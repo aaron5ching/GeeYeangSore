@@ -28,7 +28,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     {
                         TenantId = t.HTenantId,
                         TenantStatus = t.HStatus?.Trim() ?? "未設定",
-                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "-",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
