@@ -34,7 +34,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
                         // ✅ 使用 IsNullOrWhiteSpace 避免空字串 + Trim() 移除左右空白
                         TenantStatus = string.IsNullOrWhiteSpace(t.HStatus) ? "未設定" : t.HStatus.Trim(),
-                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "未開通",
+                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "-",
                         LandlordStatus = string.IsNullOrWhiteSpace(landlord?.HStatus) ? "未驗證" : landlord.HStatus.Trim(),
 
                         Name = t.HUserName ?? "未填寫",

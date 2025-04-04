@@ -5,6 +5,59 @@
     ViewData["Title"] = "UserManagement";
 }
 
+
+<!-- 搜尋表單 -->
+<form method="get" class="mb-3">
+    <div class="row mb-2">
+        <div class="col-md-6">
+            <input type="text" class="form-control" name="userId" placeholder="請輸入房客ID或房東ID" value="@Request.Query["userId"]">
+        </div>
+        <div class="col-md-6">
+            <input type="text" class="form-control" name="name" placeholder="請輸入房客姓名或房東姓名" value="@Request.Query["name"]">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <label class="form-label">註冊期間</label>
+            <div class="input-group">
+                <input type="date" class="form-control" name="startDate" value="@Request.Query["startDate"]">
+                <span class="input-group-text">~</span>
+                <input type="date" class="form-control" name="endDate" value="@Request.Query["endDate"]">
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-md-4">
+            <select class="form-select" name="status">
+                <option value="">狀態</option>
+                <option value="啟用" selected="@(Request.Query["status"] == "啟用")">啟用</option>
+                <option value="停用" selected="@(Request.Query["status"] == "停用")">停用</option>
+                <option value="黑名單" selected="@(Request.Query["status"] == "黑名單")">黑名單</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" name="isTenant">
+                <option value="">是否為房客</option>
+                <option value="true" selected="@(Request.Query["isTenant"] == "true")">是</option>
+                <option value="false" selected="@(Request.Query["isTenant"] == "false")">否</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" name="isLandlord">
+                <option value="">是否為房東</option>
+                <option value="true" selected="@(Request.Query["isLandlord"] == "true")">是</option>
+                <option value="false" selected="@(Request.Query["isLandlord"] == "false")">否</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">搜尋</button>
+        </div>
+    </div>
+</form>
+
+
 <div class="card-body">
     <table class="table table-striped">
         <thead>
