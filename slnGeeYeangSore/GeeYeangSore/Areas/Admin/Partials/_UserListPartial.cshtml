@@ -17,7 +17,7 @@ else
                 <th>房客狀態</th>
                 <th>房東狀態</th>
                 <th>註冊日期</th>
-                <th>身份</th>
+                <th>操作</th> <!-- ✅ 改成操作欄 -->
             </tr>
         </thead>
         <tbody>
@@ -68,15 +68,24 @@ else
                         }
                     </td>
                     <td>@user.RegisterDate.ToString("yyyy-MM-dd")</td>
+
+                    <!-- ✅ 操作欄 -->
                     <td>
-                        @if (user.IsTenant)
-                        {
-                            <span class="badge bg-info me-1">房客</span>
-                        }
-                        @if (user.IsLandlord)
-                        {
-                            <span class="badge bg-primary">房東</span>
-                        }
+                        <a class="btn btn-sm btn-outline-primary me-1"
+                           asp-area="Admin"
+                           asp-controller="User"
+                           asp-action="Edit"
+                           asp-route-id="@user.TenantId">
+                            <i class="fa fa-edit"></i> 編輯
+                        </a>
+                        <a class="btn btn-sm btn-outline-danger"
+                           asp-area="Admin"
+                           asp-controller="User"
+                           asp-action="Delete"
+                           asp-route-id="@user.TenantId"
+                           onclick="return confirm('確定要刪除這筆使用者資料嗎？');">
+                            <i class="fa fa-trash"></i> 刪除
+                        </a>
                     </td>
                 </tr>
             }

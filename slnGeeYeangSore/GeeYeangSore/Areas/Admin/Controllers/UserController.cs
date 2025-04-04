@@ -77,6 +77,24 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             return PartialView("~/Partials/_UserListPartial.cshtml", result);
         }
-    }
 
+
+        public IActionResult Edit(int id)
+        {
+            // TODO: 導向編輯頁
+            return View();
+        }
+
+        public IActionResult Delete(int id)
+        {
+            // TODO: 執行刪除邏輯或確認畫面
+            return RedirectToAction("UserManagement");
+        }
+
+
+
+
+
+
+    }
 }
