@@ -1,5 +1,13 @@
 ﻿@model GeeYeangSore.Models.HTenant
 
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">使用者資料載入失敗。</div>
+    return;
+}
+
+
 <div class="container">
     <!-- 🧍 房客資訊 -->
     <div class="card mb-4">
@@ -53,9 +61,10 @@
     </div>
 
     <!-- 🏠 房東資訊（若有） -->
-    @if (Model.HLandlords.Any())
+    @if (Model.HLandlords != null && Model.HLandlords.Any())
     {
         var landlord = Model.HLandlords.First();
+
         <div class="card mb-4">
             <div class="card-header bg-warning">房東資訊</div>
             <div class="card-body row g-3">

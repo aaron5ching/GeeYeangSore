@@ -82,6 +82,9 @@
 </div>
 
 @section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         $(document).ready(function () {
 
@@ -89,21 +92,23 @@
             $('#searchForm').on('submit', function (e) {
                 e.preventDefault();
 
-                const formData = {
-                    userId: $('input[name="userId"]').val(),
-                    name: $('input[name="name"]').val(),
-                    status: $('select[name="status"]').val(),
-                    startDate: $('input[name="startDate"]').val(),
-                    endDate: $('input[name="endDate"]').val(),
-                    isTenant: $('select[name="isTenant"]').val(),
-                    isLandlord: $('select[name="isLandlord"]').val()
-                };
+        const formData = {
+            userId: $('input[name="userId"]').val(),
+            name: $('input[name="name"]').val(),
+            status: $('select[name="status"]').val(),
+            startDate: $('input[name="startDate"]').val(),
+            endDate: $('input[name="endDate"]').val(),
+            isTenant: $('select[name="isTenant"]').val(),
+            isLandlord: $('select[name="isLandlord"]').val()
+        };
 
-                $.ajax({
-                    url: '@Url.Action("SearchUser", "User", new { area = "Admin" })',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(formData),
+
+                        $.ajax({
+        url: '@Url.Action("SearchUser", "User", new { area = "Admin" })',
+        method: 'POST',
+        contentType: 'application/json', // 必須指定為 JSON
+        data: JSON.stringify(formData), // 必須手動轉成 JSON
+
                     success: function (result) {
                         $('#searchResult').html(result);
                     },
@@ -140,7 +145,7 @@
                 modal.show();
 
                 $.ajax({
-                    url: '@Url.Action("Edit", "User", new { area = "Admin" })/' + id,
+                    url: '@Url.Action("Edit", "User", new { area = "Admin" })' + '?id=' + id,
                     success: function (html) {
                         $('#editModalBody').html(html);
                     },

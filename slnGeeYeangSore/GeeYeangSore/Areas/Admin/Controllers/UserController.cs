@@ -45,6 +45,12 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
         {
+
+            if (query == null)
+            {
+                return BadRequest("查詢條件為空，請確認前端傳送格式。");
+            }
+
             var result = _context.HTenants
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
