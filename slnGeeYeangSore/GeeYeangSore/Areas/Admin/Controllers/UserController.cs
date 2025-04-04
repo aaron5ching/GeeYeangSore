@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
 {
+
     [Area("Admin")]
     public class UserController : SuperController
     {
@@ -18,33 +19,43 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
         public IActionResult UserManagement()
         {
-            if (!HasAnyRole("超級管理員", "系統管理員"))
-                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+            return View(); // 初始頁面只回傳空的 View，結果靠 AJAX 動態載入
+        }
 
-            var data = _context.HTenants
+        [HttpPost]
+        public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
+        {
+            var result = _context.HTenants
                 .Include(t => t.HLandlords)
-                .AsEnumerable() // ⛳ 將 IQueryable 轉成記憶體 Enumerable，讓我們可以使用 `?.` 和其他 C# 功能
+                .AsEnumerable()
                 .Select(t =>
                 {
-                    var landlord = t.HLandlords.FirstOrDefault(); // 取得對應的房東（可能為 null）
-
+                    var landlord = t.HLandlords.FirstOrDefault();
                     return new CUserViewModels
                     {
                         TenantId = t.HTenantId,
-
-                        // ✅ 使用 IsNullOrWhiteSpace 避免空字串 + Trim() 移除左右空白
                         TenantStatus = string.IsNullOrWhiteSpace(t.HStatus) ? "未設定" : t.HStatus.Trim(),
-                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "-",
+                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "未開通",
                         LandlordStatus = string.IsNullOrWhiteSpace(landlord?.HStatus) ? "未驗證" : landlord.HStatus.Trim(),
-
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
                         IsTenant = t.HIsTenant ?? false,
                         IsLandlord = t.HIsLandlord ?? false
                     };
-                }).ToList();
+                })
+                .Where(u =>
+                    (string.IsNullOrEmpty(query.UserId) || u.TenantId.ToString().Contains(query.UserId) || u.LandlordId.Contains(query.UserId)) &&
+                    (string.IsNullOrEmpty(query.Name) || u.Name.Contains(query.Name)) &&
+                    (string.IsNullOrEmpty(query.Status) || u.TenantStatus == query.Status || u.LandlordStatus == query.Status) &&
+                    (!query.StartDate.HasValue || u.RegisterDate >= query.StartDate.Value) &&
+                    (!query.EndDate.HasValue || u.RegisterDate <= query.EndDate.Value) &&
+                    (!query.IsTenant.HasValue || u.IsTenant == query.IsTenant.Value) &&
+                    (!query.IsLandlord.HasValue || u.IsLandlord == query.IsLandlord.Value)
+                )
+                .ToList();
 
-            return View(data);
+            return PartialView("_UserListPartial", result);
         }
     }
+
 }
