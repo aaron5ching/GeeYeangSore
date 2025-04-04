@@ -1,0 +1,128 @@
+﻿@model GeeYeangSore.Models.HTenant
+
+<div class="container">
+    <!-- 🧍 房客資訊 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">房客資訊</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label class="form-label">房客ID</label>
+                <input class="form-control" value="@Model.HTenantId" readonly />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">驗證狀態</label>
+                <select class="form-select" name="HStatus">
+                    <option value="未驗證" selected="@(Model.HStatus == "未驗證")">未驗證</option>
+                    <option value="驗證中" selected="@(Model.HStatus == "驗證中")">驗證中</option>
+                    <option value="已驗證" selected="@(Model.HStatus == "已驗證")">已驗證</option>
+                    <option value="封鎖中" selected="@(Model.HStatus == "封鎖中")">封鎖中</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">姓名</label>
+                <input class="form-control" name="HUserName" value="@Model.HUserName" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">生日</label>
+                <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">性別</label>
+                <select class="form-select" name="HGender">
+                    <option value="true" selected="@(Model.HGender == true)">男</option>
+                    <option value="false" selected="@(Model.HGender == false)">女</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">居住地</label>
+                <input class="form-control" name="HAddress" value="@Model.HAddress" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">電話</label>
+                <input class="form-control" name="HPhoneNumber" value="@Model.HPhoneNumber" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">電子郵件</label>
+                <input type="email" class="form-control" name="HEmail" value="@Model.HEmail" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">密碼</label>
+                <input type="password" class="form-control" name="HPassword" value="@Model.HPassword" />
+            </div>
+        </div>
+    </div>
+
+    <!-- 🏠 房東資訊（若有） -->
+    @if (Model.HLandlords.Any())
+    {
+        var landlord = Model.HLandlords.First();
+        <div class="card mb-4">
+            <div class="card-header bg-warning">房東資訊</div>
+            <div class="card-body row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">房東ID</label>
+                    <input class="form-control" value="@landlord.HLandlordId" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">房東姓名</label>
+                    <input class="form-control" value="@landlord.HLandlordName" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">驗證狀態</label>
+                    <select class="form-select" name="LandlordStatus">
+                        <option value="未驗證" selected="@(landlord.HStatus == "未驗證")">未驗證</option>
+                        <option value="驗證中" selected="@(landlord.HStatus == "驗證中")">驗證中</option>
+                        <option value="已驗證" selected="@(landlord.HStatus == "已驗證")">已驗證</option>
+                        <option value="封鎖中" selected="@(landlord.HStatus == "封鎖中")">封鎖中</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">銀行帳戶</label>
+                    <input class="form-control" value="@landlord.HBankAccount" readonly />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">銀行名稱</label>
+                    <input class="form-control" value="@landlord.HBankName" readonly />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">身分證正面</label>
+                    <img src="@landlord.HIdCardFrontUrl" class="img-fluid border" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">身分證反面</label>
+                    <img src="@landlord.HIdCardBackUrl" class="img-fluid border" />
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-secondary">修改照片</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🏘️ 擁有房源列表 -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">擁有的房源</div>
+            <div class="card-body">
+                @if (landlord.HProperties.Any())
+                {
+                    <ul class="list-group">
+                        @foreach (var p in landlord.HProperties)
+                        {
+                            <li class="list-group-item">
+                                <strong>@p.HPropertyTitle</strong> - @p.HAddress
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">目前無房源紀錄</p>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- 💾 儲存按鈕 -->
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">儲存變更</button>
+    </div>
+</div>
