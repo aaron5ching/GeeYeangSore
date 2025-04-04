@@ -1,14 +1,12 @@
 ﻿using GeeYeangSore.Areas.Admin.ViewModels;
-using GeeYeangSore.Controllers;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
 {
-
     [Area("Admin")]
-    public class UserController : SuperController
+    public class UserController : Controller
     {
         private readonly GeeYeangSoreContext _context;
 
@@ -17,6 +15,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             _context = context;
         }
 
+        // ✅ 初始頁面：顯示所有使用者
         public IActionResult UserManagement()
         {
             var allUsers = _context.HTenants
@@ -28,9 +27,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     return new CUserViewModels
                     {
                         TenantId = t.HTenantId,
-                        TenantStatus = string.IsNullOrWhiteSpace(t.HStatus) ? "未設定" : t.HStatus.Trim(),
-                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "-",
-                        LandlordStatus = string.IsNullOrWhiteSpace(landlord?.HStatus) ? "未驗證" : landlord.HStatus.Trim(),
+                        TenantStatus = t.HStatus?.Trim() ?? "未設定",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
+                        LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
                         IsTenant = t.HIsTenant ?? false,
@@ -39,10 +38,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 })
                 .ToList();
 
-            return View(allUsers); // ✅ 傳送資料進 View
+            return View(allUsers);
         }
 
-
+        // ✅ AJAX 搜尋使用者
         [HttpPost]
         public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
         {
@@ -55,9 +54,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     return new CUserViewModels
                     {
                         TenantId = t.HTenantId,
-                        TenantStatus = string.IsNullOrWhiteSpace(t.HStatus) ? "未設定" : t.HStatus.Trim(),
-                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "未開通",
-                        LandlordStatus = string.IsNullOrWhiteSpace(landlord?.HStatus) ? "未驗證" : landlord.HStatus.Trim(),
+                        TenantStatus = t.HStatus?.Trim() ?? "未設定",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
+                        LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
                         IsTenant = t.HIsTenant ?? false,
@@ -75,26 +74,45 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 )
                 .ToList();
 
-            return PartialView("~/Partials/_UserListPartial.cshtml", result);
+            return PartialView("~/Areas/Admin/Partials/_UserListPartial.cshtml", result);
         }
 
-
+        // ✅ AJAX 載入編輯視窗（Partial View）
+        [HttpGet]
         public IActionResult Edit(int id)
         {
-            // TODO: 導向編輯頁
-            return View();
+            var tenant = _context.HTenants.FirstOrDefault(t => t.HTenantId == id);
+            if (tenant == null) return NotFound();
+
+            return PartialView("~/Areas/Admin/Partials/_EditUserPartial.cshtml", tenant);
         }
 
+        // ✅ AJAX 儲存編輯內容
+        [HttpPost]
+        public IActionResult Edit(HTenant updatedTenant)
+        {
+            var existing = _context.HTenants.FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
+            if (existing == null) return NotFound();
+
+            existing.HUserName = updatedTenant.HUserName;
+            existing.HStatus = updatedTenant.HStatus;
+            _context.SaveChanges();
+
+            return Ok();
+        }
+
+        // ✅ AJAX 刪除使用者
+        [HttpPost]
         public IActionResult Delete(int id)
         {
-            // TODO: 執行刪除邏輯或確認畫面
-            return RedirectToAction("UserManagement");
+            var tenant = _context.HTenants.FirstOrDefault(t => t.HTenantId == id);
+            if (tenant != null)
+            {
+                _context.HTenants.Remove(tenant);
+                _context.SaveChanges();
+                return Ok();
+            }
+            return NotFound();
         }
-
-
-
-
-
-
     }
 }

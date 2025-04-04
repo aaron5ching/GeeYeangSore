@@ -12,12 +12,12 @@ else
         <thead class="table-light">
             <tr>
                 <th>房客ID</th>
-                <th>房東ID</th>
-                <th>姓名</th>
                 <th>房客狀態</th>
+                <th>房東ID</th>
                 <th>房東狀態</th>
+                <th>姓名</th>
                 <th>註冊日期</th>
-                <th>操作</th> <!-- ✅ 改成操作欄 -->
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -25,8 +25,6 @@ else
             {
                 <tr>
                     <td>@user.TenantId</td>
-                    <td>@user.LandlordId</td>
-                    <td>@user.Name</td>
                     <td>
                         @switch (user.TenantStatus)
                         {
@@ -39,14 +37,15 @@ else
                             case "已驗證":
                                 <span class="badge bg-success">已驗證</span>
                                 break;
-                            case "封鎖中":
-                                <span class="badge bg-danger">封鎖中</span>
+                            case "已封鎖":
+                                <span class="badge bg-danger">已封鎖</span>
                                 break;
                             default:
                                 <span class="badge bg-dark">未知</span>
                                 break;
                         }
                     </td>
+                    <td>@user.LandlordId</td>
                     <td>
                         @switch (user.LandlordStatus)
                         {
@@ -59,33 +58,25 @@ else
                             case "已驗證":
                                 <span class="badge bg-success">已驗證</span>
                                 break;
-                            case "封鎖中":
-                                <span class="badge bg-danger">封鎖中</span>
+                            case "已封鎖":
+                                <span class="badge bg-danger">已封鎖</span>
                                 break;
                             default:
                                 <span class="badge bg-dark">未知</span>
                                 break;
                         }
                     </td>
+                    <td>@user.Name</td>
                     <td>@user.RegisterDate.ToString("yyyy-MM-dd")</td>
-
-                    <!-- ✅ 操作欄 -->
                     <td>
-                        <a class="btn btn-sm btn-outline-primary me-1"
-                           asp-area="Admin"
-                           asp-controller="User"
-                           asp-action="Edit"
-                           asp-route-id="@user.TenantId">
+                        <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
+                                data-id="@user.TenantId">
                             <i class="fa fa-edit"></i> 編輯
-                        </a>
-                        <a class="btn btn-sm btn-outline-danger"
-                           asp-area="Admin"
-                           asp-controller="User"
-                           asp-action="Delete"
-                           asp-route-id="@user.TenantId"
-                           onclick="return confirm('確定要刪除這筆使用者資料嗎？');">
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete"
+                                data-id="@user.TenantId">
                             <i class="fa fa-trash"></i> 刪除
-                        </a>
+                        </button>
                     </td>
                 </tr>
             }

@@ -1,6 +1,5 @@
 ﻿@model List<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
 
-
 @{
     ViewData["Title"] = "使用者管理";
 }
@@ -58,21 +57,38 @@
 
 <hr />
 
-<!-- 📋 搜尋結果會載入在這裡 -->
+<!-- 📋 初始顯示使用者資料 -->
 <div id="searchResult">
     @await Html.PartialAsync("~/Areas/Admin/Partials/_UserListPartial.cshtml", Model)
 </div>
 
+<!-- 🪟 編輯彈窗 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">編輯使用者</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- AJAX 載入表單中 -->
+                <div class="text-center text-muted">
+                    載入中...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
 
-            // 🔁 綁定 submit 事件
+            // 🔁 搜尋提交（初始也會自動執行）
             $('#searchForm').on('submit', function (e) {
                 e.preventDefault();
 
-                var formData = {
+                const formData = {
                     userId: $('input[name="userId"]').val(),
                     name: $('input[name="name"]').val(),
                     status: $('select[name="status"]').val(),
@@ -91,13 +107,48 @@
                         $('#searchResult').html(result);
                     },
                     error: function () {
-                        alert('搜尋失敗，請稍後再試！');
+                        alert("搜尋失敗，請稍後再試！");
                     }
                 });
             });
 
-            // ✅ 頁面載入時自動搜尋
-            $('#searchForm').submit();
+            $('#searchForm').submit(); // 初始執行
+
+            // 🗑️ 刪除使用者（AJAX 無刷新）
+            $(document).on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+                if (confirm("確定要刪除這筆使用者資料嗎？")) {
+                    $.ajax({
+                        url: '@Url.Action("Delete", "User", new { area = "Admin" })/' + id,
+                        type: 'POST',
+                        success: function () {
+                            $('#searchForm').submit(); // 重新載入搜尋結果
+                        },
+                        error: function () {
+                            alert("刪除失敗，請稍後再試！");
+                        }
+                    });
+                }
+            });
+
+            // ✏️ 載入編輯畫面（modal）
+            $(document).on('click', '.btn-edit', function () {
+                const id = $(this).data('id');
+                $('#editModalBody').html('<div class="text-center text-muted">載入中...</div>');
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+
+                $.ajax({
+                    url: '@Url.Action("Edit", "User", new { area = "Admin" })/' + id,
+                    success: function (html) {
+                        $('#editModalBody').html(html);
+                    },
+                    error: function () {
+                        $('#editModalBody').html('<div class="text-danger text-center">載入失敗</div>');
+                    }
+                });
+            });
+
         });
     </script>
 }
