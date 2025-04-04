@@ -15,7 +15,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             _context = context;
         }
 
-        // ✅ 初始頁面：顯示所有使用者
+        // 初始頁面：顯示所有使用者
         public IActionResult UserManagement()
         {
             var allUsers = _context.HTenants
@@ -28,7 +28,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     {
                         TenantId = t.HTenantId,
                         TenantStatus = t.HStatus?.Trim() ?? "未設定",
-                        LandlordId = landlord?.HLandlordId.ToString() ?? "-",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
@@ -41,7 +41,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             return View(allUsers);
         }
 
-        // ✅ AJAX 搜尋使用者
+        // AJAX 搜尋使用者
         [HttpPost]
         public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
         {
@@ -77,22 +77,29 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             return PartialView("~/Areas/Admin/Partials/_UserListPartial.cshtml", result);
         }
 
-        // ✅ AJAX 載入編輯視窗（Partial View）
+        // AJAX 載入編輯視窗（Partial View）
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var tenant = _context.HTenants.FirstOrDefault(t => t.HTenantId == id);
-            if (tenant == null) return NotFound();
+            // 載入房客資料，包含房東與房源
+            var tenant = _context.HTenants
+                .Include(t => t.HLandlords)
+                    .ThenInclude(l => l.HProperties)
+                .FirstOrDefault(t => t.HTenantId == id);
+
+            if (tenant == null)
+                return NotFound();
 
             return PartialView("~/Areas/Admin/Partials/_EditUserPartial.cshtml", tenant);
         }
 
-        // ✅ AJAX 儲存編輯內容
+        // AJAX 儲存編輯內容
         [HttpPost]
         public IActionResult Edit(HTenant updatedTenant)
         {
             var existing = _context.HTenants.FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
-            if (existing == null) return NotFound();
+            if (existing == null)
+                return NotFound();
 
             existing.HUserName = updatedTenant.HUserName;
             existing.HStatus = updatedTenant.HStatus;
@@ -101,7 +108,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             return Ok();
         }
 
-        // ✅ AJAX 刪除使用者
+        // AJAX 刪除使用者
         [HttpPost]
         public IActionResult Delete(int id)
         {
