@@ -1,31 +1,85 @@
 ﻿@model IEnumerable<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>房客ID</th>
-            <th>房東ID</th>
-            <th>姓名</th>
-            <th>房客狀態</th>
-            <th>房東狀態</th>
-            <th>註冊日期</th>
-            <th>身份</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center mt-3">
+        <i class="fa fa-info-circle me-1"></i> 沒有找到符合條件的使用者。
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
             <tr>
-                <td>@user.TenantId</td>
-                <td>@user.LandlordId</td>
-                <td>@user.Name</td>
-                <td>@user.TenantStatus</td>
-                <td>@user.LandlordStatus</td>
-                <td>@user.RegisterDate.ToShortDateString()</td>
-                <td>
-                    @(user.IsTenant ? "房客" : "") @(user.IsLandlord ? "房東" : "")
-                </td>
+                <th>房客ID</th>
+                <th>房東ID</th>
+                <th>姓名</th>
+                <th>房客狀態</th>
+                <th>房東狀態</th>
+                <th>註冊日期</th>
+                <th>身份</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.TenantId</td>
+                    <td>@user.LandlordId</td>
+                    <td>@user.Name</td>
+                    <td>
+                        @switch (user.TenantStatus)
+                        {
+                            case "未驗證":
+                                <span class="badge bg-secondary">未驗證</span>
+                                break;
+                            case "驗證中":
+                                <span class="badge bg-warning text-dark">驗證中</span>
+                                break;
+                            case "已驗證":
+                                <span class="badge bg-success">已驗證</span>
+                                break;
+                            case "封鎖中":
+                                <span class="badge bg-danger">封鎖中</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark">未知</span>
+                                break;
+                        }
+                    </td>
+                    <td>
+                        @switch (user.LandlordStatus)
+                        {
+                            case "未驗證":
+                                <span class="badge bg-secondary">未驗證</span>
+                                break;
+                            case "驗證中":
+                                <span class="badge bg-warning text-dark">驗證中</span>
+                                break;
+                            case "已驗證":
+                                <span class="badge bg-success">已驗證</span>
+                                break;
+                            case "封鎖中":
+                                <span class="badge bg-danger">封鎖中</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark">未知</span>
+                                break;
+                        }
+                    </td>
+                    <td>@user.RegisterDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (user.IsTenant)
+                        {
+                            <span class="badge bg-info me-1">房客</span>
+                        }
+                        @if (user.IsLandlord)
+                        {
+                            <span class="badge bg-primary">房東</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

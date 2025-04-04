@@ -1,63 +1,74 @@
-﻿@{
+﻿@model List<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
+
+
+@{
     ViewData["Title"] = "使用者管理";
 }
+
 <h2>使用者管理</h2>
 
-<!-- 搜尋表單 -->
-<form id="searchForm">
-    <div class="row">
-        <div class="col-md-4">
-            <input type="text" name="userId" class="form-control" placeholder="房客ID/房東ID" />
+<!-- 🔍 搜尋表單 -->
+<form id="searchForm" class="mb-3">
+    <div class="row mb-2">
+        <div class="col-md-6">
+            <input type="text" class="form-control" name="userId" placeholder="請輸入房客ID或房東ID" />
         </div>
-        <div class="col-md-4">
-            <input type="text" name="name" class="form-control" placeholder="姓名" />
+        <div class="col-md-6">
+            <input type="text" class="form-control" name="name" placeholder="請輸入房客姓名或房東姓名" />
         </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <label class="form-label">註冊期間</label>
+            <div class="input-group">
+                <input type="date" class="form-control" name="startDate" />
+                <span class="input-group-text">~</span>
+                <input type="date" class="form-control" name="endDate" />
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
         <div class="col-md-4">
-            <select name="status" class="form-select">
+            <select class="form-select" name="status">
                 <option value="">狀態</option>
                 <option value="啟用">啟用</option>
                 <option value="停用">停用</option>
                 <option value="黑名單">黑名單</option>
             </select>
         </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col-md-6">
-            <input type="date" name="startDate" class="form-control" />
-        </div>
-        <div class="col-md-6">
-            <input type="date" name="endDate" class="form-control" />
-        </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col-md-6">
-            <select name="isTenant" class="form-select">
+        <div class="col-md-4">
+            <select class="form-select" name="isTenant">
                 <option value="">是否為房客</option>
                 <option value="true">是</option>
                 <option value="false">否</option>
             </select>
         </div>
-        <div class="col-md-6">
-            <select name="isLandlord" class="form-select">
+        <div class="col-md-4">
+            <select class="form-select" name="isLandlord">
                 <option value="">是否為房東</option>
                 <option value="true">是</option>
                 <option value="false">否</option>
             </select>
         </div>
     </div>
-    <div class="text-end mt-3">
+    <div class="text-end">
         <button type="submit" class="btn btn-primary">搜尋</button>
     </div>
 </form>
 
 <hr />
 
-<!-- 搜尋結果會動態載入這裡 -->
-<div id="searchResult"></div>
+<!-- 📋 搜尋結果會載入在這裡 -->
+<div id="searchResult">
+    @await Html.PartialAsync("~/Areas/Admin/Partials/_UserListPartial.cshtml", Model)
+</div>
+
 
 @section Scripts {
     <script>
         $(document).ready(function () {
+
+            // 🔁 綁定 submit 事件
             $('#searchForm').on('submit', function (e) {
                 e.preventDefault();
 
@@ -84,6 +95,9 @@
                     }
                 });
             });
+
+            // ✅ 頁面載入時自動搜尋
+            $('#searchForm').submit();
         });
     </script>
 }

@@ -19,8 +19,29 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
         public IActionResult UserManagement()
         {
-            return View(); // 初始頁面只回傳空的 View，結果靠 AJAX 動態載入
+            var allUsers = _context.HTenants
+                .Include(t => t.HLandlords)
+                .AsEnumerable()
+                .Select(t =>
+                {
+                    var landlord = t.HLandlords.FirstOrDefault();
+                    return new CUserViewModels
+                    {
+                        TenantId = t.HTenantId,
+                        TenantStatus = string.IsNullOrWhiteSpace(t.HStatus) ? "未設定" : t.HStatus.Trim(),
+                        LandlordId = landlord != null ? landlord.HLandlordId.ToString() : "-",
+                        LandlordStatus = string.IsNullOrWhiteSpace(landlord?.HStatus) ? "未驗證" : landlord.HStatus.Trim(),
+                        Name = t.HUserName ?? "未填寫",
+                        RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
+                        IsTenant = t.HIsTenant ?? false,
+                        IsLandlord = t.HIsLandlord ?? false
+                    };
+                })
+                .ToList();
+
+            return View(allUsers); // ✅ 傳送資料進 View
         }
+
 
         [HttpPost]
         public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
@@ -54,7 +75,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 )
                 .ToList();
 
-            return PartialView("_UserListPartial", result);
+            return PartialView("~/Partials/_UserListPartial.cshtml", result);
         }
     }
 
