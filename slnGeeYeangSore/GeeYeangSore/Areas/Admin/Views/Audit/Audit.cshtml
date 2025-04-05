@@ -1,0 +1,68 @@
+﻿@using System.Diagnostics
+@model IEnumerable<GeeYeangSore.Models.HAudit>
+
+<body>
+    <!-- 顯示成功訊息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <h2>📢已收到房東申請： </h2>
+    <section>
+        <div class="card mb-4">
+            <div class="card-body">
+                @foreach (var item in Model.Where(item => item.HStatus == "待審核"))
+                {
+                    <form action="Audit" method="post">
+
+                        房客ID：
+                        <p class="card-title">@item.HAuditId</p>
+                        銀行名稱：
+                        <p class="card-title">@item.HBankName</p>
+                        銀行帳號：
+                        <p class="card-title">@item.HBankAccount</p>
+                        審核備註：
+                        <p class="card-title">@item.HReviewNote</p>
+                        申請時間：
+                        <p class="card-title">@item.HSubmittedAt</p>
+                        <br />
+                        <input type="hidden" name="HAuditId" value=@item.HAuditId />
+                        <button type="submit" class="btn btn-success" name="typeString" value="通過">通過</button>
+
+                        <button type="submit" class="btn btn-danger" name="typeString" value="退件">退件</button>
+
+                    </form>
+                    @* <form action="AcceptApply" method="post"> *@
+                    @*     <input type="hidden" name="HAuditId" value="@item.HAuditId" /> *@
+                    @*     <button type="submit" class="btn btn-success">通過</button> *@
+                    @* </form> *@
+                    @* <form action="RejectApply" method="post"> *@
+                    @*     <input type="hidden" name="HAuditId" value="@item.HAuditId" /> *@
+                    @*     <button type="submit"class="btn btn-warning">退件</button> *@
+                    @* </form> *@
+
+                }
+            </div>
+        </div>
+    </section>
+
+    @* <script> *@
+    @*     document.getElementById("submitAbout").addEventListener("click", function(event) { *@
+    @*         let titleInput = document.getElementById("HTitle"); *@
+    @*         let contentInput = document.getElementById("HContent"); *@
+
+    @*         if (titleInput.value.trim() === "") { *@
+    @*             event.preventDefault(); // 阻止表單提交 *@
+    @*             alert("失敗！請輸入標題！"); *@
+    @*         } *@
+    @*         if (contentInput.value.trim() === "") { *@
+    @*             event.preventDefault(); // 阻止表單提交 *@
+    @*             alert("失敗！請輸入內容！"); *@
+    @*         } *@
+    @*     }); *@
+    @* </script> *@
+</body>

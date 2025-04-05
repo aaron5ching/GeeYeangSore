@@ -20,7 +20,7 @@
         </p>
         <div class="card-body mb-lg-2">
             <form action="News" method="post" enctype="multipart/form-data">
-                公告標題：<input type="text" class="form-control" name="HTitle">
+                公告標題：<input type="text" class="form-control" name="HTitle" id="HTitle">
                 <br>
                 公告內容：<textarea class="form-control" rows="4" name="HContent" id="HContent"></textarea>
                 <br>
@@ -61,7 +61,13 @@
                             <small style="margin-left: 400px; ; margin-top:100px; font-size: 20px;" class="text-muted">
                                 修改日期：@newsItem.HUpdatedAt.ToString("yyyy-MM-dd HH:mm:ss")
                             </small>
-                            <button type="submit" class="btn btn-info" id="UpdateNews">修改文章內容</button>
+                            <div style="position: relative; left: 300px;">
+                                @* <img src="~@newsItem.HImagePath" asp-append-version="true" alt="圖片顯示失敗" /> *@
+                                <img src="@Url.Content(newsItem.HImagePath)" asp-append-version="true" />
+
+                            </div>
+                            <button type="submit" class="btn btn-info" name="type" value="修改文章">修改文章</button>
+                            <button type="submit" class="btn btn-danger" name="type" value="刪除文章">刪除文章</button>
                         </form>
 
                     </div>

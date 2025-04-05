@@ -19,7 +19,7 @@
                     標題：<p class="card-title"></p>
                     <input class="form-control" id="HTitle" name="HTitle">
                     內容：<p class="card-title"></p>
-                    <textarea class="form-control replyContent" name="HContent"></textarea>
+                    <textarea class="form-control" name="HContent" id="HContent"></textarea>
                     公告時間：<p class="card-title"></p>
                     <label for="Image">選擇圖片：</label>
                     <input type="file" class="form-control" name="Image">
@@ -43,7 +43,7 @@
                         更新內容：
                         <textarea class="form-control replyContent" id="HContent" name="HContent" placeholder="請輸入要更新的內容">@item.HContent</textarea>
                         <div style="position: relative; left: 300px;">
-                            <img src="~@item.HImagePath" asp-append-version="true" alt="說明圖片" />
+                            <img src="@Url.Content(item.HImagePath)" asp-append-version="true" alt="查無圖片" />
                         </div>
                         公告時間：
                         <p class="card-body">@item.HCreatedAt</p>
@@ -62,7 +62,7 @@
                     <!-- 刪除公告的表單 -->
                     <form action="DeleteGuide" method="post">
                         <input type="hidden" name="HGuideId" value="@item.HGuideId" />
-                        <button type="submit" id="submitGuide" style="position: absolute; left: 300px; bottom: 15px" class="btn btn-warning">刪除公告</button>
+                        <button type="submit" id="submitGuide" class="btn btn-warning">刪除公告</button>
                     </form>
                 }
             </div>

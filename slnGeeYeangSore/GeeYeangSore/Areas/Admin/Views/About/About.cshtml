@@ -34,7 +34,7 @@
             <div class="card-body">
                 @foreach (var item in Model)
                 {
-                    <form action="UpdateAbout" method="post" enctype="multipart/form-data">
+                    <form action="UpdateAbout" method="post">
 
                         更新標題：
                         <input class="form-control" id="HTitle" placeholder="請輸入要更新的標題" name="HTitle" value="@item.HTitle">

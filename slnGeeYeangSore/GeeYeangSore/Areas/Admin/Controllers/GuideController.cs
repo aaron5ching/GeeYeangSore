@@ -36,18 +36,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         public IActionResult Guide(string HTitle, string HContent, IFormFile Image)
         {
             const string imagePath = "/images/Guide";
-            //string imageName = Guid.NewGuid() + Path.GetExtension(Image.FileName);
-
-            //string rootPath = _env.WebRootPath + imagePath;
-
-            //if (!Directory.Exists(rootPath))
-            //{
-            //    Directory.CreateDirectory(rootPath);
-            //}
-
-            //string filePath = Path.Combine(rootPath, imageName);
-
-            //string sqlPath = $"wwwroot/Guide/{imageName}";
 
             HGuide guide = new HGuide
             {

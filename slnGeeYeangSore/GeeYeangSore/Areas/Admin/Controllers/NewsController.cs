@@ -26,34 +26,51 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             return View(news);
         }
 
+        //[HttpPost]
+        //public IActionResult DeleteNews(int HNewsId)
+        //{
+
+        //}
+
+
         [HttpPost]
-        public IActionResult UpdateNews(int HNewsId, string HContent, IFormFile image)
+        public IActionResult UpdateNews(int HNewsId, string HContent, IFormFile image,string type)
         {
             Console.WriteLine("TEST!");
-
             var contact = _db.HNews.FirstOrDefault(n => n.HNewsId == HNewsId);
-
-            if (contact != null)
+            if (type== "修改文章")
             {
 
-                contact.HContent = HContent;
-                contact.HUpdatedAt=DateTime.Now;
 
-                if (image != null)
+                if (contact != null)
                 {
 
-                    var filePath = Path.Combine("wwwroot", "images", image.FileName);
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    contact.HContent = HContent;
+                    contact.HUpdatedAt = DateTime.Now;
+
+                    if (image != null)
                     {
-                        image.CopyTo(stream);
+
+                        var filePath = Path.Combine("wwwroot", "images", image.FileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            image.CopyTo(stream);
+                        }
+
+                        contact.HImagePath = filePath;
                     }
 
-                    contact.HImagePath = filePath; 
+
                 }
 
-                _db.SaveChanges();
+            }
+            else
+            {
+                _db.Remove(contact);
+                
             }
 
+            _db.SaveChanges();
 
             return Redirect("News");
 
@@ -62,29 +79,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult News(string HTitle, string HContent, IFormFile image)
         {
-            const string imagePath= "/images/News";
-            string imageName = Guid.NewGuid() + Path.GetExtension(image.FileName);
-
-            string rootPath = _env.WebRootPath+ imagePath;
-
-            if (!Directory.Exists(rootPath))
-            {
-                Directory.CreateDirectory(rootPath);
-            }
-
-            string filePath = Path.Combine(rootPath, imageName);
-
-            string sqlPath = $"wwwroot/News/{imageName}";
-
-            if (image != null)
-            {
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    image.CopyTo(fileStream);
-                }
-            }
-
-
             HNews news = new HNews
             {
                 HTitle = HTitle,
@@ -94,14 +88,32 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 HUpdatedAt = DateTime.Now
             };
 
-            if (image != null)
+            if (image!=null)
             {
+                const string imagePath = "/images/News";
+                string imageName = Guid.NewGuid() + Path.GetExtension(image.FileName);
+
+                string rootPath = _env.WebRootPath + imagePath;
+
+                if (!Directory.Exists(rootPath))
+                {
+                    Directory.CreateDirectory(rootPath);
+                }
+
+                string filePath = Path.Combine(rootPath, imageName);
+
+                string sqlPath = $"wwwroot/News/{imageName}";
+
+                if (image != null)
+                {
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        image.CopyTo(fileStream);
+                    }
+                }
                 news.HImagePath = imagePath + "/" + imageName;
             }
-            else
-            {
-                news.HImagePath = null;
-            }
+            
             _db.HNews.Add(news);
             _db.SaveChanges();
             return Redirect("News");
