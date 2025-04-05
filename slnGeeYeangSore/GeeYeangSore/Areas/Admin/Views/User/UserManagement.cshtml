@@ -85,6 +85,8 @@
 
     <script>
 
+
+
                 function loadPage(page) {
             const formData = {
                 userId: $('input[name="userId"]').val() || null,
@@ -150,22 +152,80 @@
 
 
             // ✏️ 載入編輯畫面（modal）
-            $(document).on('click', '.btn-edit', function () {
-                const id = $(this).data('id');
-                $('#editModalBody').html('<div class="text-center text-muted">載入中...</div>');
-                const modal = new bootstrap.Modal(document.getElementById('editModal'));
-                modal.show();
+                    $(document).on('click', '.btn-edit', function () {
+            const id = $(this).data('id');
+            $('#editModalBody').html('<div class="text-center text-muted">載入中...</div>');
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+
+            $.ajax({
+                url: '@Url.Action("Edit", "User", new { area = "Admin" })' + '?id=' + id,
+                success: function (html) {
+                    $('#editModalBody').html(html);
+
+                    // ✅ 載入完成後手動綁定儲存事件
+                    if (typeof bindEditForm === 'function') {
+                        bindEditForm();
+                    }
+                },
+                error: function () {
+                    $('#editModalBody').html('<div class="text-danger text-center">載入失敗</div>');
+                }
+            });
+        });
+
+                        function bindEditForm() {
+            // 🐥工具方法：自動補上圖片路徑
+            const normalizeImagePath = (filename) => {
+                if (!filename) return "";
+                if (filename.startsWith("/images/User/")) return filename;
+                return "/images/User/" + filename;
+            };
+
+            $('#editForm').off('submit').on('submit', function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    HTenantId: parseInt($('input[name="HTenantId"]').val()), // 房客ID
+                    HUserName: $('input[name="HUserName"]').val(),            // 姓名
+                    HStatus: $('select[name="HStatus"]').val(),               // 狀態
+                    HBirthday: $('input[name="HBirthday"]').val(),            // 生日（yyyy-MM-dd）
+                    HGender: $('select[name="HGender"]').val() === "true",    // 性別（轉布林）
+                    HAddress: $('input[name="HAddress"]').val(),              // 地址
+                    HPhoneNumber: $('input[name="HPhoneNumber"]').val(),      // 電話
+                    HEmail: $('input[name="HEmail"]').val(),                  // 電子郵件
+                    HPassword: $('input[name="HPassword"]').val(),            // 密碼
+                    HImages: normalizeImagePath($('#HImage').val()),          // 房客照片路徑
+                    HLandlords: [
+                        {
+                            HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()), // 身分證正面
+                            HIdCardBackUrl: normalizeImagePath($('#HIdCardBackUrl').val())   // 身分證反面
+                        }
+                    ]
+                };
+
+                console.log("🔄 傳送資料：", formData); // 🐥除錯用
 
                 $.ajax({
-                    url: '@Url.Action("Edit", "User", new { area = "Admin" })' + '?id=' + id,
-                    success: function (html) {
-                        $('#editModalBody').html(html);
+                    type: 'POST',
+                    url: '/Admin/User/Edit',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function () {
+                        alert('儲存成功！');
+                        $('#editModal').modal('hide');
+                        // document.activeElement.blur(); ✅ 把目前聚焦的元素取消焦點
+                        $('#searchForm').submit(); // ✅ 自動刷新使用者列表
                     },
-                    error: function () {
-                        $('#editModalBody').html('<div class="text-danger text-center">載入失敗</div>');
+                    error: function (xhr) {
+                        console.error('❌ 儲存失敗：', xhr.responseText);
+                        alert('儲存失敗：' + xhr.responseText);
                     }
                 });
             });
+        }
+
+
 
             // 🗑️ 刪除使用者（AJAX 無刷新）
             $(document).on('click', '.btn-delete', function () {

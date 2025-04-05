@@ -105,16 +105,43 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
         // AJAX 儲存編輯內容
         [HttpPost]
-        public IActionResult Edit(HTenant updatedTenant)
+        public IActionResult Edit([FromBody] HTenant updatedTenant)
         {
+
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("❌ 模型驗證失敗！");
+                foreach (var kvp in ModelState)
+                {
+                    foreach (var err in kvp.Value.Errors)
+                    {
+                        Console.WriteLine($"[欄位 {kvp.Key}]：{err.ErrorMessage}");
+                    }
+                }
+                return BadRequest("模型驗證失敗");
+            }
+
+
+            // 🐥 Step 1：除錯輸出接收到的 JSON 內容
+            Console.WriteLine("🟡 收到前端傳入的 updatedTenant：");
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(updatedTenant));
+
+            // 🐥 Step 2：查找現有資料
             var existing = _context.HTenants
                 .Include(t => t.HLandlords)
                 .FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
 
             if (existing == null)
+            {
+                Console.WriteLine("❌ 查無對應的 HTenantId：" + updatedTenant.HTenantId);
                 return NotFound();
+            }
 
-            // 🧍 更新房客資訊
+            // 🐥 Step 3：印出前後比對值（看是否真的有差異）
+            Console.WriteLine($"👤 房客原本姓名：{existing.HUserName}，更新為：{updatedTenant.HUserName}");
+            Console.WriteLine($"📷 原本照片檔名：{existing.HImages}，更新為：{updatedTenant.HImages}");
+
+            // 🧍 更新房客資料
             existing.HUserName = updatedTenant.HUserName;
             existing.HStatus = updatedTenant.HStatus;
             existing.HBirthday = updatedTenant.HBirthday;
@@ -125,19 +152,45 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             existing.HPassword = updatedTenant.HPassword;
             existing.HImages = updatedTenant.HImages;
 
-            // 🪪 更新房東身分證正反面
-            var landlord = existing.HLandlords.FirstOrDefault();
+            // 🪪 更新房東資料（只取第一位）
+            var existingLandlord = existing.HLandlords.FirstOrDefault();
             var updatedLandlord = updatedTenant.HLandlords.FirstOrDefault();
-            if (landlord != null && updatedLandlord != null)
+
+            if (existingLandlord != null && updatedLandlord != null)
             {
-                landlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
-                landlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
+                Console.WriteLine("🪪 房東身份證更新內容：");
+                Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
+                Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
+
+                existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
+                existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
+
+                // ✅ 使用 Update 確保被追蹤
+                _context.HLandlords.Update(existingLandlord);
+            }
+            else
+            {
+                Console.WriteLine("⚠️ updatedTenant.HLandlords 為空或 existing.HLandlords 為空！");
             }
 
-            _context.SaveChanges();
+            // ✅ 同樣使用 Update 而不是手動設定狀態
+            _context.HTenants.Update(existing);
 
-            return Ok();
+            try
+            {
+                int affected = _context.SaveChanges(); // ✅ 執行資料庫儲存
+                Console.WriteLine($"🟢 實際寫入資料筆數：{affected}");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ 儲存失敗，錯誤訊息：{ex.Message}");
+                return StatusCode(500, "資料儲存失敗，請稍後再試");
+            }
         }
+
+
+
 
         // AJAX 刪除使用者
         [HttpPost]

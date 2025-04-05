@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
 
 namespace GeeYeangSore.Models;
 
@@ -33,5 +35,7 @@ public partial class HLandlord
 
     public virtual ICollection<HProperty> HProperties { get; set; } = new List<HProperty>();
 
-    public virtual HTenant HTenant { get; set; } = null!;
+    [JsonIgnore]
+    public virtual HTenant? HTenant { get; set; }
+
 }
