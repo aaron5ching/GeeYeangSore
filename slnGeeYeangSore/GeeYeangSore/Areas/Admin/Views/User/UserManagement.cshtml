@@ -4,20 +4,21 @@
     ViewData["Title"] = "使用者管理";
 }
 
-<h2>使用者管理</h2>
+<h2 style="font-style: italic;">使用者管理</h2>
 
 <!-- 🔍 搜尋表單 -->
 <form id="searchForm" class="mb-3">
     <div class="row mb-2">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <input type="text" class="form-control" name="userId" placeholder="請輸入房客ID或房東ID" />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <input type="text" class="form-control" name="name" placeholder="請輸入房客姓名或房東姓名" />
         </div>
     </div>
+
     <div class="row mb-2">
-        <div class="col-12">
+        <div class="col-6">
             <label class="form-label">註冊期間</label>
             <div class="input-group">
                 <input type="date" class="form-control" name="startDate" />
@@ -27,23 +28,17 @@
         </div>
     </div>
     <div class="row mb-2">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" name="status">
-                <option value="">狀態</option>
+                <option value="">所有狀態</option>
                 <option value="未驗證">未驗證</option>
                 <option value="驗證中">驗證中</option>
                 <option value="已驗證">已驗證</option>
                 <option value="封鎖中">封鎖中</option>
             </select>
         </div>
-        <div class="col-md-4">
-            <select class="form-select" name="isTenant">
-                <option value="">是否為房客</option>
-                <option value="true">是</option>
-                <option value="false">否</option>
-            </select>
-        </div>
-        <div class="col-md-4">
+
+        <div class="col-md-3">
             <select class="form-select" name="isLandlord">
                 <option value="">是否為房東</option>
                 <option value="true">是</option>
@@ -51,9 +46,12 @@
             </select>
         </div>
     </div>
-    <div class="text-end">
-        <button type="submit" class="btn btn-primary">搜尋</button>
+    <div class="col-md-10 text-end">
+        <button type="button" id="btnClear" class="btn btn-secondary" style="width: 150px">清除</button>
+        <button type="submit" class="btn btn-primary" style="width: 150px;">搜尋</button>
+
     </div>
+
 </form>
 
 <hr />
@@ -87,34 +85,41 @@
     <script>
         $(document).ready(function () {
 
-            // 🔁 搜尋提交
-            $('#searchForm').on('submit', function (e) {
-                e.preventDefault();
+                    // 🧼 清除搜尋欄位
+        $('#btnClear').on('click', function () {
+            $('#searchForm').find('input[type="text"], input[type="date"], select').val(''); // 清空所有欄位
+            $('#searchForm').submit(); // 重新送出查詢（可移除這行讓清除不立即查詢）
+        });
 
-                const formData = {
-                    userId: $('input[name="userId"]').val() || null,
-                    name: $('input[name="name"]').val() || null,
-                    status: $('select[name="status"]').val() || null,
-                    startDate: $('input[name="startDate"]').val() || null,
-                    endDate: $('input[name="endDate"]').val() || null,
-                    isTenant: $('select[name="isTenant"]').val() !== "" ? JSON.parse($('select[name="isTenant"]').val()) : null,
-                    isLandlord: $('select[name="isLandlord"]').val() !== "" ? JSON.parse($('select[name="isLandlord"]').val()) : null
-                };
 
-                $.ajax({
-                    url: '@Url.Action("SearchUser", "User", new { area = "Admin" })',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(formData),
-                    success: function (result) {
-                        $('#searchResult').html(result);
-                    },
-                    error: function (xhr) {
-                        $('#searchResult').html('<div class="alert alert-danger text-center">搜尋失敗，請稍後再試。</div>');
-                        console.error("搜尋錯誤訊息：", xhr.responseText);
-                    }
-                });
+                    // 🔁 搜尋提交
+        $('#searchForm').on('submit', function (e) {
+            e.preventDefault(); // ❗取消預設表單提交動作
+
+            const formData = {
+                userId: $('input[name="userId"]').val() || null,
+                name: $('input[name="name"]').val() || null,
+                status: $('select[name="status"]').val() || null,
+                startDate: $('input[name="startDate"]').val() || null,
+                endDate: $('input[name="endDate"]').val() || null,
+                isLandlord: $('select[name="isLandlord"]').val() !== "" ? JSON.parse($('select[name="isLandlord"]').val()) : null
+            };
+
+            $.ajax({
+                url: '@Url.Action("SearchUser", "User", new { area = "Admin" })',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (result) {
+                    $('#searchResult').html(result); // ✅ 成功後更新結果區塊
+                },
+                error: function (xhr) {
+                    $('#searchResult').html('<div class="alert alert-danger text-center">搜尋失敗，請稍後再試。</div>');
+                    console.error("搜尋錯誤訊息：", xhr.responseText);
+                }
             });
+        });
+
 
             // ✏️ 載入編輯畫面（modal）
             $(document).on('click', '.btn-edit', function () {

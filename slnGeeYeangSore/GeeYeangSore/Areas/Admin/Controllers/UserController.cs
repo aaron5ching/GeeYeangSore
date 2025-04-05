@@ -28,7 +28,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     {
                         TenantId = t.HTenantId,
                         TenantStatus = t.HStatus?.Trim() ?? "未設定",
-                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "-",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
@@ -60,7 +60,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     {
                         TenantId = t.HTenantId,
                         TenantStatus = t.HStatus?.Trim() ?? "未設定",
-                        LandlordId = landlord?.HLandlordId.ToString() ?? "未開通",
+                        LandlordId = landlord?.HLandlordId.ToString() ?? "-",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
                         RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
@@ -74,13 +74,13 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     (string.IsNullOrEmpty(query.Status) || u.TenantStatus == query.Status || u.LandlordStatus == query.Status) &&
                     (!query.StartDate.HasValue || u.RegisterDate >= query.StartDate.Value) &&
                     (!query.EndDate.HasValue || u.RegisterDate <= query.EndDate.Value) &&
-                    (!query.IsTenant.HasValue || u.IsTenant == query.IsTenant.Value) &&
-                    (!query.IsLandlord.HasValue || u.IsLandlord == query.IsLandlord.Value)
+                    (!query.IsLandlord.HasValue || u.IsLandlord == query.IsLandlord.Value) // ✅ 保留「是否為房東」
                 )
                 .ToList();
 
             return PartialView("~/Areas/Admin/Partials/_UserListPartial.cshtml", result);
         }
+
 
         // AJAX 載入編輯視窗（Partial View）
         [HttpGet]

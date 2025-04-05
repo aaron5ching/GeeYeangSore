@@ -11,21 +11,21 @@ else
     <table class="table table-bordered table-striped align-middle">
         <thead class="table-light">
             <tr>
-                <th>房客ID</th>
-                <th>房客狀態</th>
-                <th>房東ID</th>
-                <th>房東狀態</th>
-                <th>姓名</th>
-                <th>註冊日期</th>
-                <th>操作</th>
+                <th style="width: 90px;" class="text-center">房客ID</th>
+                <th style="width: 90px;" class="text-center">房客狀態</th>
+                <th style="width: 90px;" class="text-center">房東ID</th>
+                <th style="width: 90px;" class="text-center">房東狀態</th>
+                <th style="width: 160px;">姓名</th> <!-- 約可容納 10~12 個中文字 -->
+                <th style="width: 100px;" class="text-center">註冊日期</th>
+                <th style="width: 120px;" class="text-center">操作</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var user in Model)
             {
                 <tr>
-                    <td>@user.TenantId</td>
-                    <td>
+                    <td class="text-center">@user.TenantId</td>
+                    <td class="text-center">
                         @switch (user.TenantStatus)
                         {
                             case "未驗證":
@@ -45,8 +45,8 @@ else
                                 break;
                         }
                     </td>
-                    <td>@user.LandlordId</td>
-                    <td>
+                    <td class="text-center">@user.LandlordId</td>
+                    <td class="text-center">
                         @switch (user.LandlordStatus)
                         {
                             case "未驗證":
@@ -66,9 +66,9 @@ else
                                 break;
                         }
                     </td>
-                    <td>@user.Name</td>
-                    <td>@user.RegisterDate.ToString("yyyy-MM-dd")</td>
-                    <td>
+                    <td class="text-truncate" style="max-width: 160px;">@user.Name</td>
+                    <td class="text-center">@user.RegisterDate.ToString("yyyy-MM-dd")</td>
+                    <td class="text-center">
                         <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
                                 data-id="@user.TenantId">
                             <i class="fa fa-edit"></i> 編輯
@@ -78,6 +78,7 @@ else
                             <i class="fa fa-trash"></i> 刪除
                         </button>
                     </td>
+
                 </tr>
             }
         </tbody>
