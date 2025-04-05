@@ -2,6 +2,8 @@
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
 {
@@ -16,8 +18,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         }
 
         // 初始頁面：顯示所有使用者
-        public IActionResult UserManagement()
+        public IActionResult UserManagement(int page = 1)
         {
+            int pageSize = 15; // 每頁 15 筆
             var allUsers = _context.HTenants
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
@@ -36,19 +39,21 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                         IsLandlord = t.HIsLandlord ?? false
                     };
                 })
-                .ToList();
+                .ToPagedList(page, pageSize); // ✅ 分頁處理
 
             return View(allUsers);
         }
 
         // AJAX 搜尋使用者
         [HttpPost]
-        public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
+        public IActionResult SearchUser([FromBody] CUserSearchViewModel query, int page = 1)
         {
             if (query == null)
             {
-                return BadRequest("查詢條件為空，請確認前端傳送格式。");
+                return BadRequest("查詢條件為空");
             }
+
+            int pageSize = 15;
 
             var result = _context.HTenants
                 .Include(t => t.HLandlords)
@@ -74,12 +79,13 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     (string.IsNullOrEmpty(query.Status) || u.TenantStatus == query.Status || u.LandlordStatus == query.Status) &&
                     (!query.StartDate.HasValue || u.RegisterDate >= query.StartDate.Value) &&
                     (!query.EndDate.HasValue || u.RegisterDate <= query.EndDate.Value) &&
-                    (!query.IsLandlord.HasValue || u.IsLandlord == query.IsLandlord.Value) // ✅ 保留「是否為房東」
+                    (!query.IsLandlord.HasValue || u.IsLandlord == query.IsLandlord.Value)
                 )
-                .ToList();
+                .ToPagedList(page, pageSize); // ✅ 分頁處理
 
             return PartialView("~/Areas/Admin/Partials/_UserListPartial.cshtml", result);
         }
+
 
 
         // AJAX 載入編輯視窗（Partial View）

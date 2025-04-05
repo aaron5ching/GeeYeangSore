@@ -1,4 +1,6 @@
-﻿@model IEnumerable<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
 
 @if (!Model.Any())
 {
@@ -15,7 +17,7 @@ else
                 <th style="width: 90px;" class="text-center">房客狀態</th>
                 <th style="width: 90px;" class="text-center">房東ID</th>
                 <th style="width: 90px;" class="text-center">房東狀態</th>
-                <th style="width: 160px;">姓名</th> <!-- 約可容納 10~12 個中文字 -->
+                <th style="width: 160px;">姓名</th>
                 <th style="width: 100px;" class="text-center">註冊日期</th>
                 <th style="width: 120px;" class="text-center">操作</th>
             </tr>
@@ -78,9 +80,23 @@ else
                             <i class="fa fa-trash"></i> 刪除
                         </button>
                     </td>
-
                 </tr>
             }
         </tbody>
     </table>
+
+    <!-- ✅ 分頁導覽列 -->
+    <div class="d-flex justify-content-center mt-3">
+        @Html.PagedListPager(Model, page => "javascript:loadPage(" + page + ")", new PagedListRenderOptions
+{
+    LinkToFirstPageFormat = "⏪",
+    LinkToPreviousPageFormat = "＜",
+    LinkToNextPageFormat = "＞",
+    LinkToLastPageFormat = "⏩",
+    UlElementClasses = new[] { "pagination", "justify-content-center" },
+    PageClasses = new[] { "page-link" }
+})
+    </div>
+
+
 }
