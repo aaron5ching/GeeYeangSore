@@ -54,19 +54,28 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         {
 
             var about = _db.HAbouts.FirstOrDefault(item => item.HAboutId == HAboutId);
-            about.HTitle = HTitle;
-            about.HContent = HContent;
-            about.HUpdatedAt=DateTime.Now;
+
+            if (about != null)
+            {
+                about.HTitle = HTitle;
+                about.HContent = HContent;
+                about.HUpdatedAt = DateTime.Now;
+
+
+                _db.SaveChanges();
+                TempData["Success"] = "公告修改成功！";
+            }
 
             return RedirectToAction("About");
         }
         [HttpPost]
-        public IActionResult DeleteAbout(int HNewsId)
+        public IActionResult DeleteAbout(int HAboutId)
         {
 
-            var about = _db.HAbouts.FirstOrDefault(item => item.HAboutId == HNewsId);
+            var about = _db.HAbouts.FirstOrDefault(item => item.HAboutId == HAboutId);
             _db.Remove(about);
-
+            _db.SaveChanges();
+            TempData["Success"] = "公告刪除成功！";
             return RedirectToAction("About");
         }
 
