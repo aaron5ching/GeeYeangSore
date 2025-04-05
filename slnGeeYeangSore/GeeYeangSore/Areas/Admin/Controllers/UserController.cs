@@ -45,7 +45,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult SearchUser([FromBody] CUserSearchViewModel query)
         {
-
             if (query == null)
             {
                 return BadRequest("查詢條件為空，請確認前端傳送格式。");
@@ -87,7 +86,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            // 載入房客資料，包含房東與房源
             var tenant = _context.HTenants
                 .Include(t => t.HLandlords)
                     .ThenInclude(l => l.HProperties)
@@ -103,11 +101,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult Edit(HTenant updatedTenant)
         {
-            var existing = _context.HTenants.FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
+            var existing = _context.HTenants
+                .Include(t => t.HLandlords)
+                .FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
+
             if (existing == null)
                 return NotFound();
 
-            // 更新房客資訊
+            // 🧍 更新房客資訊
             existing.HUserName = updatedTenant.HUserName;
             existing.HStatus = updatedTenant.HStatus;
             existing.HBirthday = updatedTenant.HBirthday;
@@ -116,13 +117,21 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             existing.HPhoneNumber = updatedTenant.HPhoneNumber;
             existing.HEmail = updatedTenant.HEmail;
             existing.HPassword = updatedTenant.HPassword;
-            existing.HImages = updatedTenant.HImages; // ✅ 新增：儲存上傳後的圖片檔名
+            existing.HImages = updatedTenant.HImages;
+
+            // 🪪 更新房東身分證正反面
+            var landlord = existing.HLandlords.FirstOrDefault();
+            var updatedLandlord = updatedTenant.HLandlords.FirstOrDefault();
+            if (landlord != null && updatedLandlord != null)
+            {
+                landlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
+                landlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
+            }
 
             _context.SaveChanges();
 
             return Ok();
         }
-
 
         // AJAX 刪除使用者
         [HttpPost]
@@ -136,6 +145,60 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 return Ok();
             }
             return NotFound();
+        }
+
+        // 上傳房客照片
+        [HttpPost]
+        public IActionResult UploadTenantPhoto(IFormFile photo)
+        {
+            if (photo == null || photo.Length == 0)
+                return BadRequest("未選擇檔案");
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+            var savePath = Path.Combine("wwwroot/images/User", fileName);
+
+            using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                photo.CopyTo(stream);
+            }
+
+            return Ok("/images/User/" + fileName);
+        }
+
+        // 上傳房東身分證正面
+        [HttpPost]
+        public IActionResult UploadLandlordIdFront(IFormFile photo)
+        {
+            if (photo == null || photo.Length == 0)
+                return BadRequest("未選擇檔案");
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+            var savePath = Path.Combine("wwwroot/images/User", fileName);
+
+            using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                photo.CopyTo(stream);
+            }
+
+            return Ok("/images/User/" + fileName);
+        }
+
+        // 上傳房東身分證反面
+        [HttpPost]
+        public IActionResult UploadLandlordIdBack(IFormFile photo)
+        {
+            if (photo == null || photo.Length == 0)
+                return BadRequest("未選擇檔案");
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+            var savePath = Path.Combine("wwwroot/images/User", fileName);
+
+            using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                photo.CopyTo(stream);
+            }
+
+            return Ok("/images/User/" + fileName);
         }
     }
 }
