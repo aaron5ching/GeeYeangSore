@@ -62,6 +62,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult UpdateAbout(int HAboutId, string HTitle, string HContent)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var about = _db.HAbouts.FirstOrDefault(item => item.HAboutId == HAboutId);
 
@@ -81,7 +84,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult DeleteAbout(int HAboutId)
         {
-
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             var about = _db.HAbouts.FirstOrDefault(item => item.HAboutId == HAboutId);
             _db.Remove(about);
             _db.SaveChanges();
