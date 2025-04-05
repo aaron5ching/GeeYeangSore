@@ -107,12 +107,22 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             if (existing == null)
                 return NotFound();
 
+            // 更新房客資訊
             existing.HUserName = updatedTenant.HUserName;
             existing.HStatus = updatedTenant.HStatus;
+            existing.HBirthday = updatedTenant.HBirthday;
+            existing.HGender = updatedTenant.HGender;
+            existing.HAddress = updatedTenant.HAddress;
+            existing.HPhoneNumber = updatedTenant.HPhoneNumber;
+            existing.HEmail = updatedTenant.HEmail;
+            existing.HPassword = updatedTenant.HPassword;
+            existing.HImages = updatedTenant.HImages; // ✅ 新增：儲存上傳後的圖片檔名
+
             _context.SaveChanges();
 
             return Ok();
         }
+
 
         // AJAX 刪除使用者
         [HttpPost]
