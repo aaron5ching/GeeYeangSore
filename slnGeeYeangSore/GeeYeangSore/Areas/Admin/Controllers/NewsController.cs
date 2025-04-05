@@ -1,4 +1,5 @@
-﻿using GeeYeangSore.Models;
+﻿using GeeYeangSore.Controllers;
+using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
@@ -7,7 +8,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
 
-    public class NewsController : Controller
+    public class NewsController : SuperController
     {
         private readonly Models.GeeYeangSoreContext _db;
         private readonly IWebHostEnvironment _env;
@@ -22,6 +23,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         //https://localhost:7022/Admin/News/News
         public IActionResult News()
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             var news = _db.HNews.ToList();
             return View(news);
         }
@@ -36,6 +41,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult UpdateNews(int HNewsId, string HContent, IFormFile image,string type)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             Console.WriteLine("TEST!");
             var contact = _db.HNews.FirstOrDefault(n => n.HNewsId == HNewsId);
             if (type== "修改文章")
@@ -79,6 +88,11 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult News(string HTitle, string HContent, IFormFile image)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+
             HNews news = new HNews
             {
                 HTitle = HTitle,
@@ -120,10 +134,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         }
 
         //https://localhost:7022/Admin/News/Test
-        public void Test()
-        {
-            Console.WriteLine("Test!!");
-        }
 
         public IActionResult Index()
         {

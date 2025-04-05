@@ -1,4 +1,5 @@
-﻿using GeeYeangSore.Models;
+﻿using GeeYeangSore.Controllers;
+using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,7 +8,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
-    public class GuideController : Controller
+    public class GuideController : SuperController
     {
 
         private readonly Models.GeeYeangSoreContext _db;
@@ -27,6 +28,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         //https://localhost:7022/Admin/Guide/Guide
         public IActionResult Guide()
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var contact = _db.HGuides.ToList();
             return View(contact);
@@ -35,6 +39,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult Guide(string HTitle, string HContent, IFormFile Image)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             const string imagePath = "/images/Guide";
 
             HGuide guide = new HGuide
@@ -77,6 +85,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult DeleteGuide(int HGuideId)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var guide = _db.HGuides.FirstOrDefault(g => g.HGuideId == HGuideId);
 
@@ -91,6 +102,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult UpdateGuide(int HGuideId, string HTitle, string HContent, IFormFile Image)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var guide = _db.HGuides.FirstOrDefault(g => g.HGuideId == HGuideId);
             if (guide == null)

@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using GeeYeangSore.Controllers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
 
-    public class AuditController : Controller
+    public class AuditController : SuperController
     {
 
         private readonly Models.GeeYeangSoreContext _db;
@@ -27,6 +28,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         //https://localhost:7022/Admin/Audit/Audit
         public IActionResult Audit()
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var contact = _db.HAudits.ToList();
             return View(contact);
@@ -34,8 +38,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult Audit(int HAuditId,string typeString)
         {
-            Console.WriteLine(HAuditId);
-            Console.WriteLine(typeString);
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             //return View("Audit");
             //（待審核/通過/退件）
             var audit = _db.HAudits.FirstOrDefault(item => item.HAuditId == HAuditId);

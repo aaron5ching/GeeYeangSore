@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices.JavaScript;
+using GeeYeangSore.Controllers;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +8,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
-    public class AboutController : Controller
+    public class AboutController : SuperController
     {
 
         private readonly Models.GeeYeangSoreContext _db;
@@ -30,6 +31,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         //https://localhost:7022/Admin/About/About
         public IActionResult About()
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             var news = _db.HAbouts.ToList();
 
             return View(news);
@@ -38,6 +43,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public IActionResult About(string HTitle, string HContent, IFormFile image)
         {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                //如果沒有權限就會顯示NoPermission頁面
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             HAbout news = new HAbout
             {
                 HTitle = HTitle,
