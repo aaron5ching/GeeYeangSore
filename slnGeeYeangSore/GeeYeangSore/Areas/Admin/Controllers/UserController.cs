@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using X.PagedList;
 using X.PagedList.Extensions;
 
-namespace GeeYeangSore.Areas.Admin.Controllers.User
+namespace GeeYeangSore.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Route("[area]/[controller]/[action]")]
