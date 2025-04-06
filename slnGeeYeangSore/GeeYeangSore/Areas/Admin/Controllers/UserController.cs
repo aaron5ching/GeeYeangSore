@@ -104,11 +104,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             return PartialView("~/Areas/Admin/Partials/_EditUserPartial.cshtml", tenant);
         }
 
-        // AJAX 儲存編輯內容
+        // AJAX 儲存編輯內容（使用 ViewModel）
         [HttpPost]
-        public IActionResult Edit([FromBody] HTenant updatedTenant)
+        public IActionResult Edit([FromBody] CEditUserViewModel updated)
         {
-
             if (!ModelState.IsValid)
             {
                 Console.WriteLine("模型驗證失敗！");
@@ -122,43 +121,37 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 return BadRequest("模型驗證失敗");
             }
 
+            // 🐥 Step 1：印出前端傳入內容
+            Console.WriteLine("收到前端傳入的 updated ViewModel：");
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(updated));
 
-            // 🐥 Step 1：除錯輸出接收到的 JSON 內容
-            Console.WriteLine("收到前端傳入的 updatedTenant：");
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(updatedTenant));
-
-            // 🐥 Step 2：查找現有資料
+            // 🐥 Step 2：查詢資料庫原始房客資料
             var existing = _context.HTenants
                 .Include(t => t.HLandlords)
-                .FirstOrDefault(t => t.HTenantId == updatedTenant.HTenantId);
+                .FirstOrDefault(t => t.HTenantId == updated.HTenantId);
 
             if (existing == null)
             {
-                Console.WriteLine("查無對應的 HTenantId：" + updatedTenant.HTenantId);
+                Console.WriteLine("查無對應的 HTenantId：" + updated.HTenantId);
                 return NotFound();
             }
 
-            // 🐥 Step 3：印出前後比對值（看是否真的有差異）
-            Console.WriteLine($"房客原本姓名：{existing.HUserName}，更新為：{updatedTenant.HUserName}");
-            Console.WriteLine($"原本照片檔名：{existing.HImages}，更新為：{updatedTenant.HImages}");
+            // 🧍 更新房客欄位
+            existing.HUserName = updated.HUserName;
+            existing.HStatus = updated.HStatus;
+            existing.HBirthday = updated.HBirthday;
+            existing.HGender = updated.HGender;
+            existing.HAddress = updated.HAddress;
+            existing.HPhoneNumber = updated.HPhoneNumber;
+            existing.HEmail = updated.HEmail;
+            existing.HPassword = updated.HPassword;
+            existing.HImages = string.IsNullOrWhiteSpace(updated.HImages) ? existing.HImages : updated.HImages;
 
-            // 🧍 更新房客資料
-            existing.HUserName = updatedTenant.HUserName;
-            existing.HStatus = updatedTenant.HStatus;
-            existing.HBirthday = updatedTenant.HBirthday;
-            existing.HGender = updatedTenant.HGender;
-            existing.HAddress = updatedTenant.HAddress;
-            existing.HPhoneNumber = updatedTenant.HPhoneNumber;
-            existing.HEmail = updatedTenant.HEmail;
-            existing.HPassword = updatedTenant.HPassword;
-            // ✅ 若前端傳來圖片為 null，就保留原本資料
-            existing.HImages = string.IsNullOrWhiteSpace(updatedTenant.HImages) ? existing.HImages : updatedTenant.HImages;
-
-            // 🪪 更新房東資料（只取第一位）
+            // 🪪 更新房東欄位（僅取第一位）
+            var updatedLandlord = updated.HLandlords.FirstOrDefault();
             var existingLandlord = existing.HLandlords.FirstOrDefault();
-            var updatedLandlord = updatedTenant.HLandlords.FirstOrDefault();
 
-            if (existingLandlord != null && updatedLandlord != null)
+            if (updatedLandlord != null && existingLandlord != null)
             {
                 Console.WriteLine("🪪 房東資料更新內容：");
                 Console.WriteLine($"▶️ 房東本名：{existingLandlord.HLandlordName} → {updatedLandlord.HLandlordName}");
@@ -168,7 +161,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
                 Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
 
-                // ✅ 更新房東欄位
                 existingLandlord.HLandlordName = updatedLandlord.HLandlordName;
                 existingLandlord.HStatus = updatedLandlord.HStatus;
                 existingLandlord.HBankName = updatedLandlord.HBankName;
@@ -180,16 +172,15 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             }
             else
             {
-                Console.WriteLine("⚠️ updatedTenant.HLandlords 為空或 existing.HLandlords 為空！");
+                Console.WriteLine("⚠️ 房東資料為空，無法更新");
             }
 
-            // ✅ 同樣使用 Update 而不是手動設定狀態
             _context.HTenants.Update(existing);
 
             try
             {
-                int affected = _context.SaveChanges(); // ✅ 執行資料庫儲存
-                Console.WriteLine($"🟢 實際寫入資料筆數：{affected}");
+                int affected = _context.SaveChanges();
+                Console.WriteLine($"🟢 儲存成功，共更新 {affected} 筆資料");
                 return Ok();
             }
             catch (Exception ex)
@@ -198,6 +189,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 return StatusCode(500, "資料儲存失敗，請稍後再試");
             }
         }
+
 
 
 
