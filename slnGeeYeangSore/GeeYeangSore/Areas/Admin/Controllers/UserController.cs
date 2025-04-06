@@ -110,7 +110,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("❌ 模型驗證失敗！");
+                Console.WriteLine("模型驗證失敗！");
                 foreach (var kvp in ModelState)
                 {
                     foreach (var err in kvp.Value.Errors)
@@ -123,7 +123,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
 
             // 🐥 Step 1：除錯輸出接收到的 JSON 內容
-            Console.WriteLine("🟡 收到前端傳入的 updatedTenant：");
+            Console.WriteLine("收到前端傳入的 updatedTenant：");
             Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(updatedTenant));
 
             // 🐥 Step 2：查找現有資料
@@ -133,13 +133,13 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             if (existing == null)
             {
-                Console.WriteLine("❌ 查無對應的 HTenantId：" + updatedTenant.HTenantId);
+                Console.WriteLine("查無對應的 HTenantId：" + updatedTenant.HTenantId);
                 return NotFound();
             }
 
             // 🐥 Step 3：印出前後比對值（看是否真的有差異）
-            Console.WriteLine($"👤 房客原本姓名：{existing.HUserName}，更新為：{updatedTenant.HUserName}");
-            Console.WriteLine($"📷 原本照片檔名：{existing.HImages}，更新為：{updatedTenant.HImages}");
+            Console.WriteLine($"房客原本姓名：{existing.HUserName}，更新為：{updatedTenant.HUserName}");
+            Console.WriteLine($"原本照片檔名：{existing.HImages}，更新為：{updatedTenant.HImages}");
 
             // 🧍 更新房客資料
             existing.HUserName = updatedTenant.HUserName;
@@ -150,7 +150,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             existing.HPhoneNumber = updatedTenant.HPhoneNumber;
             existing.HEmail = updatedTenant.HEmail;
             existing.HPassword = updatedTenant.HPassword;
-            existing.HImages = updatedTenant.HImages;
+            // ✅ 若前端傳來圖片為 null，就保留原本資料
+            existing.HImages = string.IsNullOrWhiteSpace(updatedTenant.HImages) ? existing.HImages : updatedTenant.HImages;
 
             // 🪪 更新房東資料（只取第一位）
             var existingLandlord = existing.HLandlords.FirstOrDefault();
@@ -158,14 +159,22 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             if (existingLandlord != null && updatedLandlord != null)
             {
-                Console.WriteLine("🪪 房東身份證更新內容：");
+                Console.WriteLine("🪪 房東資料更新內容：");
+                Console.WriteLine($"▶️ 房東本名：{existingLandlord.HLandlordName} → {updatedLandlord.HLandlordName}");
+                Console.WriteLine($"▶️ 身份狀態：{existingLandlord.HStatus} → {updatedLandlord.HStatus}");
+                Console.WriteLine($"▶️ 銀行名稱：{existingLandlord.HBankName} → {updatedLandlord.HBankName}");
+                Console.WriteLine($"▶️ 銀行帳戶：{existingLandlord.HBankAccount} → {updatedLandlord.HBankAccount}");
                 Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
                 Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
 
+                // ✅ 更新房東欄位
+                existingLandlord.HLandlordName = updatedLandlord.HLandlordName;
+                existingLandlord.HStatus = updatedLandlord.HStatus;
+                existingLandlord.HBankName = updatedLandlord.HBankName;
+                existingLandlord.HBankAccount = updatedLandlord.HBankAccount;
                 existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
                 existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
 
-                // ✅ 使用 Update 確保被追蹤
                 _context.HLandlords.Update(existingLandlord);
             }
             else

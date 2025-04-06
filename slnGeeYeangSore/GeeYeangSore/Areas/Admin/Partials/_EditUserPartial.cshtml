@@ -74,7 +74,7 @@
 						 class="img-fluid border mb-2"
 						 style="width: 150px; height: 150px; object-fit: cover;"
 						 onerror="this.src='/images/default.png'" />
-					<input type="hidden" name="HImages" id="HImage" value="@Model.HImages" />
+					<input type="hidden" name="HImages" id="HImages" value="@Model.HImages" />
 				</div>
 
 
@@ -99,14 +99,20 @@
 				<!-- ✅ 1. 房東本名 -->
 				<div class="col-md-4">
 					<label class="form-label">房東本名</label>
-					<input class="form-control" name="HLandlordName" value="@landlord.HLandlordName" readonly />
+					<input class="form-control" name="HLandlordName" value="@landlord.HLandlordName"/>
 				</div>
 
-				<!-- ✅ 2. 身份狀態 -->
+				<!-- ✅ 2. 身份狀態（改為下拉選單） -->
 				<div class="col-md-4">
 					<label class="form-label">身份狀態</label>
-					<input class="form-control" name="HStatus" value="@landlord.HStatus" readonly />
+					<select class="form-select" name="HLandlordStatus">
+						<option value="未驗證" selected="@(landlord.HStatus == "未驗證")">未驗證</option>
+						<option value="驗證中" selected="@(landlord.HStatus == "驗證中")">驗證中</option>
+						<option value="已驗證" selected="@(landlord.HStatus == "已驗證")">已驗證</option>
+						<option value="封鎖中" selected="@(landlord.HStatus == "封鎖中")">封鎖中</option>
+					</select>
 				</div>
+
 
 				<!-- ✅ 3. 身份建立時間 -->
 				<div class="col-md-4">
@@ -123,13 +129,13 @@
 				<!-- ✅ 5. 銀行名稱 -->
 				<div class="col-md-4">
 					<label class="form-label">銀行名稱</label>
-					<input class="form-control" name="HBankName" value="@landlord.HBankName" readonly />
+					<input class="form-control" name="HBankName" value="@landlord.HBankName"/>
 				</div>
 
 				<!-- ✅ 6. 銀行帳戶 -->
 				<div class="col-md-4">
 					<label class="form-label">銀行帳戶</label>
-					<input class="form-control" name="HBankAccount" value="@landlord.HBankAccount" readonly />
+					<input class="form-control" name="HBankAccount" value="@landlord.HBankAccount"/>
 				</div>
 
 				<!-- ✅ 7. 📷 身分證上傳 -->
@@ -166,51 +172,154 @@
 </form>
 
 @section Scripts {
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 	<script>
-		function bindEditForm() {
-			$('#editForm').off('submit').on('submit', function (e) {
-				e.preventDefault();
+		function loadPage(page) {
+			const formData = {
+				userId: $('input[name="userId"]').val() || null,
+				name: $('input[name="name"]').val() || null,
+				status: $('select[name="status"]').val() || null,
+				startDate: $('input[name="startDate"]').val() || null,
+				endDate: $('input[name="endDate"]').val() || null,
+				isLandlord: $('select[name="isLandlord"]').val() !== "" ? JSON.parse($('select[name="isLandlord"]').val()) : null
+			};
 
-		const formData = {
-			HTenantId: parseInt($('input[name="HTenantId"]').val()), // ✅ 確保為 int
-			HUserName: $('input[name="HUserName"]').val(),
-			HStatus: $('select[name="HStatus"]').val(),
-			HBirthday: $('input[name="HBirthday"]').val(), // ✅ 可直接傳 ISO 字串
-			HGender: $('select[name="HGender"]').val() === "true", // ✅ 字串轉布林
-			HAddress: $('input[name="HAddress"]').val(),
-			HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
-			HEmail: $('input[name="HEmail"]').val(),
-			HPassword: $('input[name="HPassword"]').val(),
-			HImages: $('#HImage').val(), // ✅ ❗這裡欄位名原本錯寫成 HImage
-			HLandlords: [
-				{
-					HIdCardFrontUrl: $('#HIdCardFrontUrl').val(),
-					HIdCardBackUrl: $('#HIdCardBackUrl').val()
+			$.ajax({
+				url: `/Admin/User/SearchUser?page=${page}`,
+				method: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify(formData),
+				success: function (result) {
+					$('#searchResult').html(result);
+				},
+				error: function (xhr) {
+					$('#searchResult').html('<div class="alert alert-danger text-center">載入失敗</div>');
+					console.error("分頁錯誤：", xhr.responseText);
 				}
-			]
-		};
-
-
-		$.ajax({
-			type: 'POST',
-			url: '/Admin/User/Edit',
-			contentType: 'application/json',
-			data: JSON.stringify(formData),
-			success: function () {
-				alert('儲存成功！');
-				$('#editModal').modal('hide'); // ✅ 確認成功後再關閉 modal
-			},
-			error: function (xhr) {
-				console.error('儲存失敗：', xhr.responseText);
-				alert('儲存失敗：' + xhr.responseText);
-			}
-		});
-
 			});
 		}
 
-		// 初次載入 Partial 時立即綁定（用主頁也會再次呼叫）
-		bindEditForm();
+		$(document).ready(function () {
+			$('#btnClear').on('click', function () {
+				$('#searchForm').find('input[type="text"], input[type="date"], select').val('');
+				$('#searchForm').submit();
+			});
+
+			$('#searchForm').on('submit', function (e) {
+				e.preventDefault();
+				const formData = {
+					userId: $('input[name="userId"]').val() || null,
+					name: $('input[name="name"]').val() || null,
+					status: $('select[name="status"]').val() || null,
+					startDate: $('input[name="startDate"]').val() || null,
+					endDate: $('input[name="endDate"]').val() || null,
+					isLandlord: $('select[name="isLandlord"]').val() !== "" ? JSON.parse($('select[name="isLandlord"]').val()) : null
+				};
+
+				$.ajax({
+					url: '@Url.Action("SearchUser", "User", new { area = "Admin" })',
+					method: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(formData),
+					success: function (result) {
+						$('#searchResult').html(result);
+					},
+					error: function (xhr) {
+						$('#searchResult').html('<div class="alert alert-danger text-center">搜尋失敗，請稍後再試。</div>');
+						console.error("搜尋錯誤訊息：", xhr.responseText);
+					}
+				});
+			});
+
+			$(document).on('click', '.btn-edit', function () {
+				const id = $(this).data('id');
+				$('#editModalBody').html('<div class="text-center text-muted">載入中...</div>');
+				const modal = new bootstrap.Modal(document.getElementById('editModal'));
+				modal.show();
+
+				$.ajax({
+					url: '@Url.Action("Edit", "User", new { area = "Admin" })' + '?id=' + id,
+					success: function (html) {
+						$('#editModalBody').html(html);
+						if (typeof bindEditForm === 'function') bindEditForm();
+					},
+					error: function () {
+						$('#editModalBody').html('<div class="text-danger text-center">載入失敗</div>');
+					}
+				});
+			});
+
+			function bindEditForm() {
+		const normalizeImagePath = (filename) => {
+			if (!filename) return "";
+			return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
+		};
+
+
+				$('#editForm').off('submit').on('submit', function (e) {
+					e.preventDefault();
+
+					const formData = {
+						HTenantId: parseInt($('input[name="HTenantId"]').val()),
+						HUserName: $('input[name="HUserName"]').val(),
+						HStatus: $('select[name="HStatus"]').val(),
+						HBirthday: $('input[name="HBirthday"]').val(),
+						HGender: $('select[name="HGender"]').val() === "true",
+						HAddress: $('input[name="HAddress"]').val(),
+						HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
+						HEmail: $('input[name="HEmail"]').val(),
+						HPassword: $('input[name="HPassword"]').val(),
+						HImages: normalizeImagePath($('#HImages').val()),
+						HLandlords: [
+							{
+								HLandlordName: $('input[name="HLandlordName"]').val(),
+								HStatus: $('select[name="HLandlordStatus"]').val(),
+								HBankName: $('input[name="HBankName"]').val(),
+								HBankAccount: $('input[name="HBankAccount"]').val(),
+								HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()),
+								HIdCardBackUrl: normalizeImagePath($('#HIdCardBackUrl').val())
+							}
+						]
+					};
+
+					$.ajax({
+						type: 'POST',
+						url: '/Admin/User/Edit',
+						contentType: 'application/json',
+						data: JSON.stringify(formData),
+						success: function () {
+							alert('儲存成功！');
+							$('#editModal').modal('hide');
+							document.activeElement?.blur();
+							$('#searchForm').submit();
+						},
+						error: function (xhr) {
+							console.error('❌ 儲存失敗：', xhr.responseText);
+							alert('儲存失敗：' + xhr.responseText);
+						}
+					});
+				});
+			}
+
+			$(document).on('click', '.btn-delete', function () {
+				const id = $(this).data('id');
+				if (confirm("確定要刪除這筆使用者資料嗎？")) {
+					$.ajax({
+						url: '@Url.Action("Delete", "User", new { area = "Admin" })/' + id,
+						type: 'POST',
+						success: function () {
+							$('#searchForm').submit();
+						},
+						error: function () {
+							alert("刪除失敗，請稍後再試！");
+						}
+					});
+				}
+			});
+		});
 	</script>
 }
+
 
