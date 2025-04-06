@@ -55,6 +55,10 @@
                             <a class="btn btn-primary btn-sm" asp-area="Admin" asp-controller="PrivateMessages"
                                 asp-action="PrivateChat" asp-route-senderId="@item.HSenderId"
                                 asp-route-receiverId="@item.HReceiverId">查看對話</a>
+                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#reportModal" data-message-id="@item.HMessageId">
+                                檢舉
+                            </button>
                             <form asp-action="Delete" method="post" asp-area="Admin" asp-controller="PrivateMessages"
                                 asp-route-id="@item.HMessageId" onsubmit="return confirm('確定要刪除這則訊息嗎？');"
                                 style="display:inline;">
@@ -85,3 +89,45 @@
         </nav>
     }
 </div>
+
+<!-- 檢舉 Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="Report" asp-area="Admin" asp-controller="PrivateMessages">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportModalLabel">檢舉私人訊息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="messageId" name="messageId" />
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">檢舉原因</label>
+                        <textarea class="form-control" id="reason" name="reason" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">送出檢舉</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var reportModal = document.getElementById('reportModal');
+            if (reportModal) {
+                reportModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var messageId = button.getAttribute('data-message-id');
+                    var inputMessageId = reportModal.querySelector('#messageId');
+                    inputMessageId.value = messageId;
+                });
+            }
+        });
+    </script>
+}

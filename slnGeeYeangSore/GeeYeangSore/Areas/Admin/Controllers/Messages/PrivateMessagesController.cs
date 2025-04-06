@@ -4,6 +4,7 @@ using GeeYeangSore.Models;
 using GeeYeangSore.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 
 namespace GeeYeangSore.Areas.Admin.Controllers.Messages
 {
@@ -124,6 +125,98 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             ViewBag.MessageCount = messages.Count;
 
             return View(messages);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        //檢舉功能
+        public async Task<IActionResult> Report(int messageId, string reason)
+        {
+            // 檢查管理者權限
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            // 檢查訊息是否存在
+            var message = await _context.HMessages.FindAsync(messageId);
+            if (message == null)
+            {
+                return NotFound();
+            }
+
+            // 創建新的檢舉記錄
+            var report = new HReport
+            {
+                HMessageId = messageId,
+                HAuthorId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                HAuthorType = "Admin", // 檢舉者類型為管理員
+                HReason = reason,
+                HStatus = "Pending", // 初始狀態為待處理
+                HCreatedAt = DateTime.Now
+            };
+
+            // 將檢舉記錄添加到資料庫
+            _context.HReports.Add(report);
+            await _context.SaveChangesAsync();
+
+            // 設置成功訊息
+            TempData["SuccessMessage"] = "檢舉已成功提交！";
+
+            // 重定向回列表頁面
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // 處理檢舉
+        public async Task<IActionResult> ProcessReport(int reportId, string status)
+        {
+            // 檢查管理者權限
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            // 檢查檢舉記錄是否存在
+            var report = await _context.HReports.FindAsync(reportId);
+            if (report == null)
+            {
+                return NotFound();
+            }
+
+            // 更新檢舉狀態和處理資訊
+            report.HStatus = status;
+            report.HAdminId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            report.HReviewedAt = DateTime.Now;
+
+            // 保存更改
+            await _context.SaveChangesAsync();
+
+            // 設置成功訊息
+            TempData["SuccessMessage"] = "檢舉已成功處理！";
+
+            // 重定向回檢舉列表頁面
+            return RedirectToAction(nameof(ReportList));
+        }
+        //檢舉列表頁面
+        public async Task<IActionResult> ReportList()
+        {
+            // 檢查管理者權限
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            // 獲取所有檢舉記錄
+            var reports = await _context.HReports
+                .OrderByDescending(r => r.HCreatedAt)
+                .ToListAsync();
+
+            // 獲取所有相關的訊息
+            var messageIds = reports.Select(r => r.HMessageId).ToList();
+            var messages = await _context.HMessages
+                .Where(m => messageIds.Contains(m.HMessageId))
+                .ToDictionaryAsync(m => m.HMessageId);
+
+            // 將訊息資訊存儲在 ViewBag 中
+            ViewBag.Messages = messages;
+
+            return View(reports);
         }
 
     }
