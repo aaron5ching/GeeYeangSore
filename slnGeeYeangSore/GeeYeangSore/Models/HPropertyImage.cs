@@ -18,4 +18,8 @@ public partial class HPropertyImage
     public DateTime? HUploadedDate { get; set; }
 
     public DateTime? HLastUpDated { get; set; }
+
+    public virtual HLandlord? HLandlord { get; set; }
+
+    public virtual HProperty? HProperty { get; set; }
 }

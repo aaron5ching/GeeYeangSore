@@ -28,4 +28,20 @@ public partial class HMessage
     public DateTime? HTimestamp { get; set; }
 
     public string? HSource { get; set; }
+
+    public int? HIsDeleted { get; set; }
+
+    public int? HReportCount { get; set; }
+
+    public int? HDeletedBySender { get; set; }
+
+    public int? HDeletedByReceiver { get; set; }
+
+    public DateTime? HEditedAt { get; set; }
+
+    public int? HIsEdited { get; set; }
+
+    public virtual HChat? HChat { get; set; }
+
+    public virtual ICollection<HReport> HReports { get; set; } = new List<HReport>();
 }

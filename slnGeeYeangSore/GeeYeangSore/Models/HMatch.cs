@@ -13,13 +13,13 @@ public partial class HMatch
 
     public string? HMatchUserIntro { get; set; }
 
-    public string HMatchReason { get; set; } = null!;
+    public string? HMatchReason { get; set; }
 
     public DateTime? HMatchdate { get; set; }
 
     public DateTime? HLastUpdated { get; set; }
 
-    public double HCompatibilityScore { get; set; }
+    public double? HCompatibilityScore { get; set; }
 
     public string? HStatus { get; set; }
 
@@ -29,17 +29,17 @@ public partial class HMatch
 
     public int? HBudget { get; set; }
 
-    public string HSleepschedule { get; set; } = null!;
+    public string? HSleepschedule { get; set; }
 
-    public int HAcceptsSmoking { get; set; }
+    public int? HAcceptsSmoking { get; set; }
 
-    public int HAcceptsPets { get; set; }
+    public int? HAcceptsPets { get; set; }
 
-    public string HPreferredRoommateGender { get; set; } = null!;
+    public string? HPreferredRoommateGender { get; set; }
 
-    public string HPreferredRoommateAge { get; set; } = null!;
+    public string? HPreferredRoommateAge { get; set; }
 
-    public string HPreferredRoommateOccupation { get; set; } = null!;
+    public string? HPreferredRoommateOccupation { get; set; }
 
     public virtual HTenant? HMatchEduser { get; set; }
 

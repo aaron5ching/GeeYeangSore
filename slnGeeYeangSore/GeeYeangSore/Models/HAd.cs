@@ -38,4 +38,6 @@ public partial class HAd
     public virtual HLandlord HLandlord { get; set; } = null!;
 
     public virtual HProperty HProperty { get; set; } = null!;
+
+    public virtual ICollection<HTransaction> HTransactions { get; set; } = new List<HTransaction>();
 }

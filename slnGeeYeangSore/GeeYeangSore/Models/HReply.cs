@@ -18,4 +18,6 @@ public partial class HReply
     public string? HStatus { get; set; }
 
     public DateTime? HCreatedAt { get; set; }
+
+    public DateTime? HDeletedAt { get; set; }
 }

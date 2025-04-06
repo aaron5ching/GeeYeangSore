@@ -7,9 +7,9 @@ public partial class HPropertyFeature
 {
     public int HFeaturePropertyId { get; set; }
 
-    public int? HLandlordId { get; set; }
+    public int HLandlordId { get; set; }
 
-    public int? HPropertyId { get; set; }
+    public int HPropertyId { get; set; }
 
     public bool? HAllowsDogs { get; set; }
 
@@ -58,4 +58,8 @@ public partial class HPropertyFeature
     public bool? HBalcony { get; set; }
 
     public bool? HPublicEquipment { get; set; }
+
+    public virtual HLandlord HLandlord { get; set; } = null!;
+
+    public virtual HProperty HProperty { get; set; } = null!;
 }
