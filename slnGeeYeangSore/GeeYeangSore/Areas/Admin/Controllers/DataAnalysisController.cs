@@ -52,7 +52,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                                               Month = $"{g.Key.Year}-{g.Key.Month}",
                                               PropertyCount = g.Count()
                                           })
-                                          .OrderBy(m => m.Month)
+                                          .OrderBy(m => m.Month) 
                                           .ToList(),
 
                     // 平台廣告收益
@@ -65,7 +65,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                                          {
                                              Month = $"{g.Key.Year}-{g.Key.Month}",
                                              Revenue = g.Sum(r => r.HTotalIncome ?? 0)
-                                         })
+                                         }) 
                                          .OrderBy(m => m.Month)
                                          .ToList(),
 
