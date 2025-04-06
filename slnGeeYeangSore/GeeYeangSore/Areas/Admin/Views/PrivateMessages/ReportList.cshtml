@@ -1,0 +1,111 @@
+@{
+    ViewData["Title"] = "檢舉列表";
+}
+
+@model IEnumerable<GeeYeangSore.Models.HReport>
+
+<div class="container-fluid px-4">
+    <h2 class="mb-4">檢舉列表</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>檢舉ID</th>
+                    <th>被檢舉訊息</th>
+                    <th>檢舉原因</th>
+                    <th>檢舉者</th>
+                    <th>檢舉時間</th>
+                    <th>狀態</th>
+                    <th>處理者</th>
+                    <th>處理時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var report in Model)
+                {
+                    var message = report.HMessageId.HasValue && ViewBag.Messages.ContainsKey(report.HMessageId.Value)
+                    ? ViewBag.Messages[report.HMessageId.Value]
+                    : null;
+                    <tr>
+                        <td>@report.HReportId</td>
+                        <td>
+                            @if (message != null)
+                            {
+                                <button class="btn btn-link btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#messageModal-@report.HReportId">
+                                    查看訊息
+                                </button>
+                            }
+                        </td>
+                        <td>@report.HReason</td>
+                        <td>@report.HAuthorId (@report.HAuthorType)</td>
+                        <td>@report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <span
+                                class="badge @(report.HStatus == "Pending" ? "bg-warning" : 
+                                                                                                  report.HStatus == "Approved" ? "bg-success" : "bg-danger")">
+                            @report.HStatus
+                        </span>
+                    </td>
+                    <td>@(report.HAdminId?.ToString() ?? "-")</td>
+                    <td>@(report.HReviewedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td>
+                        @if (report.HStatus == "Pending")
+                            {
+                                <div class="btn-group">
+                                    <form asp-action="ProcessReport" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reportId" value="@report.HReportId" />
+                                        <input type="hidden" name="status" value="Approved" />
+                                        <button type="submit" class="btn btn-success btn-sm">通過</button>
+                                    </form>
+                                    <form asp-action="ProcessReport" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reportId" value="@report.HReportId" />
+                                        <input type="hidden" name="status" value="Rejected" />
+                                        <button type="submit" class="btn btn-danger btn-sm">拒絕</button>
+                                    </form>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+
+                    <!-- 訊息詳情 Modal -->
+                    @if (message != null)
+                    {
+                        <div class="modal fade" id="messageModal-@report.HReportId" tabindex="-1"
+                            aria-labelledby="messageModalLabel-@report.HReportId" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="messageModalLabel-@report.HReportId">
+                                            被檢舉訊息詳情
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p><strong>發送者：</strong>@message.HSenderId (@message.HSenderRole)</p>
+                                        <p><strong>接收者：</strong>@message.HReceiverId (@message.HReceiverRole)</p>
+                                        <p><strong>內容：</strong>@message.HContent</p>
+                                        <p><strong>時間：</strong>@message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
