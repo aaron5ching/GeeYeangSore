@@ -7,3 +7,4 @@ namespace GeeYeangSore.Models
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }
+ 

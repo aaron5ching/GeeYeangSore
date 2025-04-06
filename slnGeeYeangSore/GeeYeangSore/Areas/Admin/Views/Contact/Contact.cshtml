@@ -1,0 +1,116 @@
+﻿@model IEnumerable<GeeYeangSore.Models.HContact>
+
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聯絡我們</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <section id="announcement">
+        <h2>📢 未回覆來信</h2>
+
+        @if (Model.Count(item => item.HStatus == false) == 0)
+        {
+            <div class="alert alert-info">
+                沒有待回覆的訊息。
+            </div>
+        }
+        else
+        {
+            @foreach (var newsItem in Model.Where(item => item.HStatus == false))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form action="Contact" method="post" id="Reply">
+                            <input hidden class="form-control" name="HContactId" id="HContactId" value="@newsItem.HContactId">
+
+                            標題：<p class="card-title">@newsItem.HTitle</p>
+                            內容：<p class="card-title">@newsItem.HContent</p>
+                            收信時間：<p class="card-title">@newsItem.HCreatedAt</p>
+                            手機號碼：<p class="card-title">@newsItem.HPhoneNumber</p>
+                            姓名：<p class="card-title">@newsItem.HTenantId</p>
+                            電子郵件：<p class="card-title">@newsItem.HEmail</p>
+
+                            @* <textarea class="form-control" placeholder="請輸入回覆要用戶給用戶的內容" rows="4" name="HReplyContent" id="HReplyContent"></textarea> *@
+                            <textarea class="form-control replyContent" placeholder="請輸入回覆..." name="HReplyContent"></textarea>
+                            <button type="submit" class="btn btn-info replyButton">提交回覆</button>
+                            <small style="margin-left: 50px; margin-top:10px; font-size: 20px;" class="text-muted">
+                                收到日期：@newsItem.HCreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                            </small>
+
+                            <small style="margin-left: 400px; margin-top:100px; font-size: 20px;" class="text-muted">
+                                回覆日期：@newsItem.HReplyAt.ToString("yyyy-MM-dd HH:mm:ss")
+                            </small>
+                            @* <button type="submit" class="btn btn-info" id="Reply">提交回覆</button> *@
+                        </form>
+                    </div>
+                </div>
+            }
+
+
+
+        }
+
+
+    </section>
+
+    <section id="announcement">
+        <h2>📢 已回覆來信</h2>
+
+        @if (Model.Count(item => item.HStatus == true) >= 1)
+        {
+            @foreach (var newsItem in Model.Where(item => item.HStatus == true))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <input hidden class="form-control" name="HContactId" id="HContactId" value="@newsItem.HContactId">
+                        標題：<p class="card-title">@newsItem.HTitle</p>
+                        內容：<p class="card-title">@newsItem.HContent</p>
+
+                        收信時間：<p class="card-title">@newsItem.HCreatedAt</p>
+                        手機號碼：<p class="card-title">@newsItem.HPhoneNumber</p>
+                        姓名：<p class="card-title">@newsItem.HTenantId</p>
+                        電子郵件：<p class="card-title">@newsItem.HEmail</p>
+                        回覆內容：<p class="card-title">@newsItem.HReplyContent</p>
+                        <small style="margin-left: 50px; margin-top:10px; font-size: 20px;" class="text-muted">
+                            收到日期：@newsItem.HCreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                        </small>
+
+                        @* <small style="margin-left: 400px;" class="text-muted"> *@
+                        <small style="margin-left: 400px; ; margin-top:100px; font-size: 20px;" class="text-muted">
+                            回覆日期：@newsItem.HReplyAt.ToString("yyyy-MM-dd HH:mm:ss")
+                        </small>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                暫無已回覆來信。
+            </div>
+        }
+    </section>
+
+
+    <script>
+        document.querySelectorAll(".replyForm").forEach(form => {
+          form.addEventListener("submit", function (event) {
+            const replyInput = form.querySelector(".replyContent");
+            if (!replyInput.value.trim()) {
+              event.preventDefault();
+              alert("失敗！請輸入回覆內容！");
+            }
+          });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
+
