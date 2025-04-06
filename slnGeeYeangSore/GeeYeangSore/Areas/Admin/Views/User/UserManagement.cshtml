@@ -1,6 +1,6 @@
 ﻿@model X.PagedList.IPagedList<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
 
-
+    
 @{
     ViewData["Title"] = "使用者管理";
 }
@@ -255,7 +255,7 @@
                     HLandlords: [
                         {
                             HLandlordName: $('input[name="HLandlordName"]').val(),
-                            HStatus: $('input[name="HLandlordStatus"]').val(),
+                            HStatus: $('select[name="HLandlordStatus"]').val(),
                             HBankName: $('input[name="HBankName"]').val(),
                             HBankAccount: $('input[name="HBankAccount"]').val(),
                             HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()),
