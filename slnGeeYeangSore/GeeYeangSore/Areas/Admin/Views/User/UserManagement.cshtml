@@ -159,57 +159,130 @@
                 });
             });
 
-            function bindEditForm() {
-        const normalizeImagePath = (filename) => {
-            if (!filename) return "";
-            return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
-        };
+                    function bindEditForm() {
+            const normalizeImagePath = (filename) => {
+                if (!filename) return "";
+                return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
+            };
 
+            // ✅ 房客照片上傳
+            $(document).on('change', '#uploadTenantPhotoInput', function () {
+                const file = this.files[0];
+                if (!file) return;
 
-                $('#editForm').off('submit').on('submit', function (e) {
-                    e.preventDefault();
+                const url = URL.createObjectURL(file);
+                $('#tenantPhotoPreview').attr('src', url);
 
-                    const formData = {
-                        HTenantId: parseInt($('input[name="HTenantId"]').val()),
-                        HUserName: $('input[name="HUserName"]').val(),
-                        HStatus: $('select[name="HStatus"]').val(),
-                        HBirthday: $('input[name="HBirthday"]').val(),
-                        HGender: $('select[name="HGender"]').val() === "true",
-                        HAddress: $('input[name="HAddress"]').val(),
-                        HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
-                        HEmail: $('input[name="HEmail"]').val(),
-                        HPassword: $('input[name="HPassword"]').val(),
-                        HImages: normalizeImagePath($('#HImage').val()),
-                        HLandlords: [
-                            {
-                                HLandlordName: $('input[name="HLandlordName"]').val(),
-                                HStatus: $('input[name="HLandlordStatus"]').val(),
-                                HBankName: $('input[name="HBankName"]').val(),
-                                HBankAccount: $('input[name="HBankAccount"]').val(),
-                                HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()),
-                                HIdCardBackUrl: normalizeImagePath($('#HIdCardBackUrl').val())
-                            }
-                        ]
-                    };
+                const formData = new FormData();
+                formData.append('photo', file);
 
-                    $.ajax({
-                        type: 'POST',
-                        url: '/Admin/User/Edit',
-                        contentType: 'application/json',
-                        data: JSON.stringify(formData),
-                        success: function () {
-                            alert('儲存成功！');
-                            $('#editModal').modal('hide');
-                            document.activeElement?.blur();
-                            $('#searchForm').submit();
-                        },
-                        error: function (xhr) {
-                            console.error('❌ 儲存失敗：', xhr.responseText);
-                            alert('儲存失敗：' + xhr.responseText);
-                        }
-                    });
+                $.ajax({
+                    url: '/Admin/User/UploadTenantPhoto',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (url) {
+                        const fileName = url.split('/').pop();
+                        $('#HImages').val(fileName);
+                    }
                 });
-            }
+            });
+
+            // ✅ 身分證正面
+            $(document).on('change', '#uploadIdCardFrontInput', function () {
+                const file = this.files[0];
+                if (!file) return;
+
+                const url = URL.createObjectURL(file);
+                $('#idCardFrontPreview').attr('src', url);
+
+                const formData = new FormData();
+                formData.append('photo', file);
+
+                $.ajax({
+                    url: '/Admin/User/UploadLandlordIdFront',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (url) {
+                        const fileName = url.split('/').pop();
+                        $('#HIdCardFrontUrl').val(fileName);
+                    }
+                });
+            });
+
+            // ✅ 身分證反面
+            $(document).on('change', '#uploadIdCardBackInput', function () {
+                const file = this.files[0];
+                if (!file) return;
+
+                const url = URL.createObjectURL(file);
+                $('#idCardBackPreview').attr('src', url);
+
+                const formData = new FormData();
+                formData.append('photo', file);
+
+                $.ajax({
+                    url: '/Admin/User/UploadLandlordIdBack',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (url) {
+                        const fileName = url.split('/').pop();
+                        $('#HIdCardBackUrl').val(fileName);
+                    }
+                });
+            });
+
+            // ✅ 儲存資料事件（你原本就有）
+            $('#editForm').off('submit').on('submit', function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    HTenantId: parseInt($('input[name="HTenantId"]').val()),
+                    HUserName: $('input[name="HUserName"]').val(),
+                    HStatus: $('select[name="HStatus"]').val(),
+                    HBirthday: $('input[name="HBirthday"]').val(),
+                    HGender: $('select[name="HGender"]').val() === "true",
+                    HAddress: $('input[name="HAddress"]').val(),
+                    HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
+                    HEmail: $('input[name="HEmail"]').val(),
+                    HPassword: $('input[name="HPassword"]').val(),
+                    HImages: normalizeImagePath($('#HImages').val()),
+                    HLandlords: [
+                        {
+                            HLandlordName: $('input[name="HLandlordName"]').val(),
+                            HStatus: $('input[name="HLandlordStatus"]').val(),
+                            HBankName: $('input[name="HBankName"]').val(),
+                            HBankAccount: $('input[name="HBankAccount"]').val(),
+                            HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()),
+                            HIdCardBackUrl: normalizeImagePath($('#HIdCardBackUrl').val())
+                        }
+                    ]
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Admin/User/Edit',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function () {
+                        alert('儲存成功！');
+                        $('#editModal').modal('hide');
+                        document.activeElement?.blur();
+                        $('#searchForm').submit();
+                    },
+                    error: function (xhr) {
+                        console.error('❌ 儲存失敗：', xhr.responseText);
+                        alert('儲存失敗：' + xhr.responseText);
+                    }
+                });
+            });
+        }
+
 
             $(document).on('click', '.btn-delete', function () {
                 const id = $(this).data('id');
