@@ -73,7 +73,7 @@
 						 src="/images/User/@Model.HImages"
 						 class="img-fluid border mb-2"
 						 style="width: 150px; height: 150px; object-fit: cover;"
-						 onerror="this.src='/images/default-user.png'" />
+						 onerror="this.src='/images/default.png'" />
 					<input type="hidden" name="HImages" id="HImage" value="@Model.HImages" />
 				</div>
 
@@ -137,7 +137,7 @@
 					<!-- 身分證正面 -->
 					<div class="col-md-6">
 						<label class="form-label">身分證正面</label>
-						<img id="idCardFrontPreview" src="/images/User/@landlord.HIdCardFrontUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default-idcard.png'" />
+						<img id="idCardFrontPreview" src="/images/User/@landlord.HIdCardFrontUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default.png'" />
 						<input type="hidden" name="HLandlords[0].HIdCardFrontUrl" id="HIdCardFrontUrl" value="@landlord.HIdCardFrontUrl" />
 						<input type="file" class="form-control d-none" id="uploadIdCardFrontInput" />
 						<button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('uploadIdCardFrontInput').click()">上傳正面</button>
@@ -146,7 +146,7 @@
 					<!-- 身分證反面 -->
 					<div class="col-md-6">
 						<label class="form-label">身分證反面</label>
-						<img id="idCardBackPreview" src="/images/User/@landlord.HIdCardBackUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default-idcard.png'" />
+						<img id="idCardBackPreview" src="/images/User/@landlord.HIdCardBackUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default.png'" />
 						<input type="hidden" name="HLandlords[0].HIdCardBackUrl" id="HIdCardBackUrl" value="@landlord.HIdCardBackUrl" />
 						<input type="file" class="form-control d-none" id="uploadIdCardBackInput" />
 						<button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('uploadIdCardBackInput').click()">上傳反面</button>
