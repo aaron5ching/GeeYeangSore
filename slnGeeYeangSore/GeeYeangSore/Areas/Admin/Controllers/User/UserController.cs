@@ -5,9 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using X.PagedList;
 using X.PagedList.Extensions;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.User
 {
     [Area("Admin")]
+    [Route("[area]/[controller]/[action]")]
     public class UserController : Controller
     {
         private readonly GeeYeangSoreContext _context;

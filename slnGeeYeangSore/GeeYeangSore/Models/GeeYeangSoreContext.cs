@@ -7,7 +7,7 @@ namespace GeeYeangSore.Models;
 public partial class GeeYeangSoreContext : DbContext
 {
     public GeeYeangSoreContext()
-    {
+    { 
     }
 
     public GeeYeangSoreContext(DbContextOptions<GeeYeangSoreContext> options)
