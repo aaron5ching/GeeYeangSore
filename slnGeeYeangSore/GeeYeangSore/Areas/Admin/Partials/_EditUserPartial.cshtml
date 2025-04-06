@@ -1,0 +1,221 @@
+﻿@model GeeYeangSore.Models.HTenant
+
+@if (Model == null)
+{
+    <div class="alert alert-danger">使用者資料載入失敗。</div>
+    return;
+}
+
+<form id="editForm" enctype="multipart/form-data">
+    <div class="container">
+        <input type="hidden" name="HTenantId" value="@Model.HTenantId" />
+
+        <!-- 🢍 房客資訊 -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">房客資訊</div>
+            <div class="card-body row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">房客ID</label>
+                    <input class="form-control" value="@Model.HTenantId" readonly />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">驗證狀態</label>
+                    <select class="form-select" name="HStatus">
+                        <option value="未驗證" selected="@(Model.HStatus == "未驗證")">未驗證</option>
+                        <option value="驗證中" selected="@(Model.HStatus == "驗證中")">驗證中</option>
+                        <option value="已驗證" selected="@(Model.HStatus == "已驗證")">已驗證</option>
+                        <option value="封鎖中" selected="@(Model.HStatus == "封鎖中")">封鎖中</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">姓名</label>
+                    <input class="form-control" name="HUserName" value="@Model.HUserName" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">生日</label>
+                    <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">性別</label>
+                    <select class="form-select" name="HGender">
+                        <option value="true" selected="@(Model.HGender == true)">男</option>
+                        <option value="false" selected="@(Model.HGender == false)">女</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">電話</label>
+                    <input class="form-control" name="HPhoneNumber" value="@Model.HPhoneNumber" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">電子郵件</label>
+                    <input type="email" class="form-control" name="HEmail" value="@Model.HEmail" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">密碼</label>
+                    <input type="text" class="form-control" name="HPassword" value="@Model.HPassword" />
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">居住地</label>
+                    <input class="form-control" name="HAddress" value="@Model.HAddress" />
+                </div>
+
+                <div class="col-md-6 d-flex flex-column">
+                    <label class="form-label">房客照片</label>
+                    <img id="tenantPhotoPreview"
+                         src="/images/User/@Model.HImages"
+                         class="img-fluid border mb-2"
+                         style="width: 150px; height: 150px; object-fit: cover;"
+                         onerror="this.src='/images/default.png'" />
+                    <input type="hidden" name="HImages" id="HImages" value="@Model.HImages" />
+                </div>
+                <div class="col-md-6 d-flex align-items-end justify-content-end">
+                    <input type="file" class="form-control d-none" id="uploadTenantPhotoInput" />
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('uploadTenantPhotoInput').click()">修改照片</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🦳 房東資訊 -->
+        @if (Model.HLandlords != null && Model.HLandlords.Any())
+        {
+            var landlord = Model.HLandlords.FirstOrDefault();
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">房東資訊</div>
+                <div class="card-body row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">房東本名</label>
+                        <input class="form-control" name="HLandlordName" value="@landlord.HLandlordName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">身份狀態</label>
+                        <select class="form-select" name="HLandlordStatus">
+                            <option value="未驗證" selected="@(landlord.HStatus == "未驗證")">未驗證</option>
+                            <option value="驗證中" selected="@(landlord.HStatus == "驗證中")">驗證中</option>
+                            <option value="已驗證" selected="@(landlord.HStatus == "已驗證")">已驗證</option>
+                            <option value="封鎖中" selected="@(landlord.HStatus == "封鎖中")">封鎖中</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">身份建立時間</label>
+                        <input class="form-control" value="@landlord.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">評價</label>
+                        <input class="form-control" value="@landlord.HRating?.ToString("0.0") ?? " 無資料"" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">銀行名稱</label>
+                        <input class="form-control" name="HBankName" value="@landlord.HBankName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">銀行帳戶</label>
+                        <input class="form-control" name="HBankAccount" value="@landlord.HBankAccount" />
+                    </div>
+
+                    <!-- 身份證圖片上傳 -->
+                    <div class="row g-3 border-top pt-3 mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">身份證正面</label>
+                            <img id="idCardFrontPreview" src="/images/User/@landlord.HIdCardFrontUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default.png'" />
+                            <input type="hidden" name="HLandlords[0].HIdCardFrontUrl" id="HIdCardFrontUrl" value="@landlord.HIdCardFrontUrl" />
+                            <input type="file" class="form-control d-none" id="uploadIdCardFrontInput" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('uploadIdCardFrontInput').click()">上傳正面</button>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">身份證反面</label>
+                            <img id="idCardBackPreview" src="/images/User/@landlord.HIdCardBackUrl" class="img-fluid border mb-2" style="max-height: 200px;" onerror="this.src='/images/default.png'" />
+                            <input type="hidden" name="HLandlords[0].HIdCardBackUrl" id="HIdCardBackUrl" value="@landlord.HIdCardBackUrl" />
+                            <input type="file" class="form-control d-none" id="uploadIdCardBackInput" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('uploadIdCardBackInput').click()">上傳反面</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="text-end">
+            <button type="submit" class="btn btn-primary">儲存變更</button>
+        </div>
+    </div>
+</form>
+
+@* @section Scripts { *@
+@*     <script> *@
+@*         $(document).ready(function () { *@
+@*             $('#uploadTenantPhotoInput').on('change', function () { *@
+@*                 const file = this.files[0]; *@
+@*                 if (!file) return; *@
+
+@*                 const url = URL.createObjectURL(file); *@
+@*                 $('#tenantPhotoPreview').attr('src', url); *@
+
+@*                 const formData = new FormData(); *@
+@*                 formData.append('photo', file); *@
+
+@*                 $.ajax({ *@
+@*                     url: '/Admin/User/UploadTenantPhoto', *@
+@*                     type: 'POST', *@
+@*                     data: formData, *@
+@*                     processData: false, *@
+@*                     contentType: false, *@
+@*                     success: function (url) { *@
+@*                         const fileName = url.split('/').pop(); *@
+@*                         $('#HImages').val(fileName); *@
+@*                         $('#tenantPhotoPreview').attr('src', '/images/User/' + fileName); *@
+@*                     } *@
+@*                 }); *@
+@*             }); *@
+
+@*             $('#uploadIdCardFrontInput').on('change', function () { *@
+@*                 const file = this.files[0]; *@
+@*                 if (!file) return; *@
+
+@*                 const url = URL.createObjectURL(file); *@
+@*                 $('#idCardFrontPreview').attr('src', url); *@
+
+@*                 const formData = new FormData(); *@
+@*                 formData.append('photo', file); *@
+
+@*                 $.ajax({ *@
+@*                     url: '/Admin/User/UploadLandlordIdFront', *@
+@*                     type: 'POST', *@
+@*                     data: formData, *@
+@*                     processData: false, *@
+@*                     contentType: false, *@
+@*                     success: function (url) { *@
+@*                         const fileName = url.split('/').pop(); *@
+@*                         $('#HIdCardFrontUrl').val(fileName); *@
+@*                         $('#idCardFrontPreview').attr('src', '/images/User/' + fileName); *@
+@*                     } *@
+@*                 }); *@
+@*             }); *@
+
+@*             $('#uploadIdCardBackInput').on('change', function () { *@
+@*                 const file = this.files[0]; *@
+@*                 if (!file) return; *@
+
+@*                 const url = URL.createObjectURL(file); *@
+@*                 $('#idCardBackPreview').attr('src', url); *@
+
+@*                 const formData = new FormData(); *@
+@*                 formData.append('photo', file); *@
+
+@*                 $.ajax({ *@
+@*                     url: '/Admin/User/UploadLandlordIdBack', *@
+@*                     type: 'POST', *@
+@*                     data: formData, *@
+@*                     processData: false, *@
+@*                     contentType: false, *@
+@*                     success: function (url) { *@
+@*                         const fileName = url.split('/').pop(); *@
+@*                         $('#HIdCardBackUrl').val(fileName); *@
+@*                         $('#idCardBackPreview').attr('src', '/images/User/' + fileName); *@
+@*                     } *@
+@*                 }); *@
+@*             }); *@
+@*         }); *@
+@*     </script> *@
+@* } *@
