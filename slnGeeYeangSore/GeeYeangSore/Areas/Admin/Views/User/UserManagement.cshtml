@@ -49,6 +49,8 @@
 		</div>
 	</div>
 	<div class="col-md-10 text-end">
+
+		<button type="button" id="btnCreateUser" class="btn btn-warning" style="width: 150px">新增</button>
 		<button type="button" id="btnClear" class="btn btn-secondary" style="width: 150px">清除</button>
 		<button type="submit" class="btn btn-primary" style="width: 150px;">搜尋</button>
 
@@ -111,6 +113,23 @@
 		}
 
 		$(document).ready(function () {
+
+					// ✅ 新增使用者按鈕事件
+		$('#btnCreateUser').on('click', function () {
+			const modal = new bootstrap.Modal(document.getElementById('editModal'));
+			$('#editModalLabel').text('新增使用者');
+			$('#editModalBody').html('<div class="text-muted text-center">載入中...</div>');
+			modal.show();
+
+			$.get('/Admin/User/Create', function (html) {
+				$('#editModalBody').html(html);
+				if (typeof bindCreateForm === 'function') bindCreateForm();
+			}).fail(function () {
+				$('#editModalBody').html('<div class="text-danger text-center">載入失敗</div>');
+			});
+		});
+
+
 			$('#btnClear').on('click', function () {
 				$('#searchForm').find('input[type="text"], input[type="date"], select').val('');
 				$('#searchForm').submit();

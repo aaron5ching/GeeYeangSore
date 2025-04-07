@@ -262,5 +262,46 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             return Ok("/images/User/" + fileName);
         }
+
+
+        // ✅ GET：載入新增表單
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return PartialView("~/Areas/Admin/Partials/UserManagement/_CreateUserPartial.cshtml", new CEditUserViewModel());
+        }
+
+        // ✅ POST：儲存新增資料
+        [HttpPost]
+        public IActionResult Create([FromBody] CEditUserViewModel newUser)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest("模型驗證失敗");
+
+            var tenant = new HTenant
+            {
+                HUserName = newUser.HUserName,
+                HBirthday = newUser.HBirthday,
+                HGender = newUser.HGender,
+                HPhoneNumber = newUser.HPhoneNumber,
+                HEmail = newUser.HEmail,
+                HPassword = newUser.HPassword,
+                HAddress = newUser.HAddress,
+                HStatus = newUser.HStatus ?? "未驗證",
+                HImages = newUser.HImages,
+                HCreatedAt = DateTime.Now,
+                HIsTenant = true,
+                HIsLandlord = false
+            };
+
+            _context.HTenants.Add(tenant);
+            _context.SaveChanges();
+
+            return Ok();
+        }
+
+
+
+
     }
 }
