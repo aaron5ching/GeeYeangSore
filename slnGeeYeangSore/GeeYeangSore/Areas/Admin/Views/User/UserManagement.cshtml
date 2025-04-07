@@ -320,5 +320,72 @@
 				}
 			});
 		});
+
+			// ✅ 新增使用者表單處理邏輯
+		function bindCreateForm() {
+			const normalizeImagePath = (filename) => {
+				if (!filename) return "";
+				return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
+			};
+
+			// ✅ 房客照片上傳（新增）
+			$(document).on('change', '#uploadTenantPhotoInput', function () {
+				const file = this.files[0];
+				if (!file) return;
+
+				const previewUrl = URL.createObjectURL(file);
+				$('#tenantPhotoPreview').attr('src', previewUrl);
+
+				const formData = new FormData();
+				formData.append('photo', file);
+
+				$.ajax({
+					url: '/Admin/User/UploadTenantPhoto',
+					type: 'POST',
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function (url) {
+						const fileName = url.split('/').pop();
+						$('#HImages').val(fileName);
+					}
+				});
+			});
+
+			// ✅ 綁定新增表單送出事件
+			$('#createForm').off('submit').on('submit', function (e) {
+				e.preventDefault();
+
+				const formData = {
+					HUserName: $('input[name="HUserName"]').val(),
+					HBirthday: $('input[name="HBirthday"]').val(),
+					HGender: $('select[name="HGender"]').val() === "true",
+					HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
+					HEmail: $('input[name="HEmail"]').val(),
+					HPassword: $('input[name="HPassword"]').val(),
+					HAddress: $('input[name="HAddress"]').val(),
+					HStatus: $('select[name="HStatus"]').val(),
+					HImages: normalizeImagePath($('#HImages').val()),
+					HLandlords: [] // 🐥暫不建立房東資料
+				};
+
+				$.ajax({
+					type: 'POST',
+					url: '/Admin/User/Create',
+					contentType: 'application/json',
+					data: JSON.stringify(formData),
+					success: function () {
+						alert('✅ 新增成功');
+						const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+						modal.hide();
+						$('#searchForm').submit(); // 重新載入搜尋結果
+					},
+					error: function (xhr) {
+						alert('❌ 新增失敗：' + xhr.responseText);
+					}
+				});
+			});
+		}
+
 	</script>
 }
