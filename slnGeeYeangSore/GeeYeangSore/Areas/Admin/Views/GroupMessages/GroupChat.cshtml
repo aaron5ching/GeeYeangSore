@@ -19,7 +19,19 @@
                     <div class="mb-3">
                         <strong>@ViewBag.SenderNames[message.HMessageId]</strong>
                         <span class="text-muted small">(@(message.HTimestamp?.ToString("yyyy-MM-dd HH:mm") ?? "時間未知"))</span>
-                        <div>@message.HContent</div>
+                        <div>
+                            @if (message.HReports?.Any(r => r.HStatus == "已核准") == true)
+                            {
+                                <div class="alert alert-danger mb-2 d-inline-block">
+                                    <i class="fas fa-exclamation-triangle"></i> 此訊息已被檢舉並核准
+                                </div>
+                            }
+                            @message.HContent
+                        </div>
+                        <button class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#reportModal"
+                                data-message-id="@message.HMessageId">
+                            檢舉
+                        </button>
                     </div>
                 }
             }
@@ -34,3 +46,40 @@
         <a class="btn btn-secondary" href="@Url.Action("Index", "GroupMessages", new { area = "Admin" })">返回群組清單</a>
     </div>
 </div>
+
+<!-- 檢舉 Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="Report" asp-controller="GroupMessages">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportModalLabel">檢舉群組訊息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="messageId" name="messageId" />
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">檢舉原因</label>
+                        <textarea class="form-control" id="reason" name="reason" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">送出檢舉</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var reportModal = document.getElementById('reportModal')
+        reportModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget
+            var messageId = button.getAttribute('data-message-id')
+            var inputMessageId = reportModal.querySelector('#messageId')
+            inputMessageId.value = messageId
+        })
+    </script>
+}

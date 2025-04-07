@@ -1,0 +1,156 @@
+@model IEnumerable<GeeYeangSore.Models.HReport>
+@using System.Linq
+
+@{
+    ViewBag.Title = "檢舉列表";
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function updateStatus(reportId, status) {
+            if (confirm('確定要更新此檢舉的狀態嗎？')) {
+                $.ajax({
+                    url: '@Url.Action("UpdateReportStatus", "GroupMessages", new { area = "Admin" })',
+                    type: 'POST',
+                    data: {
+                        reportId: reportId,
+                        status: status
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('更新失敗，請稍後再試。錯誤：' + error);
+                    }
+                });
+            }
+        }
+    </script>
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">檢舉列表</h2>
+
+    <!-- 狀態篩選 -->
+    <div class="mb-3">
+        <div class="btn-group" role="group">
+            <a href="@Url.Action("ReportList", "GroupMessages", new { area = "Admin" })"
+                class="btn @(string.IsNullOrEmpty(ViewBag.Status) ? "btn-primary" : "btn-outline-primary")">
+                全部
+            </a>
+            <a href="@Url.Action("ReportList", "GroupMessages", new { area = "Admin", status = "Pending" })"
+                class="btn @(ViewBag.Status == "Pending" ? "btn-primary" : "btn-outline-primary")">
+                待處理
+            </a>
+            <a href="@Url.Action("ReportList", "GroupMessages", new { area = "Admin", status = "已核准" })"
+                class="btn @(ViewBag.Status == "已核准" ? "btn-primary" : "btn-outline-primary")">
+                已核准
+            </a>
+            <a href="@Url.Action("ReportList", "GroupMessages", new { area = "Admin", status = "已拒絕" })"
+                class="btn @(ViewBag.Status == "已拒絕" ? "btn-primary" : "btn-outline-primary")">
+                已拒絕
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>檢舉ID</th>
+                    <th>訊息ID</th>
+                    <th>被檢舉訊息內容</th>
+                    <th>檢舉原因</th>
+                    <th>檢舉時間</th>
+                    <th>狀態</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var report in Model)
+                    {
+                        <tr>
+                            <td>@report.HReportId</td>
+                            <td>@report.HMessageId</td>
+                            <td>
+                                @if (report.HMessage != null)
+                                {
+                                    <div class="message-content"
+                                        style="max-width: 300px; padding: 8px; background-color: #f8f9fa; border-radius: 4px; margin: 0;">
+                                        <span
+                                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@report.HMessage.HContent</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">訊息已刪除</span>
+                                }
+                            </td>
+                            <td>@report.HReason</td>
+                            <td>@report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                @{
+                                    var statusText = report.HStatus switch
+                                    {
+                                        "Pending" => "待處理",
+                                        "Approved" => "已核准",
+                                        "Rejected" => "已拒絕",
+                                        _ => report.HStatus
+                                    };
+                                    var statusClass = report.HStatus switch
+                                    {
+                                        "Pending" => "bg-warning",
+                                        "Approved" => "bg-success",
+                                        "Rejected" => "bg-danger",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass">@statusText</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    @if (ViewBag.ChatIds[report.HReportId] != null)
+                                    {
+                                        <a href="@Url.Action("GroupChat", "GroupMessages", new { area = "Admin", chatId = ViewBag.ChatIds[report.HReportId] })"
+                                            class="btn btn-sm btn-info">
+                                            查看訊息
+                                        </a>
+                                    }
+                                    @if (report.HStatus == "Pending")
+                                    {
+                                        <button type="button" class="btn btn-sm btn-success"
+                                            onclick="updateStatus(@report.HReportId, '已核准')">
+                                            核准
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="updateStatus(@report.HReportId, '已拒絕')">
+                                            拒絕
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">沒有找到任何檢舉記錄。</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <a class="btn btn-secondary" href="@Url.Action("Index", "GroupMessages", new { area = "Admin" })">返回群組清單</a>
+    </div>
+</div>
