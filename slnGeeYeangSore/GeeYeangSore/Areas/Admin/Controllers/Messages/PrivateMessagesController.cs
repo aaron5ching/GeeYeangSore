@@ -151,7 +151,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
                 HAuthorType = "Admin", // 檢舉者類型為管理員
                 HReason = reason,
                 HStatus = "Pending", // 初始狀態為待處理
-                HCreatedAt = DateTime.Now
+                HCreatedAt = DateTime.Now,
+                HReportType = "Private"
             };
 
             // 將檢舉記錄添加到資料庫
@@ -202,8 +203,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
-            // 獲取所有檢舉記錄
+            //  獲取所有私人訊息的檢舉記錄
             var reports = await _context.HReports
+                .Where(r => r.HReportType == "Private") // 只顯示私人訊息的檢舉
                 .OrderByDescending(r => r.HCreatedAt)
                 .ToListAsync();
 
