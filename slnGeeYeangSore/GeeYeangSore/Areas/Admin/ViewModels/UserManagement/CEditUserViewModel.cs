@@ -1,4 +1,4 @@
-﻿namespace GeeYeangSore.Areas.Admin.ViewModels
+﻿namespace GeeYeangSore.Areas.Admin.ViewModels.UserManagement
 {
     public class CEditLandlordViewModel
     {
@@ -22,6 +22,8 @@
         public string? HPassword { get; set; }
         public string? HImages { get; set; }
         public string? HStatus { get; set; }
+        public double? HRating { get; set; } // 房東評價（唯讀顯示用）
+
 
         public List<CEditLandlordViewModel> HLandlords { get; set; } = new();
     }

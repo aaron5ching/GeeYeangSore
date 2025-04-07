@@ -1,4 +1,5 @@
-﻿@model X.PagedList.IPagedList<GeeYeangSore.Areas.Admin.ViewModels.CUserViewModels>
+﻿@model X.PagedList.IPagedList<GeeYeangSore.Areas.Admin.ViewModels.UserManagement.CUserViewModels>
+
 
 
 @{
@@ -59,7 +60,7 @@
 
 <!-- 📋 初始顯示使用者資料 -->
 <div id="searchResult">
-	@await Html.PartialAsync("~/Areas/Admin/Partials/_UserListPartial.cshtml", Model)
+	@await Html.PartialAsync("~/Areas/Admin/Partials/UserManagement/_UserListPartial.cshtml", Model)
 </div>
 
 <!-- 🪟 編輯彈窗 -->

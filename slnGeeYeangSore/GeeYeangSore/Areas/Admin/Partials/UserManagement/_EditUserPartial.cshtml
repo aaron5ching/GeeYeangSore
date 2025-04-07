@@ -104,7 +104,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">評價</label>
-                        <input class="form-control" value="@landlord.HRating?.ToString("0.0") ?? " 無資料"" readonly />
+                        <input class="form-control" value="@(landlord.HRating.HasValue ? landlord.HRating.Value.ToString("0.0") : "無資料")" readonly />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">銀行名稱</label>

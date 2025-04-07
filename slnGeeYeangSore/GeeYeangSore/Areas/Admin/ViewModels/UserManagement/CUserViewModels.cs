@@ -1,4 +1,4 @@
-﻿namespace GeeYeangSore.Areas.Admin.ViewModels
+﻿namespace GeeYeangSore.Areas.Admin.ViewModels.UserManagement
 {
     public class CUserViewModels
     {
@@ -16,5 +16,7 @@
         public DateTime RegisterDate { get; set; }
         public bool IsTenant { get; set; }
         public bool IsLandlord { get; set; }
+        public double? HRating { get; set; } // 房東評價（用來顯示星星）
+
     }
 }

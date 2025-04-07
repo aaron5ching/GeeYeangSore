@@ -1,11 +1,11 @@
-﻿using GeeYeangSore.Areas.Admin.ViewModels;
+﻿using GeeYeangSore.Areas.Admin.ViewModels.UserManagement;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using X.PagedList;
 using X.PagedList.Extensions;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 {
     [Area("Admin")]
     [Route("[area]/[controller]/[action]")]
@@ -84,7 +84,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 )
                 .ToPagedList(page, pageSize); // ✅ 分頁處理
 
-            return PartialView("~/Areas/Admin/Partials/_UserListPartial.cshtml", result);
+            return PartialView("~/Areas/Admin/Partials/UserManagement/_UserListPartial.cshtml", result);
+
         }
 
 
@@ -101,7 +102,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             if (tenant == null)
                 return NotFound();
 
-            return PartialView("~/Areas/Admin/Partials/_EditUserPartial.cshtml", tenant);
+            return PartialView("~/Areas/Admin/Partials/UserManagement/_EditUserPartial.cshtml", tenant);
         }
 
         // AJAX 儲存編輯內容（使用 ViewModel）
