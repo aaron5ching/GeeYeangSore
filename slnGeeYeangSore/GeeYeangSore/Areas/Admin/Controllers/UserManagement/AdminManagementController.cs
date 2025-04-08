@@ -48,23 +48,21 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
         // ✅ POST：接收建立表單
         [HttpPost]
+        [IgnoreAntiforgeryToken]
         public IActionResult Create([FromBody] HAdmin newAdmin)
         {
-            // 取得目前登入的管理員 ID（假設你用 Session 儲存）
-            var currentAdminId = HttpContext.Session.GetInt32("AdminId");
 
-            // 撈出登入者資料
-            var currentAdmin = _context.HAdmins.FirstOrDefault(a => a.HAdminId == currentAdminId);
+            // ✅ 解法一：從 Session 取出帳號再查詢資料
+            var currentAccount = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+            var currentAdmin = _context.HAdmins.FirstOrDefault(a => a.HAccount == currentAccount);
 
-            // 權限驗證
+            // ✅ 權限驗證
             if (currentAdmin?.HRoleLevel != "超級管理員")
                 return Forbid(); // 🔐 拒絕非超級管理員新增帳號
 
-            // 基本欄位驗證
+            // ✅ 基本欄位驗證
             if (string.IsNullOrWhiteSpace(newAdmin.HAccount) || string.IsNullOrWhiteSpace(newAdmin.HPassword))
-            {
                 return BadRequest("帳號或密碼不得為空");
-            }
 
             newAdmin.HCreatedAt = DateTime.Now;
             newAdmin.HUpdateAt = DateTime.Now;
@@ -75,6 +73,37 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             return Ok();
         }
 
+        // GET：載入編輯表單
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            var admin = _context.HAdmins.Find(id);
+            if (admin == null)
+                return NotFound();
+
+            return PartialView("~/Areas/Admin/Partials/UserManagement/_EditAdminPartial.cshtml", admin);
+        }
+
+        // POST：接收編輯結果
+        [HttpPost]
+        public IActionResult Edit([FromBody] HAdmin edited)
+        {
+            var admin = _context.HAdmins.Find(edited.HAdminId);
+            if (admin == null)
+                return NotFound();
+
+            admin.HAccount = edited.HAccount;
+
+            // 密碼不為空才更新
+            if (!string.IsNullOrWhiteSpace(edited.HPassword))
+                admin.HPassword = edited.HPassword;
+
+            admin.HRoleLevel = edited.HRoleLevel;
+            admin.HUpdateAt = DateTime.Now;
+
+            _context.SaveChanges();
+            return Ok("success");
+        }
 
 
     }
