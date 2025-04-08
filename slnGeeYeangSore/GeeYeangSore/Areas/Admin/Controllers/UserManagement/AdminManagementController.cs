@@ -106,5 +106,34 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         }
 
 
+        // ✅ POST：刪除管理員
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public IActionResult Delete(int id)
+        {
+            // 取得目前登入者帳號
+            var currentAccount = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+            var currentAdmin = _context.HAdmins.FirstOrDefault(a => a.HAccount == currentAccount);
+
+            // ✅ 僅限超級管理員執行刪除
+            if (currentAdmin?.HRoleLevel != "超級管理員")
+                return Forbid();
+
+            // ✅ 找到要刪除的對象
+            var admin = _context.HAdmins.Find(id);
+            if (admin == null)
+                return NotFound();
+
+            // ✅ 禁止刪除超級管理員帳號（保護機制）
+            if (admin.HRoleLevel == "超級管理員")
+                return BadRequest("不可刪除超級管理員");
+
+            _context.HAdmins.Remove(admin);
+            _context.SaveChanges();
+
+            return Ok("deleted");
+        }
+
+
     }
 }

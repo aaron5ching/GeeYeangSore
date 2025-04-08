@@ -127,6 +127,26 @@
         });
 
 
+                // ✅ 點擊刪除按鈕
+        $(document).on('click', '.btn-delete', function () {
+            const id = $(this).data('id');
+            if (!confirm("⚠️確定要刪除這位管理員嗎？")) return;
+
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/AdminManagement/Delete',
+                data: { id: id },
+                success: function () {
+                    alert("✅ 已成功刪除！");
+                    location.reload();
+                },
+                error: function (xhr) {
+                    alert("刪除失敗：" + (xhr.responseText || "未知錯誤"));
+                }
+            });
+        });
+
+
 
     </script>
 }
