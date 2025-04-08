@@ -1,0 +1,39 @@
+﻿@model IEnumerable<GeeYeangSore.Models.HAdmin>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>管理者ID</th>
+            <th>帳號</th>
+            <th>密碼</th>
+            <th>權限</th>
+            <th>建立時間</th>
+            <th>更新時間</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var admin in Model)
+        {
+            <tr>
+                <td>@admin.HAdminId</td>
+                <td>@admin.HAccount</td>
+                <td>@admin.HPassword</td>
+                <td>@admin.HRoleLevel</td>
+                <td>@(admin.HCreatedAt?.ToString("yyyy-MM-dd HH:mm"))</td>
+                <td>@(admin.HUpdateAt?.ToString("yyyy-MM-dd HH:mm"))</td>
+                <td>
+                    @if (admin.HRoleLevel != "超級管理員")
+                    {
+                        <button class="btn btn-sm btn-warning" onclick="editAdmin(@admin.HAdminId)">編輯</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAdmin(@admin.HAdminId)">刪除</button>
+                    }
+                    else
+                    {
+                        <span class="text-muted">（保護中）</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

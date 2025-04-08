@@ -1,0 +1,28 @@
+﻿@model IEnumerable<GeeYeangSore.Models.HAdmin>
+
+@{
+    ViewBag.Title = "管理員權限管理";
+}
+
+<h2>管理員權限管理</h2>
+
+<form method="get" asp-action="AdminManagement" asp-controller="AdminManagement">
+    <div class="form-inline mb-3">
+        <label for="searchAccount" class="me-2">搜尋帳號：</label>
+        <input type="text" name="searchAccount" class="form-control me-2" placeholder="輸入帳號" />
+        <button type="submit" class="btn btn-primary">搜尋</button>
+    </div>
+
+    <div class="mb-3 d-flex justify-content-between">
+        <h3>管理員列表</h3>
+        <button class="btn btn-success" onclick="showCreateModal()">➕ 新增管理員</button>
+    </div>
+
+    <!-- 🔽 彈出視窗區域（空容器，之後載入 Partial） -->
+    <div id="adminModalContainer"></div>
+
+</form>
+
+<div id="adminListContainer">
+    @await Html.PartialAsync("~/Areas/Admin/Partials/UserManagement/_AdminListPartial.cshtml", Model)
+</div>
