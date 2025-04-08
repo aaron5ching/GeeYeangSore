@@ -5,9 +5,55 @@
 @* 私人訊息管理頁面 *@
 @model IEnumerable<GeeYeangSore.Models.HMessage>
 
+@{
+    var userNames = ViewBag.UserNames as Dictionary<(int?, string), string>;
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .table thead th {
+        background-color: #F0F9F8;
+        color: #222222;
+        border-bottom: 2px solid #3CDDD2;
+    }
+
+    .table tbody tr:hover {
+        background-color: #F0F9F8;
+    }
+
+    .modal-header {
+        background-color: #F0F9F8;
+        border-bottom: 2px solid #3CDDD2;
+    }
+
+    .modal-title {
+        color: #222222;
+    }
+</style>
+
 <div class="container-fluid px-4">
-    @* 頁面標題 *@
-    <h2 class="mb-4">私人訊息管理</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 style="color: #222222;">私人訊息管理</h2>
+        <a href="/Admin/Home/Index" class="btn btn-main">返回首頁</a>
+    </div>
+
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -16,55 +62,78 @@
         </div>
     }
 
-    @* 搜尋表單 *@
-    <form method="get" class="mb-4">
-        <div class="input-group" style="max-width: 400px;">
-            @* 搜尋輸入框，使用 ViewBag.SearchString 保持搜尋條件 *@
-            <input type="text" name="searchString" value="@(ViewBag.SearchString?.ToString().Trim())"
-                class="form-control" placeholder="搜尋私人訊息" />
-            <div class="input-group-append">
-                <button type="submit" class="btn btn-primary">搜尋</button>
+    <div class="search-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="searchString" class="form-control" placeholder="搜尋訊息內容..."
+                    value="@ViewBag.CurrentFilter">
             </div>
-        </div>
-    </form>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-main">搜尋</button>
+            </div>
+        </form>
+    </div>
 
     @* 訊息列表表格 *@
     <div class="table-responsive">
         <table class="table table-hover">
-            <thead class="thead-light">
+            <thead>
                 <tr>
-                    @* 表格欄位寬度設定 *@
-                    <th style="width: 15%">發送者</th>
-                    <th style="width: 15%">接收者</th>
-                    <th style="width: 40%">訊息內容</th>
-                    <th style="width: 15%">時間</th>
-                    <th style="width: 15%">操作</th>
+                    <th>訊息編號</th>
+                    <th>發送者</th>
+                    <th>接收者</th>
+                    <th>訊息內容</th>
+                    <th>發送時間</th>
+                    <th>狀態</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
-                @* 遍歷訊息列表 *@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.HSenderId (@item.HSenderRole)</td>
-                        <td>@item.HReceiverId (@item.HReceiverRole)</td>
-                        <td>@item.HContent</td>
-                        <td>@(item.HTimestamp?.ToString("yyyy-MM-dd HH:mm"))</td>
+                        <td>@item.HMessageId</td>
                         <td>
-                            @* 操作按鈕 *@
-                            <a class="btn btn-primary btn-sm" asp-area="Admin" asp-controller="PrivateMessages"
-                                asp-action="PrivateChat" asp-route-senderId="@item.HSenderId"
-                                asp-route-receiverId="@item.HReceiverId">查看對話</a>
-                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#reportModal" data-message-id="@item.HMessageId">
-                                檢舉
-                            </button>
-                            <form asp-action="Delete" method="post" asp-area="Admin" asp-controller="PrivateMessages"
-                                asp-route-id="@item.HMessageId" onsubmit="return confirm('確定要刪除這則訊息嗎？');"
-                                style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-danger btn-sm">刪除</button>
-                            </form>
+                            @{
+                                var senderKey = (item.HSenderId, item.HSenderRole);
+                                var senderName = userNames?.GetValueOrDefault(senderKey) ?? "未知用戶";
+                            }
+                            @senderName
+                        </td>
+                        <td>
+                            @{
+                                var receiverKey = (item.HReceiverId, item.HReceiverRole);
+                                var receiverName = userNames?.GetValueOrDefault(receiverKey) ?? "未知用戶";
+                            }
+                            @receiverName
+                        </td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                            title="@item.HContent">@item.HContent</td>
+                        <td>@item.HTimestamp?.ToString("yyyy/MM/dd HH:mm")</td>
+                        <td>
+                            @{
+                                var statusClass = item.HIsDeleted == 1 ? "badge bg-danger" : "badge bg-success";
+                                var statusText = item.HIsDeleted == 1 ? "已刪除" : "正常";
+                            }
+                            <span class="@statusClass">@statusText</span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-main" data-bs-toggle="modal"
+                                    data-bs-target="#messageModal" data-message-id="@item.HMessageId"
+                                    data-sender-id="@item.HSenderId" data-receiver-id="@item.HReceiverId"
+                                    data-sender="@($"{item.HSenderId} ({item.HSenderRole})")"
+                                    data-receiver="@($"{item.HReceiverId} ({item.HReceiverRole})")">
+                                    查看詳情
+                                </button>
+                                @if (item.HIsDeleted != 1)
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="deleteMessage(@item.HMessageId)">
+                                        刪除
+                                    </button>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }
@@ -90,44 +159,130 @@
     }
 </div>
 
-<!-- 檢舉 Modal -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- 訊息詳情Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="post" asp-action="Report" asp-area="Admin" asp-controller="PrivateMessages">
-                @Html.AntiForgeryToken()
-                <div class="modal-header">
-                    <h5 class="modal-title" id="reportModalLabel">檢舉私人訊息</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">對話詳情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-info mb-3">
+                    <p><strong>對話者：</strong><span id="modalSender"></span> 與 <span id="modalReceiver"></span></p>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" id="messageId" name="messageId" />
-                    <div class="mb-3">
-                        <label for="reason" class="form-label">檢舉原因</label>
-                        <textarea class="form-control" id="reason" name="reason" required></textarea>
-                    </div>
+                <div id="chatMessages" class="chat-messages" style="max-height: 400px; overflow-y: auto;">
+                    <!-- 訊息將由 JavaScript 動態載入 -->
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-danger">送出檢舉</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        // 確保 Bootstrap 已經載入
         document.addEventListener('DOMContentLoaded', function () {
-            var reportModal = document.getElementById('reportModal');
-            if (reportModal) {
-                reportModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var messageId = button.getAttribute('data-message-id');
-                    var inputMessageId = reportModal.querySelector('#messageId');
-                    inputMessageId.value = messageId;
+            // 獲取 Modal 實例
+            var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+
+            // 為所有「查看詳情」按鈕添加點擊事件
+            document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const senderId = this.getAttribute('data-sender-id');
+                    const receiverId = this.getAttribute('data-receiver-id');
+                    document.getElementById('modalSender').textContent = this.getAttribute('data-sender');
+                    document.getElementById('modalReceiver').textContent = this.getAttribute('data-receiver');
+
+                    // 獲取對話記錄
+                    fetch(`/Admin/PrivateMessages/GetChatHistory?senderId=${senderId}&receiverId=${receiverId}`)
+                        .then(response => response.json())
+                        .then(messages => {
+                            const chatContainer = document.getElementById('chatMessages');
+                            chatContainer.innerHTML = ''; // 清空現有內容
+
+                            messages.forEach(message => {
+                                const messageDiv = document.createElement('div');
+                                messageDiv.className = `chat-message ${message.hSenderId == senderId ? 'sender' : 'receiver'} mb-3`;
+                                messageDiv.innerHTML = `
+                                                    <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
+                                                         style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
+                                                                max-width: 80%; 
+                                                                margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
+                                                        <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
+                                                        <div class="message-text">${message.hContent}</div>
+                                                        <div class="message-time text-muted small">
+                                                            ${new Date(message.hTimestamp).toLocaleString()}
+                                                            ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
+                                                        </div>
+                                                    </div>
+                                                `;
+                                chatContainer.appendChild(messageDiv);
+                            });
+
+                            // 滾動到最新訊息
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('載入對話記錄失敗，請稍後再試。');
+                        });
+
+                    messageModal.show();
                 });
-            }
+            });
         });
+
+        // 刪除訊息
+        function deleteMessage(messageId) {
+            if (confirm('確定要刪除此訊息嗎？')) {
+                // 獲取防偽令牌
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch(`/Admin/PrivateMessages/Delete/${messageId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('刪除失敗，請稍後再試。');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('刪除失敗，請稍後再試。');
+                    });
+            }
+        }
     </script>
+
+    <style>
+        .chat-messages {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .message-content {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-content.deleted {
+            opacity: 0.7;
+        }
+
+        .chat-message {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
 }
+
+@* 添加防偽令牌 *@
+@Html.AntiForgeryToken()
