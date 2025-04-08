@@ -38,7 +38,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         /// <returns>群組列表視圖，包含分頁資訊和搜尋結果</returns>
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             // 只顯示群組對話
@@ -86,7 +86,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [Route("Admin/GroupMessages/GroupChat/{chatId}")]
         public async Task<IActionResult> GroupChat(int chatId)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             // 獲取該群組的所有訊息，包含檢舉資訊
@@ -162,8 +162,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [Route("Admin/GroupMessages/Delete/{chatId}")]
         public async Task<IActionResult> Delete(int chatId)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                return Json(new { success = false, message = "權限不足" });
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             try
             {
@@ -194,7 +194,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Report(int messageId, string reason)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var message = await _context.HMessages.FindAsync(messageId);
@@ -229,7 +229,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         /// <returns>檢舉列表視圖，包含檢舉記錄和相關操作按鈕</returns>
         public async Task<IActionResult> ReportList(string status = null)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             // 只查詢群組訊息的檢舉
@@ -273,35 +273,35 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateReportStatus(int reportId, string status)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                return Json(new { success = false, message = "權限不足" });
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             try
             {
                 // 先獲取當前管理員帳號
                 if (string.IsNullOrEmpty(LoginedUser))
                 {
-                    return Json(new { success = false, message = "請先登入" });
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
                 }
 
                 // 使用管理員帳號查找管理員記錄
                 var admin = await _context.HAdmins.FirstOrDefaultAsync(a => a.HAccount == LoginedUser);
                 if (admin == null)
                 {
-                    return Json(new { success = false, message = $"找不到管理員帳號 {LoginedUser} 的記錄" });
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
                 }
 
                 // 獲取檢舉記錄
                 var report = await _context.HReports.FindAsync(reportId);
                 if (report == null)
                 {
-                    return Json(new { success = false, message = "找不到檢舉記錄" });
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
                 }
 
                 // 檢查狀態是否有效
                 if (status != "已核准" && status != "已拒絕")
                 {
-                    return Json(new { success = false, message = "無效的狀態值" });
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
                 }
 
                 // 更新檢舉狀態
