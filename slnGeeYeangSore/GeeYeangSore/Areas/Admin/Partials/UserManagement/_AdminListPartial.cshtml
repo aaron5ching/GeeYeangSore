@@ -1,15 +1,21 @@
 ﻿@model IEnumerable<GeeYeangSore.Models.HAdmin>
 
-<table class="table table-bordered table-hover">
+<style>
+    table td, table th {
+        white-space: nowrap;
+    }
+</style>
+
+<table class="table table-bordered table-hover table-sm w-auto">
     <thead>
         <tr>
-            <th>管理者ID</th>
-            <th>帳號</th>
-            <th>密碼</th>
-            <th>權限</th>
-            <th>建立時間</th>
-            <th>更新時間</th>
-            <th>操作</th>
+            <th style="width: 100px;">管理者ID</th>
+            <th style="width: 150px;">帳號</th>
+            <th style="width: 150px;">密碼</th>
+            <th style="width: 130px;">權限</th>
+            <th style="width: 180px;">建立時間</th>
+            <th style="width: 180px;">更新時間</th>
+            <th style="width: 120px;">操作</th>
         </tr>
     </thead>
     <tbody>

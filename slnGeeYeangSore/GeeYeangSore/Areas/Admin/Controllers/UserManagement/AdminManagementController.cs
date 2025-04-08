@@ -27,5 +27,33 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             // 🐥 傳送資料至主頁
             return View("~/Areas/Admin/Views/User/AdminManagement.cshtml", admins);
         }
+
+
+
+        // ✅ GET：顯示新增表單
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return PartialView("~/Areas/Admin/Partials/UserManagement/_CreateAdminPartial.cshtml", new HAdmin());
+        }
+
+        // ✅ POST：接收建立表單
+        [HttpPost]
+        public IActionResult Create([FromBody] HAdmin newAdmin)
+        {
+            if (string.IsNullOrWhiteSpace(newAdmin.HAccount) || string.IsNullOrWhiteSpace(newAdmin.HPassword))
+            {
+                return BadRequest("帳號或密碼不得為空");
+            }
+
+            newAdmin.HCreatedAt = DateTime.Now;
+            newAdmin.HUpdateAt = DateTime.Now;
+            _context.HAdmins.Add(newAdmin);
+            _context.SaveChanges();
+
+            return Ok();
+        }
+
+
     }
 }

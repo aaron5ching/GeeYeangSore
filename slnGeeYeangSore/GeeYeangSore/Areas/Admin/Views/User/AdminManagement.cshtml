@@ -1,28 +1,72 @@
 ﻿@model IEnumerable<GeeYeangSore.Models.HAdmin>
 
 @{
-    ViewBag.Title = "管理員權限管理";
+    ViewBag.Title = "管理員權限";
 }
 
-<h2>管理員權限管理</h2>
+<h2>管理員權限</h2>
 
 <form method="get" asp-action="AdminManagement" asp-controller="AdminManagement">
     <div class="form-inline mb-3">
-        <label for="searchAccount" class="me-2">搜尋帳號：</label>
-        <input type="text" name="searchAccount" class="form-control me-2" placeholder="輸入帳號" />
-        <button type="submit" class="btn btn-primary">搜尋</button>
+        <input type="text" name="searchAccount" class="form-control form-control-sm me-2 w-auto" placeholder="輸入管理員帳號" />
+        <button type="submit" class="btn btn-primary" style="width: 150px;">搜尋</button>
     </div>
 
     <div class="mb-3 d-flex justify-content-between">
-        <h3>管理員列表</h3>
-        <button class="btn btn-success" onclick="showCreateModal()">➕ 新增管理員</button>
+        <button type="button" class="btn btn-success" onclick="showCreateModal()">新增管理員</button>
     </div>
 
-    <!-- 🔽 彈出視窗區域（空容器，之後載入 Partial） -->
+    <!-- 🔽 彈出視窗容器 -->
     <div id="adminModalContainer"></div>
-
 </form>
 
+<!-- 🔽 管理員清單 -->
 <div id="adminListContainer">
     @await Html.PartialAsync("~/Areas/Admin/Partials/UserManagement/_AdminListPartial.cshtml", Model)
 </div>
+
+@section Scripts {
+    <script>
+        // ✅ 顯示新增管理員 Modal
+        function showCreateModal() {
+            $.get('/Admin/AdminManagement/Create', function (html) {
+                $('#adminModalContainer').empty().html(html);
+                $('#createAdminModal').modal('show');
+            });
+        }
+
+        // ✅ 表單提交事件處理
+        $(document).on('submit', '#createAdminForm', function (e) {
+            e.preventDefault();
+
+            const account = this.HAccount.value.trim();
+            const password = this.HPassword.value.trim();
+            const roleLevel = this.HRoleLevel.value;
+
+            // ✅ 前端簡單驗證
+            if (!account || !password) {
+                alert("帳號與密碼不得為空");
+                return;
+            }
+
+            const data = {
+                HAccount: account,
+                HPassword: password,
+                HRoleLevel: roleLevel
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/AdminManagement/Create',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function () {
+                    location.reload(); // 成功後刷新
+                },
+                error: function (xhr) {
+                    alert('建立失敗：' + (xhr.responseText || '未知錯誤'));
+                }
+            });
+        });
+    </script>
+}
