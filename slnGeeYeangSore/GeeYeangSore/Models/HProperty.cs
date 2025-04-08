@@ -49,6 +49,8 @@ public partial class HProperty
 
     public bool? HIsShared { get; set; }
 
+    public string? HStatus { get; set; }
+
     public virtual ICollection<HAd> HAds { get; set; } = new List<HAd>();
 
     public virtual ICollection<HChat> HChats { get; set; } = new List<HChat>();

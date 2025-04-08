@@ -732,6 +732,9 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HZipcode)
                 .HasMaxLength(50)
                 .HasColumnName("h_Zipcode");
+            entity.Property(e => e.HStatus)
+                .HasMaxLength(50)
+                .HasColumnName("h_Status");
 
             entity.HasOne(d => d.HLandlord).WithMany(p => p.HProperties)
                 .HasForeignKey(d => d.HLandlordId)

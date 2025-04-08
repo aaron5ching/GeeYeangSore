@@ -14,14 +14,13 @@
         background-color: #24B4A8;
         color: #222222;
     }
-    .btn-warning {
-        background-color: #F0F9F8;
-        color: #222222;
-        border: 1px solid #666666;
+    .btn-success {
+        background-color: #28a745;
+        color: white;
     }
-    .btn-warning:hover {
-        background-color: #666666;
-        color: #F0F9F8;
+    .btn-success:hover {
+        background-color: #218838;
+        color: white;
     }
     .card {
         background-color: #F0F9F8;
@@ -70,9 +69,20 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1>房源詳細資訊</h1>
                 <div>
-                    <a asp-action="Edit" asp-route-id="@Model.HPropertyId" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> 編輯
-                    </a>
+                    <form asp-action="Approve" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.HPropertyId" />
+                        <button type="submit" class="btn btn-success" onclick="return confirm('確定要通過此房源嗎？')">
+                            <i class="fas fa-check"></i> 通過審核
+                        </button>
+                    </form>
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.HPropertyId" />
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除此房源嗎？')">
+                            <i class="fas fa-trash"></i> 刪除
+                        </button>
+                    </form>
                     <a asp-action="Index" class="btn btn-main">返回列表</a>
                 </div>
             </div>

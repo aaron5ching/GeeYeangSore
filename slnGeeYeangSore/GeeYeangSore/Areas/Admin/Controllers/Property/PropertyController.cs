@@ -11,12 +11,14 @@ using X.PagedList.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Collections.Generic;
 
 namespace GeeYeangSore.Areas.Admin.Controllers.Property
 {
     /// <summary>
     /// 房源管理控制器
     /// </summary>
+    /// // GET:https://localhost:7022/Admin/Property/Index
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
     public class PropertyController : Controller
@@ -39,17 +41,27 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
         /// </summary>
         /// <param name="searchString">搜尋關鍵字</param>
         /// <param name="searchType">搜尋類型</param>
+        /// <param name="sortOrder">排序參數</param>
         /// <param name="page">當前頁碼</param>
         /// <returns>房源列表視圖</returns>
-        public async Task<IActionResult> Index(string searchString, string searchType, int page = 1)
+        public async Task<IActionResult> Index(string searchString, string searchType, string sortOrder, int page = 1)
         {
             try
             {
                 int pageSize = 15; // 每頁15筆資料
 
+                // 設置排序參數
+                ViewData["IdSort"] = string.IsNullOrEmpty(sortOrder) ? "id_desc" : "";
+                ViewData["TitleSort"] = sortOrder == "title" ? "title_desc" : "title";
+                ViewData["LandlordSort"] = sortOrder == "landlord" ? "landlord_desc" : "landlord";
+                ViewData["AddressSort"] = sortOrder == "address" ? "address_desc" : "address";
+                ViewData["PriceSort"] = sortOrder == "price" ? "price_desc" : "price";
+                ViewData["DateSort"] = sortOrder == "date" ? "date_desc" : "date";
+                ViewData["CurrentSort"] = sortOrder;
+
                 var properties = _context.HProperties
                     .Include(p => p.HLandlord)
-                    .Where(p => p.HLandlord.HStatus == "已驗證")  // 只顯示已驗證房東的房源
+                    .Where(p => p.HStatus == "已驗證" && p.HLandlord.HStatus == "已驗證")  // 同時篩選已驗證的房源和房東
                     .AsQueryable();
 
                 if (!string.IsNullOrEmpty(searchString))
@@ -57,6 +69,12 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
                     searchString = searchString.Trim();
                     switch (searchType?.ToLower())
                     {
+                        case "id":
+                            if (int.TryParse(searchString, out int propertyId))
+                            {
+                                properties = properties.Where(p => p.HPropertyId == propertyId);
+                            }
+                            break;
                         case "title":
                             properties = properties.Where(p => p.HPropertyTitle.Contains(searchString));
                             break;
@@ -72,15 +90,71 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
                         case "landlord":
                             properties = properties.Where(p => p.HLandlord.HLandlordName.Contains(searchString));
                             break;
+                        case "type":
+                            properties = properties.Where(p => p.HPropertyType.Contains(searchString));
+                            break;
+                        case "rent":
+                            if (int.TryParse(searchString, out int rentPrice))
+                            {
+                                properties = properties.Where(p => p.HRentPrice == rentPrice);
+                            }
+                            break;
                         default: // "all" or any other value
-                            properties = properties.Where(p => 
+                            properties = properties.Where(p =>
+                                p.HPropertyId.ToString().Contains(searchString) ||
                                 p.HPropertyTitle.Contains(searchString) ||
                                 p.HAddress.Contains(searchString) ||
                                 p.HCity.Contains(searchString) ||
                                 p.HDistrict.Contains(searchString) ||
+                                p.HPropertyType.Contains(searchString) ||
+                                p.HRentPrice.ToString().Contains(searchString) ||
                                 p.HLandlord.HLandlordName.Contains(searchString));
                             break;
                     }
+                }
+
+                // 根據排序參數進行排序
+                switch (sortOrder)
+                {
+                    case "id_desc":
+                        properties = properties.OrderByDescending(p => p.HPropertyId);
+                        break;
+                    case "id":
+                        properties = properties.OrderBy(p => p.HPropertyId);
+                        break;
+                    case "title_desc":
+                        properties = properties.OrderByDescending(p => p.HPropertyTitle);
+                        break;
+                    case "title":
+                        properties = properties.OrderBy(p => p.HPropertyTitle);
+                        break;
+                    case "landlord_desc":
+                        properties = properties.OrderByDescending(p => p.HLandlord.HLandlordName);
+                        break;
+                    case "landlord":
+                        properties = properties.OrderBy(p => p.HLandlord.HLandlordName);
+                        break;
+                    case "address_desc":
+                        properties = properties.OrderByDescending(p => p.HAddress);
+                        break;
+                    case "address":
+                        properties = properties.OrderBy(p => p.HAddress);
+                        break;
+                    case "price":
+                        properties = properties.OrderBy(p => p.HRentPrice);
+                        break;
+                    case "price_desc":
+                        properties = properties.OrderByDescending(p => p.HRentPrice);
+                        break;
+                    case "date":
+                        properties = properties.OrderBy(p => p.HPublishedDate);
+                        break;
+                    case "date_desc":
+                        properties = properties.OrderByDescending(p => p.HPublishedDate);
+                        break;
+                    default: // "id" or empty
+                        properties = properties.OrderBy(p => p.HPropertyId);
+                        break;
                 }
 
                 ViewData["CurrentFilter"] = searchString;
@@ -112,6 +186,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
             {
                 var property = await _context.HProperties
                     .Include(p => p.HLandlord)
+                    .Include(p => p.HPropertyFeatures)  // 加入房源特色
+                    .Include(p => p.HPropertyImages)    // 加入房源照片
+                    .Where(p => p.HStatus == "已驗證" && p.HLandlord.HStatus == "已驗證")
                     .FirstOrDefaultAsync(m => m.HPropertyId == id);
                 
                 if (property == null)
@@ -165,6 +242,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
                     // 設置創建時間和更新時間
                     property.HPublishedDate = DateTime.Now;
                     property.HLastUpdated = DateTime.Now;
+                    property.HStatus = "待審核"; // 設置初始狀態為待審核
                     
                     // 設置其他預設值
                     property.HScore = string.IsNullOrEmpty(property.HScore) ? "0" : property.HScore;
@@ -198,6 +276,18 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
 
                             // 保存房源特色
                             _context.Add(features);
+                            await _context.SaveChangesAsync();
+
+                            // 創建審核記錄
+                            var propertyAudit = new HPropertyAudit
+                            {
+                                HPropertyId = property.HPropertyId,
+                                HLandlordId = property.HLandlordId,
+                                HAuditStatus = "待審核",
+                                HAuditDate = DateTime.Now,
+                                HAuditNotes = "新建立的房源，等待管理員審核"
+                            };
+                            _context.HPropertyAudits.Add(propertyAudit);
                             await _context.SaveChangesAsync();
 
                             // 處理照片上傳
@@ -293,11 +383,16 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
             {
                 var property = await _context.HProperties
                     .Include(p => p.HLandlord)
+                    .Include(p => p.HPropertyFeatures)  // 加入房源特色
+                    .Include(p => p.HPropertyImages)    // 加入房源照片
+                    .Where(p => p.HStatus == "已驗證" && p.HLandlord.HStatus == "已驗證")
                     .FirstOrDefaultAsync(m => m.HPropertyId == id);
+                
                 if (property == null)
                 {
                     return NotFound();
                 }
+
                 ViewData["HLandlordId"] = new SelectList(_context.HLandlords, "HLandlordId", "HLandlordName", property.HLandlordId);
                 return View(property);
             }
@@ -315,7 +410,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
         /// <param name="property">更新後的房源資料</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("HPropertyId,HLandlordId,HPropertyTitle,HRentPrice,HAddress,HCity,HDistrict,HZipcode,HPropertyType,HRoomCount,HBathroomCount,HArea,HFloor,HTotalFloors,HDescription,HAvailabilityStatus,HBuildingType,HScore,HIsVip,HIsShared")] HProperty property)
+        public async Task<IActionResult> Edit(int id, 
+            [Bind("HPropertyId,HLandlordId,HPropertyTitle,HRentPrice,HAddress,HCity,HDistrict,HZipcode,HPropertyType,HRoomCount,HBathroomCount,HArea,HFloor,HTotalFloors,HDescription,HAvailabilityStatus,HBuildingType,HScore,HIsVip,HIsShared")] HProperty property,
+            List<IFormFile> images, List<int> deletedImageIds)
         {
             if (id != property.HPropertyId)
             {
@@ -326,10 +423,109 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
             {
                 try
                 {
-                    property.HLastUpdated = DateTime.Now;
-                    _context.Update(property);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
+                    // 開始交易
+                    using (var transaction = await _context.Database.BeginTransactionAsync())
+                    {
+                        try
+                        {
+                            // 更新房源基本資訊
+                            property.HLastUpdated = DateTime.Now;
+                            _context.Update(property);
+
+                            // 處理要刪除的照片
+                            if (deletedImageIds != null && deletedImageIds.Any())
+                            {
+                                var imagesToDelete = await _context.HPropertyImages
+                                    .Where(img => deletedImageIds.Contains(img.HImageId))
+                                    .ToListAsync();
+
+                                foreach (var image in imagesToDelete)
+                                {
+                                    if (!string.IsNullOrEmpty(image.HImageUrl))
+                                    {
+                                        string imagePath = Path.Combine(_webHostEnvironment.WebRootPath, image.HImageUrl.TrimStart('/'));
+                                        if (System.IO.File.Exists(imagePath))
+                                        {
+                                            System.IO.File.Delete(imagePath);
+                                        }
+                                    }
+                                }
+                                _context.HPropertyImages.RemoveRange(imagesToDelete);
+                            }
+
+                            // 更新房源特色
+                            var features = await _context.HPropertyFeatures
+                                .FirstOrDefaultAsync(f => f.HPropertyId == id);
+                            
+                            if (features != null)
+                            {
+                                features.HAllowsAnimals = Request.Form["HAllowsAnimals"] == "true";
+                                features.HHasFurniture = Request.Form["HHasFurniture"] == "true";
+                                features.HInternet = Request.Form["HInternet"] == "true";
+                                features.HAirConditioning = Request.Form["HAirConditioning"] == "true";
+                                features.HTv = Request.Form["HTv"] == "true";
+                                features.HRefrigerator = Request.Form["HRefrigerator"] == "true";
+                                features.HWashingMachine = Request.Form["HWashingMachine"] == "true";
+                                features.HBed = Request.Form["HBed"] == "true";
+                                features.HWaterHeater = Request.Form["HWaterHeater"] == "true";
+                                features.HGasStove = Request.Form["HGasStove"] == "true";
+                                features.HParking = Request.Form["HParking"] == "true";
+                                features.HBalcony = Request.Form["HBalcony"] == "true";
+                                
+                                _context.Update(features);
+                            }
+
+                            // 處理新上傳的照片
+                            if (images != null && images.Count > 0)
+                            {
+                                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "Property");
+                                if (!Directory.Exists(uploadsFolder))
+                                {
+                                    Directory.CreateDirectory(uploadsFolder);
+                                }
+
+                                foreach (var image in images)
+                                {
+                                    if (image.Length > 0)
+                                    {
+                                        // 生成唯一的檔案名
+                                        string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                                        // 保存檔案
+                                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                                        {
+                                            await image.CopyToAsync(fileStream);
+                                        }
+
+                                        // 創建圖片記錄
+                                        var propertyImage = new HPropertyImage
+                                        {
+                                            HPropertyId = property.HPropertyId,
+                                            HLandlordId = property.HLandlordId,
+                                            HImageUrl = "/images/Property/" + uniqueFileName,
+                                            HUploadedDate = DateTime.Now,
+                                            HLastUpDated = DateTime.Now
+                                        };
+
+                                        _context.HPropertyImages.Add(propertyImage);
+                                    }
+                                }
+                            }
+
+                            await _context.SaveChangesAsync();
+                            await transaction.CommitAsync();
+
+                            TempData["SuccessMessage"] = "房源更新成功！";
+                            return RedirectToAction(nameof(Index));
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync();
+                            _logger.LogError(ex, "Error occurred while updating property");
+                            ModelState.AddModelError("", "更新房源時發生錯誤，請稍後再試");
+                        }
+                    }
                 }
                 catch (DbUpdateConcurrencyException ex)
                 {
@@ -349,6 +545,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
                     ModelState.AddModelError("", "更新房源時發生錯誤，請稍後再試");
                 }
             }
+
+            // 如果更新失敗，重新載入房東列表並返回視圖
             ViewData["HLandlordId"] = new SelectList(_context.HLandlords, "HLandlordId", "HLandlordName", property.HLandlordId);
             return View(property);
         }
@@ -368,7 +566,11 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
             {
                 var property = await _context.HProperties
                     .Include(p => p.HLandlord)
+                    .Include(p => p.HPropertyAudits)
+                    .Include(p => p.HPropertyFeatures)
+                    .Include(p => p.HPropertyImages)
                     .FirstOrDefaultAsync(m => m.HPropertyId == id);
+                
                 if (property == null)
                 {
                     return NotFound();
@@ -393,15 +595,72 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
         {
             try
             {
-                var property = await _context.HProperties.FindAsync(id);
-                if (property == null)
+                // 開始交易
+                using (var transaction = await _context.Database.BeginTransactionAsync())
                 {
-                    return NotFound();
-                }
+                    try
+                    {
+                        // 獲取房源及其相關資料
+                        var property = await _context.HProperties
+                            .Include(p => p.HPropertyAudits)
+                            .Include(p => p.HPropertyFeatures)
+                            .Include(p => p.HPropertyImages)
+                            .FirstOrDefaultAsync(p => p.HPropertyId == id);
 
-                _context.HProperties.Remove(property);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                        if (property == null)
+                        {
+                            return NotFound();
+                        }
+
+                        // 刪除房源審核記錄
+                        if (property.HPropertyAudits != null)
+                        {
+                            _context.HPropertyAudits.RemoveRange(property.HPropertyAudits);
+                        }
+
+                        // 刪除房源特色
+                        if (property.HPropertyFeatures != null)
+                        {
+                            _context.HPropertyFeatures.RemoveRange(property.HPropertyFeatures);
+                        }
+
+                        // 刪除房源圖片
+                        if (property.HPropertyImages != null)
+                        {
+                            // 刪除實體圖片文件
+                            foreach (var image in property.HPropertyImages)
+                            {
+                                if (!string.IsNullOrEmpty(image.HImageUrl))
+                                {
+                                    string imagePath = Path.Combine(_webHostEnvironment.WebRootPath, image.HImageUrl.TrimStart('/'));
+                                    if (System.IO.File.Exists(imagePath))
+                                    {
+                                        System.IO.File.Delete(imagePath);
+                                    }
+                                }
+                            }
+                            _context.HPropertyImages.RemoveRange(property.HPropertyImages);
+                        }
+
+                        // 刪除房源本身
+                        _context.HProperties.Remove(property);
+
+                        // 保存所有更改
+                        await _context.SaveChangesAsync();
+
+                        // 提交交易
+                        await transaction.CommitAsync();
+
+                        return RedirectToAction(nameof(Index));
+                    }
+                    catch (Exception ex)
+                    {
+                        // 回滾交易
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Error occurred while deleting property and its related data");
+                        return View("Error");
+                    }
+                }
             }
             catch (Exception ex)
             {
