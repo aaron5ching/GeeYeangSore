@@ -1,0 +1,193 @@
+@* 定義視圖模型為房源實體 *@
+@model GeeYeangSore.Models.HProperty
+
+@{
+    ViewData["Title"] = "編輯房源";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-warning {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .btn-warning:hover {
+        background-color: #666666;
+        color: #F0F9F8;
+    }
+    .form-control {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .form-control:focus {
+        background-color: #F0F9F8;
+        color: #222222;
+        border-color: #3CDDD2;
+        box-shadow: 0 0 0 0.25rem rgba(60, 221, 210, 0.25);
+    }
+    .form-label {
+        color: #222222;
+    }
+    .text-danger {
+        color: #dc3545 !important;
+    }
+</style>
+
+<h1 style="color: #222222;">編輯房源</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @* 隱藏欄位：房源ID *@
+            <input type="hidden" asp-for="HPropertyId" />
+            
+            <div class="form-group mb-3">
+                <label asp-for="HLandlordId" class="control-label">房東</label>
+                <select asp-for="HLandlordId" class="form-control" asp-items="ViewBag.HLandlordId"></select>
+                <span asp-validation-for="HLandlordId" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="HPropertyTitle" class="control-label">房源標題</label>
+                        <input asp-for="HPropertyTitle" class="form-control" />
+                        <span asp-validation-for="HPropertyTitle" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HRentPrice" class="control-label">租金價格</label>
+                        <input asp-for="HRentPrice" class="form-control" />
+                        <span asp-validation-for="HRentPrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HAddress" class="control-label">地址</label>
+                        <input asp-for="HAddress" class="form-control" />
+                        <span asp-validation-for="HAddress" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HCity" class="control-label">城市</label>
+                        <input asp-for="HCity" class="form-control" />
+                        <span asp-validation-for="HCity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HDistrict" class="control-label">區域</label>
+                        <input asp-for="HDistrict" class="form-control" />
+                        <span asp-validation-for="HDistrict" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HZipcode" class="control-label">郵遞區號</label>
+                        <input asp-for="HZipcode" class="form-control" />
+                        <span asp-validation-for="HZipcode" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="HPropertyType" class="control-label">房源類型</label>
+                        <input asp-for="HPropertyType" class="form-control" />
+                        <span asp-validation-for="HPropertyType" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HRoomCount" class="control-label">房間數量</label>
+                        <input asp-for="HRoomCount" class="form-control" />
+                        <span asp-validation-for="HRoomCount" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HBathroomCount" class="control-label">浴室數量</label>
+                        <input asp-for="HBathroomCount" class="form-control" />
+                        <span asp-validation-for="HBathroomCount" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HArea" class="control-label">面積</label>
+                        <input asp-for="HArea" class="form-control" />
+                        <span asp-validation-for="HArea" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HFloor" class="control-label">樓層</label>
+                        <input asp-for="HFloor" class="form-control" />
+                        <span asp-validation-for="HFloor" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HTotalFloors" class="control-label">總樓層</label>
+                        <input asp-for="HTotalFloors" class="form-control" />
+                        <span asp-validation-for="HTotalFloors" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HDescription" class="control-label">描述</label>
+                <textarea asp-for="HDescription" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="HDescription" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HAvailabilityStatus" class="control-label">狀態</label>
+                <select asp-for="HAvailabilityStatus" class="form-control">
+                    <option value="可租">可租</option>
+                    <option value="已租">已租</option>
+                    <option value="維護中">維護中</option>
+                </select>
+                <span asp-validation-for="HAvailabilityStatus" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HBuildingType" class="control-label">建築類型</label>
+                <input asp-for="HBuildingType" class="form-control" />
+                <span asp-validation-for="HBuildingType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HScore" class="control-label">評分</label>
+                <input asp-for="HScore" class="form-control" />
+                <span asp-validation-for="HScore" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input asp-for="HIsVip" class="form-check-input" />
+                    <label asp-for="HIsVip" class="form-check-label">VIP房源</label>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input asp-for="HIsShared" class="form-check-input" />
+                    <label asp-for="HIsShared" class="form-check-label">合租</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="儲存" class="btn btn-main" />
+                <a asp-action="Index" class="btn btn-warning">返回列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* 引入驗證腳本 *@
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

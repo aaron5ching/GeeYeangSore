@@ -1,0 +1,143 @@
+@* 定義視圖模型為房源集合 *@
+@model X.PagedList.IPagedList<GeeYeangSore.Models.HProperty>
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+@{
+    ViewData["Title"] = "房源列表";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-warning {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .btn-warning:hover {
+        background-color: #666666;
+        color: #F0F9F8;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: #ffffff;
+        border: none;
+    }
+    .btn-danger:hover {
+        background-color: #bb2d3b;
+        color: #ffffff;
+    }
+    .table {
+        background-color: #F0F9F8;
+    }
+    .table th {
+        color: #222222;
+    }
+    .table td {
+        color: #666666;
+    }
+    .pagination .page-link {
+        color: #007A75;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: #222222;
+    }
+</style>
+
+<h1 style="color: #222222;">房源列表</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="background-color: #F0F9F8; color: #222222; border-color: #3CDDD2;">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@* 新增房源按鈕 *@
+<p>
+    <a asp-action="Create" class="btn btn-main">新增房源</a>
+</p>
+
+@* 搜尋表單 *@
+<div class="row mb-3">
+    <div class="row-cols-md-4">
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="searchString" class="form-control" placeholder="搜尋房源標題..." value="@ViewData["CurrentFilter"]" style="background-color: #F0F9F8; color: #222222;" />
+                <button type="submit" class="btn btn-main">搜尋房源</button>
+            </div>
+        </form>
+    </div>
+    <div class="row-cols-md-4">
+        <form asp-action="Index" method="get">
+            <div class="input-group">
+                <input type="text" name="landlordName" class="form-control" placeholder="搜尋房東名稱..." value="@ViewData["LandlordFilter"]" style="background-color: #F0F9F8; color: #222222;" />
+                <button type="submit" class="btn btn-main">搜尋房東</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* 房源列表表格 *@
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            @* 表頭：顯示欄位名稱 *@
+            <th style="width: 15%">房源標題</th>
+            <th style="width: 5%">租金價格</th>
+            <th style="width: 8%">地址</th>
+            <th style="width: 5%">城市</th>
+            <th style="width: 5%">區域</th>
+            <th style="width: 5%">房源類型</th>
+            <th style="width: 5%">房東名稱</th>
+            <th style="width: 16%">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @* 遍歷房源列表，顯示每一筆資料 *@
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td class="text-truncate" style="max-width: 200px;">@Html.DisplayFor(modelItem => item.HPropertyTitle)</td>
+                <td>@Html.DisplayFor(modelItem => item.HRentPrice)</td>
+                <td class="text-truncate" style="max-width: 200px;">@Html.DisplayFor(modelItem => item.HAddress)</td>
+                <td>@Html.DisplayFor(modelItem => item.HCity)</td>
+                <td>@Html.DisplayFor(modelItem => item.HDistrict)</td>
+                <td>@Html.DisplayFor(modelItem => item.HPropertyType)</td>
+                <td>@(item.HLandlord?.HLandlordName ?? "未設定")</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a asp-action="Details" asp-route-id="@item.HPropertyId" class="btn btn-main btn-sm">詳細資訊</a>
+                        <a asp-action="Edit" asp-route-id="@item.HPropertyId" class="btn btn-warning btn-sm">編輯</a>
+                        <a asp-action="Delete" asp-route-id="@item.HPropertyId" class="btn btn-danger btn-sm">刪除</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@* 分頁控制項 *@
+<div class="d-flex justify-content-center">
+    @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewData["CurrentFilter"] }), 
+        new PagedListRenderOptions {
+            LiElementClasses = new string[] { "page-item" },
+            PageClasses = new string[] { "page-link" },
+            UlElementClasses = new string[] { "pagination" },
+            DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+            DisplayLinkToLastPage = PagedListDisplayMode.Always,
+            DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+            DisplayLinkToNextPage = PagedListDisplayMode.Always
+        })
+</div> 

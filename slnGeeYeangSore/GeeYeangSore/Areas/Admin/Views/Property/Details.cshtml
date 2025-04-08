@@ -1,0 +1,165 @@
+@model GeeYeangSore.Models.HProperty
+
+@{
+    ViewData["Title"] = "房源詳細資訊";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-warning {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .btn-warning:hover {
+        background-color: #666666;
+        color: #F0F9F8;
+    }
+    .card {
+        background-color: #F0F9F8;
+    }
+    .card-header {
+        background-color: #3CDDD2 !important;
+        color: #222222 !important;
+    }
+    dt {
+        color: #222222;
+    }
+    dd {
+        color: #666666;
+    }
+</style>
+
+<div class="ms-1 mt-0" style="max-width: 1200px;">
+    <div class="d-flex justify-content-between align-items-center mb-0">
+        <h1 style="color: #222222;">房源詳細資訊</h1>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.HPropertyId" class="btn btn-warning">編輯</a>
+            <a asp-action="Index" class="btn btn-main">返回列表</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card mb-0">
+                <div class="card-header">
+                    <h5 class="mb-0">基本資訊</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-2">房源ID</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HPropertyId)</dd>
+
+                        <dt class="col-sm-2">房東ID</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HLandlordId)</dd>
+
+                        <dt class="col-sm-2">房源標題</dt>
+                        <dd class="col-sm-10">@Html.DisplayFor(model => model.HPropertyTitle)</dd>
+
+                        <dt class="col-sm-2">房源描述</dt>
+                        <dd class="col-sm-10">@Html.DisplayFor(model => model.HDescription)</dd>
+
+                        <dt class="col-sm-2">房源類型</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HPropertyType)</dd>
+
+                        <dt class="col-sm-2">建築類型</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HBuildingType)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card mb-0">
+                <div class="card-header">
+                    <h5 class="mb-0">位置資訊</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-2">地址</dt>
+                        <dd class="col-sm-10">@Html.DisplayFor(model => model.HAddress)</dd>
+
+                        <dt class="col-sm-2">城市</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HCity)</dd>
+
+                        <dt class="col-sm-2">區域</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HDistrict)</dd>
+
+                        <dt class="col-sm-2">郵遞區號</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HZipcode)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card mb-0">
+                <div class="card-header">
+                    <h5 class="mb-0">房屋規格</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-2">房間數量</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HRoomCount)</dd>
+
+                        <dt class="col-sm-2">浴室數量</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HBathroomCount)</dd>
+
+                        <dt class="col-sm-2">面積</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HArea)</dd>
+
+                        <dt class="col-sm-2">樓層</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HFloor)</dd>
+
+                        <dt class="col-sm-2">總樓層</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HTotalFloors)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card mb-0">
+                <div class="card-header">
+                    <h5 class="mb-0">其他資訊</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-2">租金價格</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HRentPrice)</dd>
+
+                        <dt class="col-sm-2">可租狀態</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HAvailabilityStatus)</dd>
+
+                        <dt class="col-sm-2">評分</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HScore)</dd>
+
+                        <dt class="col-sm-2">發布日期</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HPublishedDate)</dd>
+
+                        <dt class="col-sm-2">最後更新</dt>
+                        <dd class="col-sm-4">@Html.DisplayFor(model => model.HLastUpdated)</dd>
+
+                        <dt class="col-sm-2">VIP房源</dt>
+                        <dd class="col-sm-4">@(Model.HIsVip == true ? "是" : "否")</dd>
+
+                        <dt class="col-sm-2">合租房源</dt>
+                        <dd class="col-sm-4">@(Model.HIsShared == true ? "是" : "否")</dd>
+
+                        <dt class="col-sm-2">房東名稱</dt>
+                        <dd class="col-sm-4">@(Model.HLandlord?.HLandlordName ?? "未設定")</dd>
+                    </dl>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,333 @@
+@* 定義視圖模型為房源實體 *@
+@model GeeYeangSore.Models.HProperty
+
+@{
+    ViewData["Title"] = "新增房源";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-warning {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .btn-warning:hover {
+        background-color: #666666;
+        color: #F0F9F8;
+    }
+    .form-control {
+        background-color: #F0F9F8;
+        color: #222222;
+        border: 1px solid #666666;
+    }
+    .form-control:focus {
+        background-color: #F0F9F8;
+        color: #222222;
+        border-color: #3CDDD2;
+        box-shadow: 0 0 0 0.25rem rgba(60, 221, 210, 0.25);
+    }
+    .form-label {
+        color: #222222;
+    }
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    .form-check-input:checked {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin: 10px;
+    }
+    #imagePreviewContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+</style>
+
+<h1 style="color: #222222;">新增房源</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        @* 新增房源表單 *@
+        <form asp-action="Create" enctype="multipart/form-data">
+            @* 顯示模型驗證錯誤摘要 *@
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="HLandlordId" class="control-label">房東</label>
+                <select asp-for="HLandlordId" class="form-control" asp-items="ViewBag.HLandlordId"></select>
+                <span asp-validation-for="HLandlordId" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="HPropertyTitle" class="control-label">房源標題</label>
+                        <input asp-for="HPropertyTitle" class="form-control" />
+                        <span asp-validation-for="HPropertyTitle" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HRentPrice" class="control-label">租金價格</label>
+                        <input asp-for="HRentPrice" class="form-control" />
+                        <span asp-validation-for="HRentPrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HAddress" class="control-label">地址</label>
+                        <input asp-for="HAddress" class="form-control" />
+                        <span asp-validation-for="HAddress" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HCity" class="control-label">城市</label>
+                        <input asp-for="HCity" class="form-control" />
+                        <span asp-validation-for="HCity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HDistrict" class="control-label">區域</label>
+                        <input asp-for="HDistrict" class="form-control" />
+                        <span asp-validation-for="HDistrict" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HZipcode" class="control-label">郵遞區號</label>
+                        <input asp-for="HZipcode" class="form-control" />
+                        <span asp-validation-for="HZipcode" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="HPropertyType" class="control-label">房源類型</label>
+                        <input asp-for="HPropertyType" class="form-control" />
+                        <span asp-validation-for="HPropertyType" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HRoomCount" class="control-label">房間數量</label>
+                        <input asp-for="HRoomCount" class="form-control" />
+                        <span asp-validation-for="HRoomCount" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HBathroomCount" class="control-label">浴室數量</label>
+                        <input asp-for="HBathroomCount" class="form-control" />
+                        <span asp-validation-for="HBathroomCount" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HArea" class="control-label">面積</label>
+                        <input asp-for="HArea" class="form-control" />
+                        <span asp-validation-for="HArea" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HFloor" class="control-label">樓層</label>
+                        <input asp-for="HFloor" class="form-control" />
+                        <span asp-validation-for="HFloor" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="HTotalFloors" class="control-label">總樓層</label>
+                        <input asp-for="HTotalFloors" class="form-control" />
+                        <span asp-validation-for="HTotalFloors" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HDescription" class="control-label">描述</label>
+                <textarea asp-for="HDescription" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="HDescription" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HAvailabilityStatus" class="control-label">狀態</label>
+                <select asp-for="HAvailabilityStatus" class="form-control">
+                    <option value="可租">可租</option>
+                    <option value="已租">已租</option>
+                    <option value="維護中">維護中</option>
+                </select>
+                <span asp-validation-for="HAvailabilityStatus" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HBuildingType" class="control-label">建築類型</label>
+                <input asp-for="HBuildingType" class="form-control" />
+                <span asp-validation-for="HBuildingType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="HScore" class="control-label">評分</label>
+                <input asp-for="HScore" class="form-control" />
+                <span asp-validation-for="HScore" class="text-danger"></span>
+            </div>
+
+            @* 房源特色部分 *@
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">房源特色</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HAllowsDogs" class="form-check-input" />
+                                <label class="form-check-label">允許養狗</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HAllowsCats" class="form-check-input" />
+                                <label class="form-check-label">允許養貓</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HAllowsAnimals" class="form-check-input" />
+                                <label class="form-check-label">允許養寵物</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HAllowsCooking" class="form-check-input" />
+                                <label class="form-check-label">允許煮食</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HHasFurniture" class="form-check-input" />
+                                <label class="form-check-label">附家具</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HInternet" class="form-check-input" />
+                                <label class="form-check-label">網路</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HAirConditioning" class="form-check-input" />
+                                <label class="form-check-label">冷氣</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HSharedRental" class="form-check-input" />
+                                <label class="form-check-label">合租</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HTv" class="form-check-input" />
+                                <label class="form-check-label">電視</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HRefrigerator" class="form-check-input" />
+                                <label class="form-check-label">冰箱</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HWashingMachine" class="form-check-input" />
+                                <label class="form-check-label">洗衣機</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HBed" class="form-check-input" />
+                                <label class="form-check-label">床</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HWaterHeater" class="form-check-input" />
+                                <label class="form-check-label">熱水器</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HGasStove" class="form-check-input" />
+                                <label class="form-check-label">瓦斯爐</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HCableTv" class="form-check-input" />
+                                <label class="form-check-label">有線電視</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HWaterDispenser" class="form-check-input" />
+                                <label class="form-check-label">飲水機</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HParking" class="form-check-input" />
+                                <label class="form-check-label">停車位</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HSocialHousing" class="form-check-input" />
+                                <label class="form-check-label">社會住宅</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HShortTermRent" class="form-check-input" />
+                                <label class="form-check-label">短期租賃</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HPublicElectricity" class="form-check-input" />
+                                <label class="form-check-label">公共電費</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HPublicWatercharges" class="form-check-input" />
+                                <label class="form-check-label">公共水費</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HLandlordShared" class="form-check-input" />
+                                <label class="form-check-label">房東同住</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HBalcony" class="form-check-input" />
+                                <label class="form-check-label">陽台</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="features.HPublicEquipment" class="form-check-input" />
+                                <label class="form-check-label">公共設備</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* 照片上傳部分 *@
+            <div class="form-group mb-3">
+                <label class="control-label">房源照片</label>
+                <input type="file" name="images" multiple class="form-control" accept="image/*" onchange="previewImages(event)" />
+                <div id="imagePreviewContainer"></div>
+            </div>
+
+            @* 表單按鈕 *@
+            <div class="form-group">
+                <input type="submit" value="新增" class="btn btn-main" />
+                <a asp-action="Index" class="btn btn-warning">返回列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function previewImages(event) {
+            const container = document.getElementById('imagePreviewContainer');
+            container.innerHTML = ''; // 清空預覽容器
+            
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'image-preview';
+                        container.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+    </script>
+}
