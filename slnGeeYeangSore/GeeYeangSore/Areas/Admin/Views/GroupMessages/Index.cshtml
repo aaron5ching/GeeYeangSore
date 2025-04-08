@@ -52,7 +52,7 @@
 
     <div class="search-section">
         <form method="get" asp-action="Index" asp-controller="GroupMessages">
-            <div class="input-group">
+            <div class="input-group" style="max-width: 400px;">
                 <input type="text" name="searchString" class="form-control" placeholder="搜尋群組訊息..."
                     value="@ViewBag.SearchString" />
                 <button class="btn btn-main" type="submit">
