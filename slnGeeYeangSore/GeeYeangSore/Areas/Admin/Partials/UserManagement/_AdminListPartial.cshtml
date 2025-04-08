@@ -3,6 +3,8 @@
 <style>
     table td, table th {
         white-space: nowrap;
+        vertical-align: middle;
+        text-align: center;
     }
 </style>
 
@@ -11,34 +13,56 @@
         <tr>
             <th style="width: 100px;">管理者ID</th>
             <th style="width: 150px;">帳號</th>
-            <th style="width: 150px;">密碼</th>
+            @if (ViewBag.IsSuperAdmin == true)
+            {
+                <th style="width: 150px;">密碼</th>
+            }
             <th style="width: 130px;">權限</th>
             <th style="width: 180px;">建立時間</th>
             <th style="width: 180px;">更新時間</th>
-            <th style="width: 120px;">操作</th>
+            @if (ViewBag.IsSuperAdmin == true)
+            {
+                <th style="width: 120px;">操作</th>
+            }
         </tr>
     </thead>
+
     <tbody>
         @foreach (var admin in Model)
         {
             <tr>
                 <td>@admin.HAdminId</td>
                 <td>@admin.HAccount</td>
-                <td>@admin.HPassword</td>
+
+                @if (ViewBag.IsSuperAdmin == true)
+                {
+                    <td>@admin.HPassword</td>
+                }
+
                 <td>@admin.HRoleLevel</td>
                 <td>@(admin.HCreatedAt?.ToString("yyyy-MM-dd HH:mm"))</td>
                 <td>@(admin.HUpdateAt?.ToString("yyyy-MM-dd HH:mm"))</td>
-                <td>
-                    @if (admin.HRoleLevel != "超級管理員")
-                    {
-                        <button class="btn btn-sm btn-warning" onclick="editAdmin(@admin.HAdminId)">編輯</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteAdmin(@admin.HAdminId)">刪除</button>
-                    }
-                    else
-                    {
-                        <span class="text-muted">（保護中）</span>
-                    }
-                </td>
+
+                @if (ViewBag.IsSuperAdmin == true)
+                {
+                    <td class="text-center">
+                        @if (admin.HRoleLevel != "超級管理員")
+                        {
+                            <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
+                                    data-id="@admin.HAdminId">
+                                <i class="fa fa-edit"></i> 編輯
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete"
+                                    data-id="@admin.HAdminId">
+                                <i class="fa fa-trash"></i> 刪除
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted">（保護中）</span>
+                        }
+                    </td>
+                }
             </tr>
         }
     </tbody>

@@ -1,33 +1,51 @@
 ﻿@model IEnumerable<GeeYeangSore.Models.HAdmin>
 
 @{
-    ViewBag.Title = "管理員權限";
+    ViewBag.Title = "管理者權限";
 }
 
-<h2>管理員權限</h2>
+<h2 style="font-style: italic;">管理者權限</h2>
 
+<!-- 🔍 搜尋表單 -->
 <form method="get" asp-action="AdminManagement" asp-controller="AdminManagement">
-    <div class="form-inline mb-3">
-        <input type="text" name="searchAccount" class="form-control form-control-sm me-2 w-auto" placeholder="輸入管理員帳號" />
-        <button type="submit" class="btn btn-primary" style="width: 150px;">搜尋</button>
+    <div class="d-flex align-items-center mb-2" style="gap: 12px;">
+        <input type="text" name="searchAccount" id="searchAccount" class="form-control" placeholder="請輸入管理員帳號" style="width: 300px;" />
+        <button type="button" class="btn btn-secondary" onclick="clearSearch()">清除</button>
+        <button type="submit" class="btn btn-primary" style="width: 160px;">搜尋</button>
     </div>
 
-    <div class="mb-3 d-flex justify-content-between">
-        <button type="button" class="btn btn-success" onclick="showCreateModal()">新增管理員</button>
-    </div>
+    <!-- ✅ 新增管理員按鈕放搜尋列下方 -->
+    @if (ViewBag.IsSuperAdmin == true)
+    {
+        <div class="mt-2">
+            <button type="button" class="btn btn-warning" onclick="showCreateModal()">新增管理員</button>
+        </div>
+    }
 
-    <!-- 🔽 彈出視窗容器 -->
-    <div id="adminModalContainer"></div>
+
+    <hr class="my-3" />
+
 </form>
 
-<!-- 🔽 管理員清單 -->
+<!-- 🔽 彈出視窗容器 -->
+<div id="adminModalContainer"></div>
+
+
+
+<!-- 📋 管理員清單 -->
 <div id="adminListContainer">
     @await Html.PartialAsync("~/Areas/Admin/Partials/UserManagement/_AdminListPartial.cshtml", Model)
 </div>
 
 @section Scripts {
     <script>
-        // ✅ 顯示新增管理員 Modal
+
+
+            function clearSearch() {
+            document.getElementById("searchAccount").value = "";
+            document.forms[0].submit(); // 送出表單，相當於清空條件重新載入
+        }
+
         function showCreateModal() {
             $.get('/Admin/AdminManagement/Create', function (html) {
                 $('#adminModalContainer').empty().html(html);
@@ -35,7 +53,6 @@
             });
         }
 
-        // ✅ 表單提交事件處理
         $(document).on('submit', '#createAdminForm', function (e) {
             e.preventDefault();
 
@@ -43,7 +60,6 @@
             const password = this.HPassword.value.trim();
             const roleLevel = this.HRoleLevel.value;
 
-            // ✅ 前端簡單驗證
             if (!account || !password) {
                 alert("帳號與密碼不得為空");
                 return;
@@ -61,7 +77,7 @@
                 data: JSON.stringify(data),
                 contentType: 'application/json',
                 success: function () {
-                    location.reload(); // 成功後刷新
+                    location.reload();
                 },
                 error: function (xhr) {
                     alert('建立失敗：' + (xhr.responseText || '未知錯誤'));
