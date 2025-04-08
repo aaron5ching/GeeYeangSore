@@ -1,0 +1,37 @@
+﻿@model GeeYeangSore.Models.HAdmin
+
+<div class="modal fade" id="createAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="createAdminForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">新增管理員</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label>帳號：</label>
+                        <input type="text" class="form-control" name="HAccount" required />
+                    </div>
+                    <div class="mb-2">
+                        <label>密碼：</label>
+                        <input type="password" class="form-control" name="HPassword" required />
+                    </div>
+                    <div class="mb-2">
+                        <label>權限：</label>
+                        <select class="form-control" name="HRoleLevel">
+                            <option value="系統管理員">系統管理員</option>
+                            <option value="內容管理員">內容管理員</option>
+                            <option value="客服管理員">客服管理員</option>
+                            <option value="財務管理員">財務管理員</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
