@@ -35,7 +35,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
             _logger = logger;
             _webHostEnvironment = webHostEnvironment;
         }
-
+        
         /// <summary>
         /// 房源列表頁面，支援搜尋功能
         /// </summary>
