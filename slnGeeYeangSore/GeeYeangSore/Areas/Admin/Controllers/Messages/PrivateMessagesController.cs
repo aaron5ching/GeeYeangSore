@@ -143,7 +143,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
 
         [HttpGet]
         [Route("Admin/PrivateMessages/PrivateChat/{senderId}/{receiverId}")]
-        public async Task<IActionResult> PrivateChat(int senderId, int receiverId)
+        public async Task<IActionResult> PrivateChat(int senderId, int receiverId, string senderRole = null, string receiverRole = null)
         {
             if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
@@ -151,8 +151,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             var messages = await _context.HMessages
                 .Where(m =>
                     m.HChatId == null &&
-                    m.HSenderId != null &&
-                    m.HReceiverId != null && m.HReceiverId != 0 &&
                     ((m.HSenderId == senderId && m.HReceiverId == receiverId) ||
                      (m.HSenderId == receiverId && m.HReceiverId == senderId)))
                 .OrderBy(m => m.HTimestamp)
@@ -160,82 +158,50 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
 
             if (!messages.Any())
             {
-                return View(new List<HMessage>());
+                return View(new List<dynamic>());
             }
 
-            var firstMessage = messages.First();
-            string senderRole = "";
-            string receiverRole = "";
-
-            if (firstMessage.HSenderId == senderId)
+            // 如果外部沒傳入角色，才從第一條訊息推測
+            if (senderRole == null || receiverRole == null)
             {
-                senderRole = firstMessage.HSenderRole;
-                receiverRole = firstMessage.HReceiverRole;
-            }
-            else
-            {
-                senderRole = firstMessage.HReceiverRole;
-                receiverRole = firstMessage.HSenderRole;
+                var firstMessage = messages.First();
+                if (firstMessage.HSenderId == senderId)
+                {
+                    senderRole = firstMessage.HSenderRole;
+                    receiverRole = firstMessage.HReceiverRole;
+                }
+                else
+                {
+                    senderRole = firstMessage.HReceiverRole;
+                    receiverRole = firstMessage.HSenderRole;
+                }
             }
 
-            // 獲取所有相關用戶的 ID
-            var userIds = messages
-                .SelectMany(m => new[] { m.HSenderId, m.HReceiverId })
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .Distinct()
-                .ToList();
+            var userIds = new[] { senderId, receiverId }.Distinct().ToList();
 
-            // 獲取房客資訊
             var tenants = await _context.HTenants
                 .Where(t => userIds.Contains(t.HTenantId))
                 .ToDictionaryAsync(t => t.HTenantId, t => t.HUserName);
 
-            // 獲取房東資訊
             var landlords = await _context.HLandlords
                 .Where(l => userIds.Contains(l.HLandlordId))
                 .ToDictionaryAsync(l => l.HLandlordId, l => l.HLandlordName);
 
-            // 建立用戶名稱字典
-            var userNames = new Dictionary<(int?, string), string>();
-
-            // 添加發送者和接收者的名稱
-            var senderKey = ((int?)senderId, senderRole);
-            var receiverKey = ((int?)receiverId, receiverRole);
-            userNames[senderKey] = GetUserName(senderId, senderRole, tenants, landlords);
-            userNames[receiverKey] = GetUserName(receiverId, receiverRole, tenants, landlords);
-
-            // 添加所有訊息中的發送者和接收者名稱
-            foreach (var message in messages)
+            // 建立包含訊息和發送者名稱的動態對象列表
+            var chatMessages = messages.Select(m => new
             {
-                if (message.HSenderId.HasValue)
-                {
-                    var messageSenderKey = (message.HSenderId, message.HSenderRole);
-                    if (!userNames.ContainsKey(messageSenderKey))
-                    {
-                        userNames[messageSenderKey] = GetUserName(message.HSenderId, message.HSenderRole, tenants, landlords);
-                    }
-                }
-                if (message.HReceiverId.HasValue)
-                {
-                    var messageReceiverKey = (message.HReceiverId, message.HReceiverRole);
-                    if (!userNames.ContainsKey(messageReceiverKey))
-                    {
-                        userNames[messageReceiverKey] = GetUserName(message.HReceiverId, message.HReceiverRole, tenants, landlords);
-                    }
-                }
-            }
+                Message = m,
+                SenderName = GetUserName(m.HSenderId, m.HSenderRole, tenants, landlords),
+                ReceiverName = GetUserName(m.HReceiverId, m.HReceiverRole, tenants, landlords)
+            }).ToList();
 
             ViewBag.SenderId = senderId;
             ViewBag.ReceiverId = receiverId;
             ViewBag.SenderRole = senderRole;
             ViewBag.ReceiverRole = receiverRole;
-            ViewBag.MessageCount = messages.Count;
-            ViewBag.UserNames = userNames;
 
-            return View(messages);
+            return View(chatMessages);
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -292,9 +258,32 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
                 return NotFound();
             }
 
+            // 獲取管理員 ID
+            var adminIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(adminIdStr))
+            {
+                TempData["ErrorMessage"] = "登入狀態異常，請重新登入！";
+                return RedirectToAction(nameof(ReportList));
+            }
+
+            int adminId;
+            if (!int.TryParse(adminIdStr, out adminId))
+            {
+                TempData["ErrorMessage"] = "登入資訊錯誤，請重新登入！";
+                return RedirectToAction(nameof(ReportList));
+            }
+
+            // 確認 h_Admin 中真的有這個 ID
+            var adminExists = await _context.HAdmins.AnyAsync(a => a.HAdminId == adminId);
+            if (!adminExists)
+            {
+                TempData["ErrorMessage"] = "管理員帳號不存在，請重新登入！";
+                return RedirectToAction(nameof(ReportList));
+            }
+
             // 更新檢舉狀態和處理資訊
             report.HStatus = status;
-            report.HAdminId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            report.HAdminId = adminId;
             report.HReviewedAt = DateTime.Now;
 
             // 保存更改
@@ -432,6 +421,26 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             }
 
             return $"用戶 {userId}";
+        }
+        [HttpGet]
+        [Route("Admin/PrivateMessages/PrivateChatByMessage/{messageId}")]
+        public async Task<IActionResult> PrivateChatByMessage(int messageId)
+        {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            // 找到這則訊息
+            var message = await _context.HMessages.FindAsync(messageId);
+            if (message == null)
+                return NotFound();
+
+            int senderId = message.HSenderId ?? 0;
+            int receiverId = message.HReceiverId ?? 0;
+            string senderRole = message.HSenderRole;
+            string receiverRole = message.HReceiverRole;
+
+            // 直接呼叫更新後的 PrivateChat 方法
+            return await PrivateChat(senderId, receiverId, senderRole, receiverRole);
         }
 
     }

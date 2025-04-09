@@ -1,111 +1,109 @@
+@model IEnumerable<GeeYeangSore.Models.HReport>
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
 @{
-    ViewData["Title"] = "檢舉列表";
+    ViewBag.Title = "檢舉列表";
+    var token = Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext).RequestToken;
+    var messages = ViewBag.Messages as Dictionary<int, GeeYeangSore.Models.HMessage>;
 }
 
-@model IEnumerable<GeeYeangSore.Models.HReport>
+<h1>檢舉列表</h1>
 
-<div class="container-fluid px-4">
-    <h2 class="mb-4">檢舉列表</h2>
+<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>檢舉ID</th>
+            <th>訊息內容</th>
+            <th>原因</th>
+            <th>狀態</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var report in Model)
+        {
+            <tr id="report-row-@report.HReportId">
+                <td>@report.HReportId</td>
+                <td>
+                    @{
+                        string messageContent = "訊息不存在";
+                        if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
+                        messages.ContainsKey(report.HMessageId.Value))
+                        {
+                            messageContent = messages[report.HMessageId.Value].HContent;
+                        }
+                    }
+                    @messageContent
+                </td>
+                <td>@report.HReason</td>
+                <td id="status-@report.HReportId">@report.HStatus</td>
+                <td>
+                    <button class="btn btn-success btn-sm"
+                        onclick="processReport(@report.HReportId, 'Approved')">核准</button>
+                    <button class="btn btn-danger btn-sm" onclick="processReport(@report.HReportId, 'Rejected')">拒絕</button>
+                    @{
+                        if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
+                        messages.ContainsKey(report.HMessageId.Value))
+                        {
+                            var message = messages[report.HMessageId.Value];
+                            <a class="btn btn-info btn-sm"
+                                href="/Admin/PrivateMessages/PrivateChat/@message.HSenderId/@message.HReceiverId"
+                                target="_blank">詳細對話</a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-info btn-sm" disabled>詳細對話</button>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    const token = '@token';
+
+    function showToast(message, isSuccess = true) {
+        const toastId = 'toast-' + Date.now();
+        const bgColor = isSuccess ? '#28a745' : '#dc3545';
+
+        const toast = `<div id="${toastId}" style="background:${bgColor};color:white;padding:10px 20px;margin-top:10px;border-radius:5px;">
+                            ${message}
+                        </div>`;
+
+        document.getElementById('toast-container').insertAdjacentHTML('beforeend', toast);
+
+        setTimeout(() => {
+            document.getElementById(toastId)?.remove();
+        }, 3000);
     }
 
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="thead-light">
-                <tr>
-                    <th>檢舉ID</th>
-                    <th>被檢舉訊息</th>
-                    <th>檢舉原因</th>
-                    <th>檢舉者</th>
-                    <th>檢舉時間</th>
-                    <th>狀態</th>
-                    <th>處理者</th>
-                    <th>處理時間</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in Model)
-                {
-                    var message = report.HMessageId.HasValue && ViewBag.Messages.ContainsKey(report.HMessageId.Value)
-                    ? ViewBag.Messages[report.HMessageId.Value]
-                    : null;
-                    <tr>
-                        <td>@report.HReportId</td>
-                        <td>
-                            @if (message != null)
-                            {
-                                <button class="btn btn-link btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#messageModal-@report.HReportId">
-                                    查看訊息
-                                </button>
-                            }
-                        </td>
-                        <td>@report.HReason</td>
-                        <td>@report.HAuthorId (@report.HAuthorType)</td>
-                        <td>@report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>
-                            <span
-                                class="badge @(report.HStatus == "Pending" ? "bg-warning" : 
-                                                                                                  report.HStatus == "Approved" ? "bg-success" : "bg-danger")">
-                            @report.HStatus
-                        </span>
-                    </td>
-                    <td>@(report.HAdminId?.ToString() ?? "-")</td>
-                    <td>@(report.HReviewedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                    <td>
-                        @if (report.HStatus == "Pending")
-                            {
-                                <div class="btn-group">
-                                    <form asp-action="ProcessReport" method="post" style="display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="reportId" value="@report.HReportId" />
-                                        <input type="hidden" name="status" value="Approved" />
-                                        <button type="submit" class="btn btn-success btn-sm">通過</button>
-                                    </form>
-                                    <form asp-action="ProcessReport" method="post" style="display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="reportId" value="@report.HReportId" />
-                                        <input type="hidden" name="status" value="Rejected" />
-                                        <button type="submit" class="btn btn-danger btn-sm">拒絕</button>
-                                    </form>
-                                </div>
-                            }
-                        </td>
-                    </tr>
-
-                    <!-- 訊息詳情 Modal -->
-                    @if (message != null)
-                    {
-                        <div class="modal fade" id="messageModal-@report.HReportId" tabindex="-1"
-                            aria-labelledby="messageModalLabel-@report.HReportId" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="messageModalLabel-@report.HReportId">
-                                            被檢舉訊息詳情
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p><strong>發送者：</strong>@message.HSenderId (@message.HSenderRole)</p>
-                                        <p><strong>接收者：</strong>@message.HReceiverId (@message.HReceiverRole)</p>
-                                        <p><strong>內容：</strong>@message.HContent</p>
-                                        <p><strong>時間：</strong>@message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
+    function processReport(reportId, status) {
+        fetch('/Admin/PrivateMessages/ProcessReport', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `reportId=${reportId}&status=${status}&__RequestVerificationToken=${token}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('伺服器錯誤');
                 }
-            </tbody>
-        </table>
-    </div>
-</div>
+                return response.text();
+            })
+            .then(() => {
+                document.getElementById(`status-${reportId}`).innerText = status;
+                showToast(`檢舉已${status == 'Approved' ? '核准' : '拒絕'}！`, true);
+            })
+            .catch(error => {
+                console.error(error);
+                showToast('處理失敗，請稍後再試！', false);
+            });
+    }
+</script>

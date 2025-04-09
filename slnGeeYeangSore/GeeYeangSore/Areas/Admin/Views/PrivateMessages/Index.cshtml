@@ -122,13 +122,17 @@
                         </td>
                         <td>
                             <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-main" data-bs-toggle="modal"
-                                        data-bs-target="#messageModal" data-message-id="@item.HMessageId"
-                                        data-sender-id="@item.HSenderId" data-receiver-id="@item.HReceiverId"
-                                        data-sender="@($"{item.HSenderId} ({item.HSenderRole})")"
-                                        data-receiver="@($"{item.HReceiverId} ({item.HReceiverRole})")">
-                                    查看詳情
-                                </button>
+                                @* <button type="button" class="btn btn-sm btn-main" data-bs-toggle="modal" *@
+                                @*         data-bs-target="#messageModal" data-message-id="@item.HMessageId" *@
+                                @*         data-sender-id="@item.HSenderId" data-receiver-id="@item.HReceiverId" *@
+                                @*         data-sender="@($"{item.HSenderId} ({item.HSenderRole})")" *@
+                                @*         data-receiver="@($"{item.HReceiverId} ({item.HReceiverRole})")"> *@
+                                @*     查看詳情 *@
+                                @* </button> *@
+								<button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+										data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
+									檢舉
+								</button>
                                 @if (item.HIsDeleted != 1)
                                 {
                                     <button type="button" class="btn btn-sm btn-danger"
@@ -136,10 +140,6 @@
                                         刪除
                                     </button>
                                 }
-                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                    data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
-                                    檢舉
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -170,10 +170,10 @@
 <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header"> =
                 <h5 class="modal-title" id="messageModalLabel">對話詳情</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> 
+           </div>
             <div class="modal-body">
                 <div class="chat-info mb-3">
                     <p><strong>對話者：</strong><span id="modalSender"></span> 與 <span id="modalReceiver"></span></p>
