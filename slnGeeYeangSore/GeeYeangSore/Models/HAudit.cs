@@ -24,6 +24,4 @@ public partial class HAudit
     public DateTime HSubmittedAt { get; set; }
 
     public DateTime? HReviewedAt { get; set; }
-
-    public virtual HTenant HAuditNavigation { get; set; } = null!;
 }
