@@ -1,4 +1,5 @@
 ﻿using GeeYeangSore.Areas.Admin.ViewModels.UserManagement;
+using GeeYeangSore.Controllers;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 {
     [Area("Admin")]
     [Route("[area]/[controller]/[action]")]
-    public class UserController : Controller
+    public class UserController : SuperController
     {
         private readonly GeeYeangSoreContext _context;
 
@@ -21,6 +22,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         // 初始頁面：顯示所有使用者
         public IActionResult UserManagement(int page = 1)
         {
+            // ✅ 只有以下三種角色能進入
+            if (!HasAnyRole("超級管理員", "系統管理員", "客服管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
             int pageSize = 15; // 每頁 15 筆
             var allUsers = _context.HTenants
                 .Include(t => t.HLandlords)
