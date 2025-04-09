@@ -1,0 +1,209 @@
+﻿@model IEnumerable<GeeYeangSore.Models.HTransaction>
+@{
+    ViewData["Title"] = "交易紀錄管理";
+    var statuses = new Dictionary<string, string>
+{
+{ "Success", "付款成功" },
+{ "Pending", "待處理" },
+};
+}
+
+<style>
+    .property-title-tooltip {
+        font-size: 20px !important;
+        max-width: 500px !important;
+        white-space: normal !important;
+    }
+
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container">
+    <h2 class="mb-4">📝 交易紀錄管理</h2>
+
+    <!-- 搜尋與篩選 -->
+    <div class="search-section">
+        <form method="get" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" id="searchTerm" class="form-control" placeholder="搜尋交易編號、房產標題或項目名稱"
+                        value="@ViewBag.SearchTerm">
+                </div>
+                <div class="col-md-2">
+                    <select id="status" class="form-control">
+                        <option value="">全部狀態</option>
+                        @foreach (var status in statuses)
+                        {
+                            if (ViewBag.Status == status.Key)
+                            {
+                                <option value="@status.Key" selected>@status.Value</option>
+                            }
+                            else
+                            {
+                                <option value="@status.Key">@status.Value</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" id="startDate" class="form-control"
+                        value="@(ViewBag.StartDate?.ToString("yyyy-MM-dd"))">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" id="endDate" class="form-control"
+                        value="@(ViewBag.EndDate?.ToString("yyyy-MM-dd"))">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-main">
+                        <i class="fas fa-search"></i> 搜尋
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 交易紀錄表格 -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>交易編號</th>
+                    <th style="width: 150px;">房產標題</th>
+                    <th>訂單編號</th>
+                    <th>交易項目</th>
+                    <th>金額</th>
+                    <th>付款方式</th>
+                    <th>付款狀態</th>
+                    <th>交易時間</th>
+                    <th>最後更新時間</th>
+                    <th>動作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transaction in Model)
+                {
+                    <tr>
+                        <td>@transaction.HTradeNo</td>
+                        <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="property-title-tooltip"
+                            title="@transaction.HProperty?.HPropertyTitle">
+                            @transaction.HProperty?.HPropertyTitle
+                        </td>
+                        <td>@transaction.HMerchantTradeNo</td>
+                        <td>@transaction.HItemName</td>
+                        <td><strong>@transaction.HAmount?.ToString("C0")</strong></td>
+                        <td>@transaction.HPaymentType</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(transaction.HRtnMsg)">
+                                @GetStatusText(transaction.HRtnMsg)
+                            </span>
+                        </td>
+                        <td>@transaction.HPaymentDate?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@transaction.HUpdateTime?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <a href="@Url.Action("Details", "Transaction", new { area = "Admin", id = transaction.HPaymentId })"
+                                class="btn btn-main btn-sm">
+                                <i class="fas fa-eye"></i> 查看詳情
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 初始化所有 tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                html: true
+            })
+        })
+
+        function filterTransactions() {
+            const searchTerm = document.getElementById('searchTerm').value;
+            const status = document.getElementById('status').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            window.location.href = `@Url.Action("Index")?searchTerm=${searchTerm}&status=${status}&startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        function resetFilters() {
+            window.location.href = '@Url.Action("Index")';
+        }
+
+        function updateStatus(id, status) {
+            if (!confirm('確定要更新此交易的狀態嗎？')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("UpdateStatus")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    status: status,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('更新失敗，請稍後再試');
+                }
+            });
+        }
+    </script>
+}
+
+@functions {
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Success" => "bg-success",
+            "Pending" => "bg-warning",
+            "付款成功" => "bg-success",
+            "待處理" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Success" => "付款成功",
+            "Pending" => "待處理",
+            "付款成功" => "付款成功",
+            "待處理" => "待處理",
+            _ => status
+        };
+    }
+}

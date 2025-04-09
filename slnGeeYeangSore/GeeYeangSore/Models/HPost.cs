@@ -22,4 +22,12 @@ public partial class HPost
     public DateTime? HUpdatedAt { get; set; }
 
     public DateTime? HLastreplyTime { get; set; }
+
+    public int? HIsPinned { get; set; }
+
+    public int? HIsLocked { get; set; }
+
+    public DateTime? HDeletedAt { get; set; }
+
+    public virtual ICollection<HPostMonitoring> HPostMonitorings { get; set; } = new List<HPostMonitoring>();
 }

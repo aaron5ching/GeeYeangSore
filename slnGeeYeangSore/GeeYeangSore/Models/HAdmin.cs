@@ -20,4 +20,10 @@ public partial class HAdmin
     public virtual ICollection<HAdminLog> HAdminLogs { get; set; } = new List<HAdminLog>();
 
     public virtual ICollection<HContact> HContacts { get; set; } = new List<HContact>();
+
+    public virtual ICollection<HPostMonitoring> HPostMonitorings { get; set; } = new List<HPostMonitoring>();
+
+    public virtual ICollection<HReportForum> HReportForums { get; set; } = new List<HReportForum>();
+
+    public virtual ICollection<HReport> HReports { get; set; } = new List<HReport>();
 }

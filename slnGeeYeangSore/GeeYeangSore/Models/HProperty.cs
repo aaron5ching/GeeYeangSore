@@ -49,9 +49,21 @@ public partial class HProperty
 
     public bool? HIsShared { get; set; }
 
+    public string? HStatus { get; set; }
+
     public virtual ICollection<HAd> HAds { get; set; } = new List<HAd>();
+
+    public virtual ICollection<HChat> HChats { get; set; } = new List<HChat>();
 
     public virtual ICollection<HFavorite> HFavorites { get; set; } = new List<HFavorite>();
 
     public virtual HLandlord HLandlord { get; set; } = null!;
+
+    public virtual ICollection<HPropertyAudit> HPropertyAudits { get; set; } = new List<HPropertyAudit>();
+
+    public virtual ICollection<HPropertyFeature> HPropertyFeatures { get; set; } = new List<HPropertyFeature>();
+
+    public virtual ICollection<HPropertyImage> HPropertyImages { get; set; } = new List<HPropertyImage>();
+
+    public virtual ICollection<HTransaction> HTransactions { get; set; } = new List<HTransaction>();
 }

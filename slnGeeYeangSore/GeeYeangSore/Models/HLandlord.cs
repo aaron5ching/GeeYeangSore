@@ -33,5 +33,11 @@ public partial class HLandlord
 
     public virtual ICollection<HProperty> HProperties { get; set; } = new List<HProperty>();
 
+    public virtual ICollection<HPropertyAudit> HPropertyAudits { get; set; } = new List<HPropertyAudit>();
+
+    public virtual ICollection<HPropertyFeature> HPropertyFeatures { get; set; } = new List<HPropertyFeature>();
+
+    public virtual ICollection<HPropertyImage> HPropertyImages { get; set; } = new List<HPropertyImage>();
+
     public virtual HTenant HTenant { get; set; } = null!;
 }

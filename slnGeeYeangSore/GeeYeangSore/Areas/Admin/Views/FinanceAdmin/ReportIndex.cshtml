@@ -1,0 +1,254 @@
+@{
+    ViewData["Title"] = "財務報表管理";
+}
+
+<style>
+    :root {
+        --main-color: #3CDDD2;
+        --main-hover: #24B4A8;
+        --bg-light: #F0F9F8;
+        --text-main: #222222;
+        --text-subtle: #666666;
+        --accent: #007A75;
+    }
+
+    body {
+        background-color: var(--bg-light);
+        color: var(--text-main);
+    }
+
+    .card {
+        border-color: var(--main-color);
+    }
+
+    .card .card-body {
+        background-color: var(--main-color);
+    }
+
+    .btn-primary {
+        background-color: var(--main-color);
+        border-color: var(--main-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--main-hover);
+        border-color: var(--main-hover);
+    }
+
+    .breadcrumb-item.active {
+        color: var(--accent);
+    }
+
+    .table th,
+    .table td {
+        color: var(--text-subtle);
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">財務報表管理</h1>
+    @Html.ActionLink("返回金流分析", "Index", "Finance", new { area = "Admin" }, new { @class = "btn btn-primary mb-4" })
+
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5>生成每日報表</h5>
+                    <form id="dailyReportForm" class="mt-3">
+                        <div class="form-group">
+                            <label>選擇日期</label>
+                            <input type="date" class="form-control" id="dailyReportDate" required>
+                        </div>
+                        <button type="submit" class="btn btn-light mt-2">生成報表</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5>生成月報表</h5>
+                    <form id="monthlyReportForm" class="mt-3">
+                        <div class="form-group">
+                            <label>選擇月份</label>
+                            <input type="month" class="form-control" id="monthlyReportDate" required>
+                        </div>
+                        <button type="submit" class="btn btn-light mt-2">生成報表</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            報表列表
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">日期範圍</span>
+                        <input type="date" id="startDate" class="form-control">
+                        <span class="input-group-text">至</span>
+                        <input type="date" id="endDate" class="form-control">
+                        <button type="button" class="btn btn-primary" id="searchBtn">搜尋</button>
+                    </div>
+                </div>
+            </div>
+            <table id="reportsTable" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>報表日期</th>
+                        <th>交易筆數</th>
+                        <th>總收入</th>
+                        <th>日收入</th>
+                        <th>月收入</th>
+                        <th>增長率</th>
+                        <th>生成時間</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // 初始化 toastr
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+
+            // 初始化日期選擇器
+            $('#dailyReportDate').val(new Date().toISOString().split('T')[0]);
+            $('#monthlyReportDate').val(new Date().toISOString().split('T')[0].substring(0, 7));
+
+            // 載入報表數據
+            loadReports();
+
+            // 生成每日報表
+            $('#dailyReportForm').submit(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/Admin/FinanceReport/GenerateDailyReport',
+                    type: 'POST',
+                    data: { reportDate: $('#dailyReportDate').val() },
+                    success: function (response) {
+                        if (response.success) {
+                            toastr.success('報表生成成功');
+                            loadReports();
+                        } else {
+                            toastr.error(response.message || '報表生成失敗');
+                        }
+                    },
+                    error: function () {
+                        toastr.error('系統錯誤');
+                    }
+                });
+            });
+
+            // 生成月報表
+            $('#monthlyReportForm').submit(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/Admin/FinanceReport/GenerateMonthlyReport',
+                    type: 'POST',
+                    data: { monthStart: $('#monthlyReportDate').val() + '-01' },
+                    success: function (response) {
+                        if (response.success) {
+                            toastr.success('報表生成成功');
+                            loadReports();
+                        } else {
+                            toastr.error(response.message || '報表生成失敗');
+                        }
+                    },
+                    error: function () {
+                        toastr.error('系統錯誤');
+                    }
+                });
+            });
+
+            // 搜尋按鈕點擊事件
+            $('#searchBtn').click(function () {
+                loadReports();
+            });
+
+            function loadReports() {
+                var startDate = $('#startDate').val();
+                var endDate = $('#endDate').val();
+
+                // 如果結束日期小於開始日期，顯示錯誤
+                if (startDate && endDate && startDate > endDate) {
+                    toastr.error('結束日期不能小於開始日期');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Admin/FinanceReport/GetReports',
+                    type: 'GET',
+                    data: {
+                        startDate: startDate || null,
+                        endDate: endDate || null
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            updateReportsTable(response.data);
+                        } else {
+                            toastr.error(response.message || '載入報表失敗');
+                        }
+                    },
+                    error: function () {
+                        toastr.error('系統錯誤');
+                    }
+                });
+            }
+
+            function updateReportsTable(reports) {
+                var tbody = $('#reportsTable tbody');
+                tbody.empty();
+
+                if (!reports || reports.length === 0) {
+                    tbody.append('<tr><td colspan="8" class="text-center">無符合條件的報表</td></tr>');
+                    return;
+                }
+
+                reports.forEach(function (report) {
+                    var row = $('<tr>');
+                    row.append($('<td>').text(new Date(report.hReportDate).toLocaleDateString()));
+                    row.append($('<td>').text(report.hTotalTransactions));
+                    row.append($('<td>').text('$' + (report.hTotalIncome || 0).toFixed(2)));
+                    row.append($('<td>').text(report.hDailyIncome ? '$' + report.hDailyIncome.toFixed(2) : '-'));
+                    row.append($('<td>').text(report.hMonthlyIncome ? '$' + report.hMonthlyIncome.toFixed(2) : '-'));
+                    row.append($('<td>').text(report.hGrowthRate ? report.hGrowthRate.toFixed(2) + '%' : '-'));
+                    row.append($('<td>').text(new Date(report.hGeneratedAt).toLocaleString()));
+
+                    var actions = $('<td>');
+                    actions.append(
+                        $('<button>')
+                            .addClass('btn btn-sm btn-primary me-2')
+                            .text('匯出')
+                            .click(function () {
+                                exportReport(report.hReportId);
+                            })
+                    );
+                    row.append(actions);
+
+                    tbody.append(row);
+                });
+            }
+
+            function exportReport(reportId) {
+                window.location.href = '/Admin/FinanceReport/ExportReport?reportId=' + reportId;
+            }
+        });
+    </script>
+}

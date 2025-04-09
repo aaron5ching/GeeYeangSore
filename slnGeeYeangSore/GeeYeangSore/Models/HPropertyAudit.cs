@@ -18,4 +18,8 @@ public partial class HPropertyAudit
     public string? HAuditNotes { get; set; }
 
     public DateTime? HAuditDate { get; set; }
+
+    public virtual HLandlord? HLandlord { get; set; }
+
+    public virtual HProperty? HProperty { get; set; }
 }

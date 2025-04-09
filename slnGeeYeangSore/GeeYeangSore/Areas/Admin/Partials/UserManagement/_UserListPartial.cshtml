@@ -1,0 +1,102 @@
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<GeeYeangSore.Areas.Admin.ViewModels.UserManagement.CUserViewModels>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center mt-3">
+        <i class="fa fa-info-circle me-1"></i> 沒有找到符合條件的使用者。
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 90px;" class="text-center">房客ID</th>
+                <th style="width: 90px;" class="text-center">房客狀態</th>
+                <th style="width: 90px;" class="text-center">房東ID</th>
+                <th style="width: 90px;" class="text-center">房東狀態</th>
+                <th style="width: 160px;">姓名</th>
+                <th style="width: 100px;" class="text-center">註冊日期</th>
+                <th style="width: 120px;" class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td class="text-center">@user.TenantId</td>
+                    <td class="text-center">
+                        @switch (user.TenantStatus)
+                        {
+                            case "未驗證":
+                                <span class="badge bg-secondary">未驗證</span>
+                                break;
+                            case "驗證中":
+                                <span class="badge bg-warning text-dark">驗證中</span>
+                                break;
+                            case "已驗證":
+                                <span class="badge bg-success">已驗證</span>
+                                break;
+                            case "封鎖中":
+                                <span class="badge bg-danger">封鎖中</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark">未知</span>
+                                break;
+                        }
+                    </td>
+                    <td class="text-center">@user.LandlordId</td>
+                    <td class="text-center">
+                        @switch (user.LandlordStatus)
+                        {
+                            case "未驗證":
+                                <span class="badge bg-secondary">未驗證</span>
+                                break;
+                            case "驗證中":
+                                <span class="badge bg-warning text-dark">驗證中</span>
+                                break;
+                            case "已驗證":
+                                <span class="badge bg-success">已驗證</span>
+                                break;
+                            case "封鎖中":
+                                <span class="badge bg-danger">封鎖中</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark">未知</span>
+                                break;
+                        }
+                    </td>
+                    <td class="text-truncate" style="max-width: 160px;">@user.Name</td>
+                    <td class="text-center">@user.RegisterDate.ToString("yyyy-MM-dd")</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
+                                data-id="@user.TenantId">
+                            <i class="fa fa-edit"></i> 編輯
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete"
+                                data-id="@user.TenantId">
+                            <i class="fa fa-trash"></i> 刪除
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- ✅ 分頁導覽列 -->
+    <div class="d-flex justify-content-center mt-3">
+        @Html.PagedListPager(Model, page => "javascript:loadPage(" + page + ")", new PagedListRenderOptions
+{
+    LinkToFirstPageFormat = "⏪",
+    LinkToPreviousPageFormat = "＜",
+    LinkToNextPageFormat = "＞",
+    LinkToLastPageFormat = "⏩",
+    UlElementClasses = new[] { "pagination", "justify-content-center" },
+    PageClasses = new[] { "page-link" }
+})
+    </div>
+
+
+}

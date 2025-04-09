@@ -1,0 +1,241 @@
+@model GeeYeangSore.Models.HProperty
+
+@{
+    ViewData["Title"] = "房源詳細資訊";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        color: white;
+    }
+    .card {
+        background-color: #F0F9F8;
+    }
+    .card-header {
+        background-color: #3CDDD2 !important;
+        color: #222222 !important;
+    }
+    dt {
+        color: #222222;
+    }
+    dd {
+        color: #666666;
+    }
+    .property-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .property-image:hover {
+        transform: scale(1.02);
+    }
+    .image-container {
+        position: relative;
+        overflow: hidden;
+    }
+    .no-image {
+        width: 100%;
+        height: 200px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #666;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1>房源詳細資訊</h1>
+                <div>
+                    <form asp-action="Approve" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.HPropertyId" />
+                        <button type="submit" class="btn btn-success" onclick="return confirm('確定要通過此房源嗎？')">
+                            <i class="fas fa-check"></i> 通過審核
+                        </button>
+                    </form>
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.HPropertyId" />
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('確定要刪除此房源嗎？')">
+                            <i class="fas fa-trash"></i> 刪除
+                        </button>
+                    </form>
+                    <a asp-action="Index" class="btn btn-main">返回列表</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">基本資訊</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">房源ID</dt>
+                                <dd class="col-sm-8">@Model.HPropertyId</dd>
+
+                                <dt class="col-sm-4">標題</dt>
+                                <dd class="col-sm-8">@Model.HPropertyTitle</dd>
+
+                                <dt class="col-sm-4">房東</dt>
+                                <dd class="col-sm-8">@Model.HLandlord.HLandlordName</dd>
+
+                                <dt class="col-sm-4">地址</dt>
+                                <dd class="col-sm-8">@Model.HAddress</dd>
+
+                                <dt class="col-sm-4">城市</dt>
+                                <dd class="col-sm-8">@Model.HCity</dd>
+
+                                <dt class="col-sm-4">區域</dt>
+                                <dd class="col-sm-8">@Model.HDistrict</dd>
+
+                                <dt class="col-sm-4">郵遞區號</dt>
+                                <dd class="col-sm-8">@Model.HZipcode</dd>
+
+                                <dt class="col-sm-4">租金</dt>
+                                <dd class="col-sm-8">@Model.HRentPrice</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">房型</dt>
+                                <dd class="col-sm-8">@Model.HPropertyType</dd>
+
+                                <dt class="col-sm-4">房間數</dt>
+                                <dd class="col-sm-8">@Model.HRoomCount</dd>
+
+                                <dt class="col-sm-4">衛浴數</dt>
+                                <dd class="col-sm-8">@Model.HBathroomCount</dd>
+
+                                <dt class="col-sm-4">面積</dt>
+                                <dd class="col-sm-8">@Model.HArea</dd>
+
+                                <dt class="col-sm-4">樓層</dt>
+                                <dd class="col-sm-8">@Model.HFloor</dd>
+
+                                <dt class="col-sm-4">總樓層</dt>
+                                <dd class="col-sm-8">@Model.HTotalFloors</dd>
+
+                                <dt class="col-sm-4">建築類型</dt>
+                                <dd class="col-sm-8">@Model.HBuildingType</dd>
+
+                                <dt class="col-sm-4">發布日期</dt>
+                                <dd class="col-sm-8">@Model.HPublishedDate?.ToString("yyyy-MM-dd")</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">房源特色</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @if (Model.HPropertyFeatures != null && Model.HPropertyFeatures.Any())
+                        {
+                            var features = Model.HPropertyFeatures.FirstOrDefault();
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-6">允許養寵物</dt>
+                                    <dd class="col-sm-6">@(features?.HAllowsAnimals == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">附家具</dt>
+                                    <dd class="col-sm-6">@(features?.HHasFurniture == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">網路</dt>
+                                    <dd class="col-sm-6">@(features?.HInternet == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">冷氣</dt>
+                                    <dd class="col-sm-6">@(features?.HAirConditioning == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">電視</dt>
+                                    <dd class="col-sm-6">@(features?.HTv == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">冰箱</dt>
+                                    <dd class="col-sm-6">@(features?.HRefrigerator == true ? "是" : "否")</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-6">洗衣機</dt>
+                                    <dd class="col-sm-6">@(features?.HWashingMachine == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">床</dt>
+                                    <dd class="col-sm-6">@(features?.HBed == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">熱水器</dt>
+                                    <dd class="col-sm-6">@(features?.HWaterHeater == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">瓦斯爐</dt>
+                                    <dd class="col-sm-6">@(features?.HGasStove == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">停車位</dt>
+                                    <dd class="col-sm-6">@(features?.HParking == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">陽台</dt>
+                                    <dd class="col-sm-6">@(features?.HBalcony == true ? "是" : "否")</dd>
+                                </dl>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">房源照片</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @if (Model.HPropertyImages != null && Model.HPropertyImages.Any())
+                        {
+                            foreach (var image in Model.HPropertyImages)
+                            {
+                                <div class="col-md-4 mb-4">
+                                    <div class="image-container">
+                                        <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" class="property-image" alt="房源照片">
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12">
+                                <div class="no-image">
+                                    <i class="fas fa-image fa-3x"></i>
+                                    <span class="ms-2">暫無照片</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

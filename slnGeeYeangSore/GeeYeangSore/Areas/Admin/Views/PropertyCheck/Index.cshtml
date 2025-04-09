@@ -1,0 +1,142 @@
+@model IPagedList<GeeYeangSore.Models.HProperty>
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+@{
+    ViewData["Title"] = "房源審核";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        color: #222222;
+        border: none;
+    }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        color: white;
+    }
+    .card {
+        background-color: #F0F9F8;
+    }
+    .card-header {
+        background-color: #3CDDD2 !important;
+        color: #222222 !important;
+    }
+    .table-fixed {
+        table-layout: fixed;
+        width: 100%;
+    }
+    .table-fixed th,
+    .table-fixed td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .col-id { width: 80px; }
+    .col-title { width: 200px; }
+    .col-landlord { width: 120px; }
+    .col-address { width: 250px; }
+    .col-price { width: 100px; }
+    .col-date { width: 120px; }
+    .col-actions { width: 200px; }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">待審核房源列表</h3>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="searchId">房源ID</label>
+                                    <input type="text" class="form-control" id="searchId" name="searchId" value="@ViewBag.SearchId" placeholder="輸入房源ID">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="searchRent">租金</label>
+                                    <input type="text" class="form-control" id="searchRent" name="searchRent" value="@ViewBag.SearchRent" placeholder="輸入租金">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-main form-control">搜尋</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-fixed">
+                            <thead>
+                                <tr>
+                                    <th class="col-id">房源ID</th>
+                                    <th class="col-title">標題</th>
+                                    <th class="col-landlord">房東</th>
+                                    <th class="col-address">地址</th>
+                                    <th class="col-price">租金</th>
+                                    <th class="col-date">發布日期</th>
+                                    <th class="col-actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var property in Model)
+                                {
+                                    <tr>
+                                        <td>@property.HPropertyId</td>
+                                        <td>@property.HPropertyTitle</td>
+                                        <td>@property.HLandlord.HLandlordName</td>
+                                        <td>@property.HAddress</td>
+                                        <td>@property.HRentPrice</td>
+                                        <td>@property.HPublishedDate?.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@property.HPropertyId" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye"></i> 查看
+                                            </a>
+                                            <form asp-action="Approve" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@property.HPropertyId" />
+                                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('確定要通過此房源嗎？')">
+                                                    <i class="fas fa-check"></i> 通過
+                                                </button>
+                                            </form>
+                                            <form asp-action="Delete" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@property.HPropertyId" />
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('確定要刪除此房源嗎？')">
+                                                    <i class="fas fa-trash"></i> 刪除
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-center mt-4">
+                        @Html.PagedListPager(Model, page => Url.Action("Index", new { page = page }),
+                            new PagedListRenderOptions
+                            {
+                                LiElementClasses = new string[] { "page-item" },
+                                PageClasses = new string[] { "page-link" }
+                            })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -32,4 +32,12 @@ public partial class HTransaction
     public string? HRawJson { get; set; }
 
     public int? HPropertyId { get; set; }
+
+    public string? HRegion { get; set; }
+
+    public int? HAdId { get; set; }
+
+    public virtual HAd? HAd { get; set; }
+
+    public virtual HProperty? HProperty { get; set; }
 }

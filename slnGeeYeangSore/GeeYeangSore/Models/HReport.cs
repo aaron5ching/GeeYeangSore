@@ -22,4 +22,12 @@ public partial class HReport
     public DateTime? HReviewedAt { get; set; }
 
     public DateTime? HCreatedAt { get; set; }
+
+    public string? HReportType { get; set; }
+
+    public int? HRelatedChatId { get; set; }
+
+    public virtual HAdmin? HAdmin { get; set; }
+
+    public virtual HMessage? HMessage { get; set; }
 }

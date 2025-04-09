@@ -18,4 +18,8 @@ public partial class HPostMonitoring
     public string? HStatus { get; set; }
 
     public int? HAdminId { get; set; }
+
+    public virtual HAdmin? HAdmin { get; set; }
+
+    public virtual HPost? HPost { get; set; }
 }
