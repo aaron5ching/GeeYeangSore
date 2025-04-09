@@ -1,0 +1,59 @@
+﻿@model GeeYeangSore.Models.HAdmin
+
+<div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editAdminForm">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">編輯管理員</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="HAdminId" value="@Model.HAdminId" />
+
+                    <div class="mb-2">
+                        <label>管理者ID：</label>
+                        <input type="text" class="form-control bg-light" value="@Model.HAdminId" readonly />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>帳號：</label>
+                        <input type="text" class="form-control" name="HAccount" value="@Model.HAccount" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>密碼：</label>
+                        <input type="text" class="form-control" name="HPassword" value="@Model.HPassword" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>權限：</label>
+                        <select class="form-control" name="HRoleLevel">
+                            <option value="超級管理員" @(Model.HRoleLevel == "超級管理員" ? "selected" : "")>超級管理員</option>
+                            <option value="系統管理員" @(Model.HRoleLevel == "系統管理員" ? "selected" : "")>系統管理員</option>
+                            <option value="內容管理員" @(Model.HRoleLevel == "內容管理員" ? "selected" : "")>內容管理員</option>
+                            <option value="客服管理員" @(Model.HRoleLevel == "客服管理員" ? "selected" : "")>客服管理員</option>
+                            <option value="財務管理員" @(Model.HRoleLevel == "財務管理員" ? "selected" : "")>財務管理員</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label>建立時間：</label>
+                        <input type="text" class="form-control bg-light" value="@Model.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")" readonly />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>更新時間：</label>
+                        <input type="text" class="form-control bg-light" value="@Model.HUpdateAt?.ToString("yyyy-MM-dd HH:mm")" readonly />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

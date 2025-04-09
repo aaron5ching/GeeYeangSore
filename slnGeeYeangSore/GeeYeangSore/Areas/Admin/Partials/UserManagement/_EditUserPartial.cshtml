@@ -104,7 +104,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">評價</label>
-                        <input class="form-control" value="@landlord.HRating?.ToString("0.0") ?? " 無資料"" readonly />
+                        <input class="form-control" value="@(landlord.HRating.HasValue ? landlord.HRating.Value.ToString("0.0") : "無資料")" readonly />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">銀行名稱</label>
@@ -142,80 +142,3 @@
     </div>
 </form>
 
-@* @section Scripts { *@
-@*     <script> *@
-@*         $(document).ready(function () { *@
-@*             $('#uploadTenantPhotoInput').on('change', function () { *@
-@*                 const file = this.files[0]; *@
-@*                 if (!file) return; *@
-
-@*                 const url = URL.createObjectURL(file); *@
-@*                 $('#tenantPhotoPreview').attr('src', url); *@
-
-@*                 const formData = new FormData(); *@
-@*                 formData.append('photo', file); *@
-
-@*                 $.ajax({ *@
-@*                     url: '/Admin/User/UploadTenantPhoto', *@
-@*                     type: 'POST', *@
-@*                     data: formData, *@
-@*                     processData: false, *@
-@*                     contentType: false, *@
-@*                     success: function (url) { *@
-@*                         const fileName = url.split('/').pop(); *@
-@*                         $('#HImages').val(fileName); *@
-@*                         $('#tenantPhotoPreview').attr('src', '/images/User/' + fileName); *@
-@*                     } *@
-@*                 }); *@
-@*             }); *@
-
-@*             $('#uploadIdCardFrontInput').on('change', function () { *@
-@*                 const file = this.files[0]; *@
-@*                 if (!file) return; *@
-
-@*                 const url = URL.createObjectURL(file); *@
-@*                 $('#idCardFrontPreview').attr('src', url); *@
-
-@*                 const formData = new FormData(); *@
-@*                 formData.append('photo', file); *@
-
-@*                 $.ajax({ *@
-@*                     url: '/Admin/User/UploadLandlordIdFront', *@
-@*                     type: 'POST', *@
-@*                     data: formData, *@
-@*                     processData: false, *@
-@*                     contentType: false, *@
-@*                     success: function (url) { *@
-@*                         const fileName = url.split('/').pop(); *@
-@*                         $('#HIdCardFrontUrl').val(fileName); *@
-@*                         $('#idCardFrontPreview').attr('src', '/images/User/' + fileName); *@
-@*                     } *@
-@*                 }); *@
-@*             }); *@
-
-@*             $('#uploadIdCardBackInput').on('change', function () { *@
-@*                 const file = this.files[0]; *@
-@*                 if (!file) return; *@
-
-@*                 const url = URL.createObjectURL(file); *@
-@*                 $('#idCardBackPreview').attr('src', url); *@
-
-@*                 const formData = new FormData(); *@
-@*                 formData.append('photo', file); *@
-
-@*                 $.ajax({ *@
-@*                     url: '/Admin/User/UploadLandlordIdBack', *@
-@*                     type: 'POST', *@
-@*                     data: formData, *@
-@*                     processData: false, *@
-@*                     contentType: false, *@
-@*                     success: function (url) { *@
-@*                         const fileName = url.split('/').pop(); *@
-@*                         $('#HIdCardBackUrl').val(fileName); *@
-@*                         $('#idCardBackPreview').attr('src', '/images/User/' + fileName); *@
-@*                     } *@
-@*                 }); *@
-@*             }); *@
-@*         }); *@
-@*     </script> *@
-@* } *@

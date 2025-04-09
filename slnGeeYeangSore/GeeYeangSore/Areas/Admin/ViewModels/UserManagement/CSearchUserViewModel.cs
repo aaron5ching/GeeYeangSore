@@ -1,5 +1,5 @@
 ﻿// CUserSearchViewModel.cs
-namespace GeeYeangSore.Areas.Admin.ViewModels
+namespace GeeYeangSore.Areas.Admin.ViewModels.UserManagement
 {
     public class CUserSearchViewModel
     {
