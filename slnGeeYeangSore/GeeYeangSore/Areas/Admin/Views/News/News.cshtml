@@ -24,10 +24,12 @@
                 <br>
                 公告內容：<textarea class="form-control" rows="4" name="HContent" id="HContent"></textarea>
                 <br>
+                
                 <label for="image">選擇圖片：</label>
                 <input type="file" name="image" class="form-control" name="Image">
                 <br>
-                <button type="submit" class="btn btn-primary" id="submitNews">上傳公告請按我</button>
+                @* <div></div> *@
+                <button type="submit" class="btn btn-success" id="submitNews">上傳公告請按我</button>
             </form>
         </div>
     </section>
@@ -66,7 +68,7 @@
                                 <img src="@Url.Content(newsItem.HImagePath)" asp-append-version="true" />
 
                             </div>
-                            <button type="submit" class="btn btn-info" name="type" value="修改文章">修改文章</button>
+                            <button type="submit" class="btn btn-primary" name="type" value="修改文章">修改文章</button>
                             <button type="submit" class="btn btn-danger" name="type" value="刪除文章">刪除文章</button>
                         </form>
 

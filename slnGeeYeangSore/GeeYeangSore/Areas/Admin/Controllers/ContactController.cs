@@ -5,19 +5,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GeeYeangSore.Areas.Admin.Controllers
 {
-
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
     public class ContactController : SuperController
     {
         private readonly Models.GeeYeangSoreContext _db;
 
-
         public ContactController(Models.GeeYeangSoreContext db)
         {
             _db = db;
-
+            //0
         }
+
         public IActionResult Index()
         {
             return View();
@@ -35,7 +34,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        public IActionResult Contact(int HContactId,string HReplyContent)
+        public IActionResult Contact(int HContactId, string HReplyContent)
         {
             if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 //如果沒有權限就會顯示NoPermission頁面
@@ -47,8 +46,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
             if (contact != null)
             {
-
-                contact.HReplyAt= DateTime.Now;
+                contact.HReplyAt = DateTime.Now;
                 contact.HReplyContent = HReplyContent;
                 contact.HStatus = true;
 
