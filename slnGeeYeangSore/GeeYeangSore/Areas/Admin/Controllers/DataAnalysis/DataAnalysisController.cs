@@ -75,11 +75,12 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 p.HPublishedDate.Value.Year == year &&
                 p.HPublishedDate.Value.Month == month);
 
-            dataAnalysis.CurrentMonthRevenue = _context.HRevenueReports
-                .Where(r => r.HReportDate.HasValue &&
-                            r.HReportDate.Value.Year == year &&
-                            r.HReportDate.Value.Month == month)
-                .Sum(r => r.HTotalIncome ?? 0);
+            dataAnalysis.CurrentMonthRevenue = _context.HTransactions
+                .Where(t => t.HPaymentDate.HasValue &&
+                t.HPaymentDate.Value.Year == year &&
+                t.HPaymentDate.Value.Month == month &&
+                t.HTradeStatus == "Success") 
+                .Sum(t => t.HAmount ?? 0);
 
             dataAnalysis.CurrentMonthUsers = _context.HLandlords
                 .Where(l => l.HCreatedAt.HasValue &&
@@ -113,12 +114,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
 
             // 收益折線圖
             dataAnalysis.MonthlyRevenueData = _context.HTransactions
-                .Where(t => t.HPaymentDate.HasValue && t.HPaymentDate.Value.Year == year)
-                .ToList() 
+                .Where(t => t.HPaymentDate.HasValue &&
+                            t.HPaymentDate.Value.Year == year &&
+                            t.HTradeStatus == "Success")
+                .ToList()
                 .GroupBy(t => t.HPaymentDate!.Value.Month)
                 .Select(g => new MonthlyRevenueData
                 {
-                    Month = $"{year}-{g.Key:D2}", 
+                    Month = $"{year}-{g.Key:D2}",
                     Revenue = g.Sum(t => t.HAmount ?? 0)
                 })
                 .OrderBy(m => m.Month)
@@ -173,7 +176,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             }
             var revenueData = _context.HTransactions
-                .Where(t => t.HPaymentDate.HasValue && t.HPaymentDate.Value.Year == year)
+                .Where(t => t.HPaymentDate.HasValue && t.HPaymentDate.Value.Year == year && t.HTradeStatus == "Success")
                 .ToList()
                 .GroupBy(t => t.HPaymentDate!.Value.Month)
                 .Select(g => new MonthlyRevenueData
@@ -189,7 +192,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 MonthlyRevenueData = revenueData,
                 SelectedYear = year,
                 RevenueAvailableYears = _context.HTransactions
-                    .Where(t => t.HPaymentDate.HasValue)
+                    .Where(t => t.HPaymentDate.HasValue && t.HTradeStatus == "Success")
                     .Select(t => t.HPaymentDate.Value.Year)
                     .Distinct()
                     .OrderByDescending(y => y)
