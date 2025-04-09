@@ -14,6 +14,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers
     /// 1. 群組列表顯示
     /// 2. 群組聊天內容查看
     /// 3. 群組訊息刪除
+    /// 4. 訊息檢舉功能
+    /// 5. 檢舉列表管理
     /// </summary>
     [Area("Admin")]
     [Route("[area]/[controller]/[action]")]
@@ -29,13 +31,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
         /// <summary>
         /// 群組列表頁面
+        /// 顯示所有群組聊天室，支援分頁和搜尋功能
         /// </summary>
-        /// <param name="searchString">搜尋關鍵字</param>
-        /// <param name="page">當前頁碼</param>
-        /// <returns>群組列表視圖</returns>
+        /// <param name="searchString">搜尋關鍵字，用於過濾群組訊息內容</param>
+        /// <param name="page">當前頁碼，預設為第1頁</param>
+        /// <returns>群組列表視圖，包含分頁資訊和搜尋結果</returns>
         public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             // 只顯示群組對話
@@ -75,19 +78,21 @@ namespace GeeYeangSore.Areas.Admin.Controllers
 
         /// <summary>
         /// 群組聊天內容頁面
+        /// 顯示特定群組的所有聊天訊息，並獲取發送者名稱
         /// </summary>
-        /// <param name="chatId">群組ID</param>
-        /// <returns>群組聊天內容視圖</returns>
+        /// <param name="chatId">要查看的群組ID</param>
+        /// <returns>群組聊天內容視圖，包含訊息列表和發送者資訊</returns>
         [HttpGet]
         [Route("Admin/GroupMessages/GroupChat/{chatId}")]
         public async Task<IActionResult> GroupChat(int chatId)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
-            // 獲取該群組的所有訊息
+            // 獲取該群組的所有訊息，包含檢舉資訊
             var messages = await _context.HMessages
                 .Where(m => m.HChatId == chatId)
+                .Include(m => m.HReports)  // 包含檢舉資訊
                 .OrderBy(m => m.HTimestamp)
                 .ToListAsync();
 
@@ -133,24 +138,32 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 }
             }
 
+            // 獲取群組名稱（如果有）
+            var groupName = await _context.HChats
+                .Where(c => c.HChatId == chatId)
+                .Select(c => c.HChatName)
+                .FirstOrDefaultAsync() ?? $"群組 {chatId}";
+
             ViewBag.ChatId = chatId;
             ViewBag.MessageCount = messages.Count;
             ViewBag.SenderNames = senderNames;
+            ViewBag.GroupName = groupName;
 
             return View(messages);
         }
 
         /// <summary>
         /// 刪除群組訊息
+        /// 刪除指定群組的所有聊天記錄
         /// </summary>
         /// <param name="chatId">要刪除的群組ID</param>
-        /// <returns>JSON格式的操作結果</returns>
+        /// <returns>JSON格式的操作結果，包含成功/失敗訊息</returns>
         [HttpPost]
         [Route("Admin/GroupMessages/Delete/{chatId}")]
         public async Task<IActionResult> Delete(int chatId)
         {
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                return Json(new { success = false, message = "權限不足" });
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             try
             {
@@ -167,6 +180,152 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "刪除失敗：" + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 提交訊息檢舉
+        /// 處理用戶對特定訊息的檢舉請求
+        /// </summary>
+        /// <param name="messageId">被檢舉的訊息ID</param>
+        /// <param name="reason">檢舉原因</param>
+        /// <returns>重定向到群組聊天頁面，並顯示操作結果訊息</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Report(int messageId, string reason)
+        {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            var message = await _context.HMessages.FindAsync(messageId);
+            if (message == null)
+            {
+                return NotFound();
+            }
+
+            var report = new HReport
+            {
+                HMessageId = messageId,
+                HAuthorId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                HAuthorType = "Admin",
+                HReason = reason,
+                HStatus = "Pending",
+                HCreatedAt = DateTime.Now,
+                HReportType = "Group"  // 設置為群組訊息檢舉
+            };
+
+            _context.HReports.Add(report);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "檢舉已成功提交！";
+            return RedirectToAction("GroupChat", new { chatId = message.HChatId });
+        }
+
+        /// <summary>
+        /// 檢舉列表頁面
+        /// 顯示所有群組訊息的檢舉記錄，支援按狀態篩選
+        /// </summary>
+        /// <param name="status">檢舉狀態篩選條件，可選值：Pending（待處理）、Approved（已核准）、Rejected（已拒絕）</param>
+        /// <returns>檢舉列表視圖，包含檢舉記錄和相關操作按鈕</returns>
+        public async Task<IActionResult> ReportList(string status = null)
+        {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            // 只查詢群組訊息的檢舉
+            var query = _context.HReports
+                .Where(r => r.HReportType == "Group")
+                .Include(r => r.HMessage)  // 包含訊息內容
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(r => r.HStatus == status);
+            }
+
+            var reports = await query
+                .OrderByDescending(r => r.HCreatedAt)
+                .ToListAsync();
+
+            // 獲取每個檢舉對應的聊天 ID
+            var chatIds = new Dictionary<int, int?>();
+            foreach (var report in reports)
+            {
+                if (report.HMessageId.HasValue)
+                {
+                    var message = await _context.HMessages.FindAsync(report.HMessageId);
+                    chatIds[report.HReportId] = message?.HChatId;
+                }
+            }
+
+            ViewBag.Status = status;
+            ViewBag.ChatIds = chatIds;
+            return View(reports);
+        }
+
+        /// <summary>
+        /// 更新檢舉狀態
+        /// 處理管理員對檢舉記錄的審核操作
+        /// </summary>
+        /// <param name="reportId">要更新的檢舉ID</param>
+        /// <param name="status">新的檢舉狀態，可選值：Approved（核准）、Rejected（拒絕）</param>
+        /// <returns>JSON格式的操作結果，包含成功/失敗訊息</returns>
+        [HttpPost]
+        public async Task<IActionResult> UpdateReportStatus(int reportId, string status)
+        {
+            if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+
+            try
+            {
+                // 先獲取當前管理員帳號
+                if (string.IsNullOrEmpty(LoginedUser))
+                {
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+                }
+
+                // 使用管理員帳號查找管理員記錄
+                var admin = await _context.HAdmins.FirstOrDefaultAsync(a => a.HAccount == LoginedUser);
+                if (admin == null)
+                {
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+                }
+
+                // 獲取檢舉記錄
+                var report = await _context.HReports.FindAsync(reportId);
+                if (report == null)
+                {
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+                }
+
+                // 檢查狀態是否有效
+                if (status != "已核准" && status != "已拒絕")
+                {
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+                }
+
+                // 更新檢舉狀態
+                report.HStatus = status;
+                report.HAdminId = admin.HAdminId;
+                report.HReviewedAt = DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = true, message = "狀態已更新" });
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    if (dbEx.InnerException?.Message.Contains("FK_h_Reports_h_Admin") == true)
+                    {
+                        return Json(new { success = false, message = $"管理員ID {admin.HAdminId} 無法用於更新檢舉記錄" });
+                    }
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"更新失敗：{ex.Message}" });
             }
         }
     }
