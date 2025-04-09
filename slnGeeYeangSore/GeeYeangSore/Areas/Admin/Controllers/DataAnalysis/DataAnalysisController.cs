@@ -135,6 +135,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
         [HttpGet]
         public IActionResult LoadPropertyChart(int year)
         {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            {
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+            }
             var model = new DataAnalysisViewModel
             {
                 MonthlyPropertyData = _context.HProperties
@@ -164,6 +168,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
         [HttpGet] 
         public IActionResult LoadRevenueChart(int year)
         {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+            {
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+            }
             var revenueData = _context.HTransactions
                 .Where(t => t.HPaymentDate.HasValue && t.HPaymentDate.Value.Year == year)
                 .ToList()
