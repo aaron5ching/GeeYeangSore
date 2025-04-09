@@ -53,7 +53,6 @@
                 <a class="nav-link" href="#"><i class="fa fa-users"></i> <span>使用者</span></a>
                 <ul class="nav flex-column ms-3">
                     <li><a class="nav-link" asp-area="Admin" asp-controller="User" asp-action="UserManagement">使用者管理</a></li>
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="Landlord" asp-action="Index">新增使用者</a></li>
                     <li>
                         <a class="nav-link" asp-area="Admin" asp-controller="AdminManagement" asp-action="AdminManagement">管理者權限</a>
                     </li>
@@ -94,8 +93,11 @@
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-cog"></i> <span>設定</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Roles">權限管理</a></li>
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Info">平台資訊</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="News" asp-action="News">快訊</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="About" asp-action="About">關於我們</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Audit" asp-action="Audit">審核房東</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Contact" asp-action="Contact">聯絡我們</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Guide" asp-action="Guide">指南手冊</a></li>
                 </ul>
             </li>
         </ul>
