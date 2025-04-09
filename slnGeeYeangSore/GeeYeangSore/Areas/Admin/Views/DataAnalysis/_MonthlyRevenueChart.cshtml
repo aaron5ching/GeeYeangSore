@@ -1,0 +1,81 @@
+﻿@model GeeYeangSore.Areas.Admin.ViewModels.DataAnalysisViewModel
+
+<!-- 年份下拉選單 -->
+<form class="d-flex justify-content-end mb-2">
+    <select id="revenueYearSelect" class="form-select form-select-sm w-50">
+        @foreach (var year in Model.RevenueAvailableYears)
+        {
+            <option value="@year" selected="@(year == Model.SelectedYear)">
+                @year 年
+            </option>
+        }
+    </select>
+</form>
+
+@if (Model.MonthlyRevenueData == null || !Model.MonthlyRevenueData.Any())
+{
+    <div class="text-center text-muted p-5">
+        <i class="fa-solid fa-circle-info me-2"></i> 沒有此年份的收益資料
+    </div>
+}
+else
+{
+    <div class="chart-container-fixed">
+        <canvas id="revenueLineChart"
+                data-labels='@Html.Raw(Json.Serialize(Model.MonthlyRevenueData.Select(m => m.Month)))'
+                data-values='@Html.Raw(Json.Serialize(Model.MonthlyRevenueData.Select(m => m.Revenue)))'>
+        </canvas>
+    </div>
+}
+
+<script>
+    $(function () {
+        const $canvas = $('#revenueLineChart');
+        if (!$canvas.length) return;
+
+        const labels = JSON.parse($canvas.attr('data-labels'));
+        const values = JSON.parse($canvas.attr('data-values'));
+
+        if (window.revenueChartInstance) {
+            window.revenueChartInstance.destroy();
+        }
+
+        const ctx = $canvas[0].getContext('2d');
+        window.revenueChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '收益（單位：NTD）',
+                    data: values,
+                    borderColor: '#3CDDD2',
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.parsed.y;
+                                return `NT$${value.toLocaleString()}`;
+                            }
+                        }
+                    }
+                }
+
+            }
+        });
+
+        // 年份切換事件
+        $('#revenueYearSelect').on('change', function () {
+            const selectedYear = $(this).val();
+            $.get('/Admin/DataAnalysis/LoadRevenueChart', { year: selectedYear }, function (result) {
+                $('#revenue-chart-container').html(result);
+            });
+        });
+    });
+</script>
