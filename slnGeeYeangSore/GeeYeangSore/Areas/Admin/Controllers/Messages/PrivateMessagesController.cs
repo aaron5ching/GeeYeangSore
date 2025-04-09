@@ -62,6 +62,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
                 .OrderByDescending(m => m.HTimestamp)  // 依時間降序排序
                 .Skip((page - 1) * PageSize)          // 跳過前面頁數的資料
                 .Take(PageSize)                       // 取得當前頁的資料
+                .Include(m => m.HReports.Where(r => r.HStatus == "待處理"))  // 只包含待處理的檢舉
                 .ToListAsync();
 
             // 獲取所有相關用戶的 ID
@@ -226,7 +227,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
                 HAuthorId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0"),
                 HAuthorType = "Admin", // 檢舉者類型為管理員
                 HReason = reason,
-                HStatus = "Pending", // 初始狀態為待處理
+                HStatus = "待處理", // 初始狀態為待處理
                 HCreatedAt = DateTime.Now,
                 HReportType = "Private"
             };
@@ -244,56 +245,76 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 處理檢舉
         public async Task<IActionResult> ProcessReport(int reportId, string status)
         {
-            // 檢查管理者權限
-            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
-
-            // 檢查檢舉記錄是否存在
-            var report = await _context.HReports.FindAsync(reportId);
-            if (report == null)
+            try
             {
-                return NotFound();
-            }
+                Console.WriteLine("【流程0】收到 ProcessReport 請求，reportId=" + reportId + ", status=" + status);
 
-            // 獲取管理員 ID
-            var adminIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(adminIdStr))
-            {
-                TempData["ErrorMessage"] = "登入狀態異常，請重新登入！";
+                if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                {
+                    Console.WriteLine("【流程1】權限不足，跳轉 NoPermission");
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
+                }
+
+                var report = await _context.HReports.FirstOrDefaultAsync(r => r.HReportId == reportId);
+                if (report == null)
+                {
+                    Console.WriteLine("【流程2】找不到該檢舉記錄，reportId=" + reportId);
+                    TempData["ErrorMessage"] = "找不到該檢舉記錄！";
+                    return RedirectToAction(nameof(ReportList));
+                }
+                Console.WriteLine("【流程2】成功找到 report");
+
+                var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(adminIdStr) || !int.TryParse(adminIdStr, out int adminId))
+                {
+                    Console.WriteLine("【流程3】adminId 取得失敗，adminIdStr=" + adminIdStr);
+                    TempData["ErrorMessage"] = "登入狀態異常，請重新登入！";
+                    return RedirectToAction(nameof(ReportList));
+                }
+                Console.WriteLine("【流程3】成功取得 adminId=" + adminId);
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    Console.WriteLine("【流程4】status 參數為空");
+                    TempData["ErrorMessage"] = "狀態參數錯誤，請重新操作！";
+                    return RedirectToAction(nameof(ReportList));
+                }
+
+                var chineseStatus = status switch
+                {
+                    "Approved" => "核准",
+                    "Rejected" => "拒絕",
+                    _ => null
+                };
+                if (chineseStatus == null)
+                {
+                    Console.WriteLine("【流程4】status 轉換失敗，status=" + status);
+                    TempData["ErrorMessage"] = "狀態參數無效，請重新操作！";
+                    return RedirectToAction(nameof(ReportList));
+                }
+                Console.WriteLine("【流程4】status 轉換為中文：" + chineseStatus);
+
+                // 更新 report
+                report.HStatus = chineseStatus;
+                report.HAdminId = adminId;
+                report.HReviewedAt = DateTime.Now;
+                Console.WriteLine("【流程5】已更新 report 欄位，準備儲存");
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine("【流程6】儲存 SaveChangesAsync 成功");
+
+                TempData["SuccessMessage"] = "檢舉已成功處理！";
                 return RedirectToAction(nameof(ReportList));
             }
-
-            int adminId;
-            if (!int.TryParse(adminIdStr, out adminId))
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "登入資訊錯誤，請重新登入！";
+                Console.WriteLine("【流程X】處理檢舉時發生錯誤！");
+                Console.WriteLine(ex.ToString());  // ❗ 請用 ToString() 看完整堆疊
+                TempData["ErrorMessage"] = "處理檢舉時發生錯誤：" + ex.Message;
                 return RedirectToAction(nameof(ReportList));
             }
-
-            // 確認 h_Admin 中真的有這個 ID
-            var adminExists = await _context.HAdmins.AnyAsync(a => a.HAdminId == adminId);
-            if (!adminExists)
-            {
-                TempData["ErrorMessage"] = "管理員帳號不存在，請重新登入！";
-                return RedirectToAction(nameof(ReportList));
-            }
-
-            // 更新檢舉狀態和處理資訊
-            report.HStatus = status;
-            report.HAdminId = adminId;
-            report.HReviewedAt = DateTime.Now;
-
-            // 保存更改
-            await _context.SaveChangesAsync();
-
-            // 設置成功訊息
-            TempData["SuccessMessage"] = "檢舉已成功處理！";
-
-            // 重定向回檢舉列表頁面
-            return RedirectToAction(nameof(ReportList));
         }
         //檢舉列表頁面
         public async Task<IActionResult> ReportList()
@@ -305,13 +326,17 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             //  獲取所有私人訊息的檢舉記錄
             var reports = await _context.HReports
                 .Where(r => r.HReportType == "Private") // 只顯示私人訊息的檢舉
+                .Include(r => r.HAdmin)                 // 包含處理的管理員資訊
+                .Include(r => r.HMessage)               // 包含訊息資訊
                 .OrderByDescending(r => r.HCreatedAt)
+                .AsNoTracking()                        // 提高性能
                 .ToListAsync();
 
             // 獲取所有相關的訊息
-            var messageIds = reports.Select(r => r.HMessageId).ToList();
+            var messageIds = reports.Select(r => r.HMessageId).Where(id => id.HasValue).Select(id => id.Value).ToList();
             var messages = await _context.HMessages
                 .Where(m => messageIds.Contains(m.HMessageId))
+                .AsNoTracking()
                 .ToDictionaryAsync(m => m.HMessageId);
 
             // 將訊息資訊存儲在 ViewBag 中

@@ -65,7 +65,8 @@
     <div class="search-section">
         <form method="get" class="row g-3 align-items-center">
             <div class="col-md-2 d-flex justify-content-center align-items-center">
-                <a href="@Url.Action("ReportList")" class="btn btn-warning btn-sm px-2 py-1" style="font-size: 0.875rem;">檢舉列表</a>
+                <a href="@Url.Action("ReportList")" class="btn btn-main btn-sm px-2 py-1"
+                    style="font-size: 0.875rem;">檢舉列表</a>
             </div>
             <div class="col-md-3">
                 <input type="text" name="searchString" class="form-control" placeholder="搜尋訊息內容..."
@@ -92,57 +93,56 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var message in Model)
                 {
                     <tr>
-                        <td>@item.HMessageId</td>
+                        <td>@message.HMessageId</td>
+                        <td>@ViewBag.UserNames[(message.HSenderId, message.HSenderRole)]</td>
+                        <td>@ViewBag.UserNames[(message.HReceiverId, message.HReceiverRole)]</td>
+                        <td>@message.HContent</td>
+                        <td>@message.HTimestamp.ToString()</td>
                         <td>
                             @{
-                                var senderKey = (item.HSenderId, item.HSenderRole);
-                                var senderName = userNames?.GetValueOrDefault(senderKey) ?? "未知用戶";
+                                var report = message.HReports?.FirstOrDefault();
+                                var hasUnprocessedReport = report != null;
                             }
-                            @senderName
-                        </td>
-                        <td>
-                            @{
-                                var receiverKey = (item.HReceiverId, item.HReceiverRole);
-                                var receiverName = userNames?.GetValueOrDefault(receiverKey) ?? "未知用戶";
+                            @if (hasUnprocessedReport)
+                            {
+                                @switch (report.HStatus)
+                                {
+                                    case "待處理":
+                                        <span class="badge bg-warning">待處理</span>
+                                        break;
+                                    case "核准":
+                                        <span class="badge bg-danger">檢舉成立</span>
+                                        break;
+                                    case "拒絕":
+                                        <span class="badge bg-secondary">檢舉駁回</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-warning">待處理</span>
+                                        break;
+                                }
                             }
-                            @receiverName
-                        </td>
-                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                            title="@item.HContent">
-                            @item.HContent
-                        </td>
-                        <td>@item.HTimestamp?.ToString("yyyy/MM/dd HH:mm")</td>
-                        <td>
-                            @{
-                                var statusClass = item.HIsDeleted == 1 ? "badge bg-danger" : "badge bg-success";
-                                var statusText = item.HIsDeleted == 1 ? "已刪除" : "正常";
-                                var editedText = item.HIsEdited == 1 ? " (已編輯)" : "";
+                            else
+                            {
+                                <span class="badge bg-success">正常</span>
                             }
-                            <span class="@statusClass">@statusText@editedText</span>
                         </td>
                         <td>
                             <div class="btn-group">
-                                @* <button type="button" class="btn btn-sm btn-main" data-bs-toggle="modal" *@
-                                @*         data-bs-target="#messageModal" data-message-id="@item.HMessageId" *@
-                                @*         data-sender-id="@item.HSenderId" data-receiver-id="@item.HReceiverId" *@
-                                @*         data-sender="@($"{item.HSenderId} ({item.HSenderRole})")" *@
-                                @*         data-receiver="@($"{item.HReceiverId} ({item.HReceiverRole})")"> *@
-                                @*     查看詳情 *@
-                                @* </button> *@
-                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                    data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
-                                    檢舉
-                                </button>
-                                @if (item.HIsDeleted != 1)
+                                @if (!hasUnprocessedReport)
                                 {
-                                    <button type="button" class="btn btn-sm btn-danger"
-                                        onclick="deleteMessage(@item.HMessageId)">
-                                        刪除
-                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#reportMessageModal" data-message-id="@message.HMessageId">檢舉</button>
                                 }
+                                else
+                                {
+                                    <button type="button" class="btn btn-warning btn-sm" disabled>已檢舉</button>
+                                }
+                               
+                                <button type="button" class="btn btn-danger btn-sm"
+                                    onclick="deleteMessage(@message.HMessageId)">刪除</button>
                             </div>
                         </td>
                     </tr>
@@ -197,7 +197,7 @@
                 <h5 class="modal-title" id="reportModalLabel">檢舉訊息</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-action="Report" method="post">
+            <form id="antiForgeryForm" method="post">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <input type="hidden" id="reportMessageId" name="messageId">
@@ -216,12 +216,21 @@
 </div>
 
 @section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         // 確保 Bootstrap 已經載入
         document.addEventListener('DOMContentLoaded', function () {
             // 獲取 Modal 實例
             var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
             var reportModal = new bootstrap.Modal(document.getElementById('reportMessageModal'));
+
+            // 為檢舉按鈕添加點擊事件
+            document.querySelectorAll('[data-bs-target="#reportMessageModal"]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const messageId = this.getAttribute('data-message-id');
+                    document.getElementById('reportMessageId').value = messageId;
+                });
+            });
 
             // 為所有「查看詳情」按鈕添加點擊事件
             document.querySelectorAll('[data-bs-target="#messageModal"]').forEach(function (button) {
@@ -242,19 +251,19 @@
                                 const messageDiv = document.createElement('div');
                                 messageDiv.className = `chat-message ${message.hSenderId == senderId ? 'sender' : 'receiver'} mb-3`;
                                 messageDiv.innerHTML = `
-                                                            <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
-                                                                 style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
-                                                                        max-width: 80%; 
-                                                                        margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
-                                                                <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
-                                                                <div class="message-text">${message.hContent}</div>
-                                                                <div class="message-time text-muted small">
-                                                                    ${new Date(message.hTimestamp).toLocaleString()}
-                                                                    ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
-                                                                    ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
-                                                                </div>
-                                                            </div>
-                                                        `;
+                                                                                    <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
+                                                                                         style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
+                                                                                                max-width: 80%; 
+                                                                                                margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
+                                                                                        <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
+                                                                                        <div class="message-text">${message.hContent}</div>
+                                                                                        <div class="message-time text-muted small">
+                                                                                            ${new Date(message.hTimestamp).toLocaleString()}
+                                                                                            ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
+                                                                                            ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                `;
                                 chatContainer.appendChild(messageDiv);
                             });
 
@@ -267,15 +276,6 @@
                         });
 
                     messageModal.show();
-                });
-            });
-
-            // 檢舉按鈕點擊事件
-            document.querySelectorAll('[data-bs-target="#reportMessageModal"]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    const messageId = this.getAttribute('data-message-id');
-                    document.getElementById('reportMessageId').value = messageId;
-                    reportModal.show();
                 });
             });
         });
@@ -305,6 +305,37 @@
                         alert('刪除失敗，請稍後再試。');
                     });
             }
+        }
+
+        function processReport(reportId, status) {
+            var tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (!tokenElement) {
+                alert("系統錯誤：找不到驗證Token！");
+                return;
+            }
+            var token = tokenElement.value;
+
+            fetch('/Admin/PrivateMessages/ProcessReport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `reportId=${reportId}&status=${status}&__RequestVerificationToken=${token}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('伺服器錯誤');
+                    }
+                    return response.text();
+                })
+                .then(() => {
+                    alert('處理成功！');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('處理失敗，請稍後再試！');
+                });
         }
     </script>
 
