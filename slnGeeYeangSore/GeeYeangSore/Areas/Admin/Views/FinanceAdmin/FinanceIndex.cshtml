@@ -1,0 +1,415 @@
+﻿@{
+    ViewData["Title"] = "金流統計";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<style>
+    .stats-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .stats-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .stats-label {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+
+    .chart-container {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        height: 400px;
+        position: relative;
+    }
+
+    .chart-container.pie-chart {
+        height: 350px;
+        padding: 10px 20px 30px 20px;
+    }
+
+    .date-input {
+        width: 150px !important;
+    }
+
+    .date-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+    }
+
+    .error-message {
+        color: red;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .vertical-text {
+        writing-mode: vertical-lr;
+        text-orientation: mixed;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: #666;
+        z-index: 10;
+    }
+
+    .vertical-text.left {
+        left: 5px;
+    }
+
+    .vertical-text.right {
+        right: 0;
+    }
+
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+    <h2 class="mb-4">金流統計</h2>
+
+    <!-- 日期選擇 -->
+    <div class="search-section">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="startDate" class="form-label">開始日期</label>
+                <input type="date" class="form-control" id="startDate">
+            </div>
+            <div class="col-md-4">
+                <label for="endDate" class="form-label">結束日期</label>
+                <input type="date" class="form-control" id="endDate">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="button" class="btn btn-main" onclick="fetchStats()">
+                    <i class="fas fa-search"></i> 查詢
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增財務報表按鈕 -->
+    <div class="mb-4">
+        <a href="/Admin/FinanceReport/Index" class="btn btn-main">
+            <i class="fas fa-file-alt"></i> 財務報表
+        </a>
+    </div>
+
+    <!-- 統計卡片 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value" id="totalTransactions">0</div>
+                <div class="stats-label">總交易筆數</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value" id="totalAmount">$0</div>
+                <div class="stats-label">總交易金額</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value text-success" id="completedTransactions">0</div>
+                <div class="stats-label">已完成交易</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value text-warning" id="pendingTransactions">0</div>
+                <div class="stats-label">待處理交易</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 圖表區域 -->
+    <div class="row mt-4">
+        <!-- 每日交易趨勢圖 -->
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h5>每日交易趨勢</h5>
+                <canvas id="trendChart"></canvas>
+                <div class="loading">載入中...</div>
+            </div>
+        </div>
+        <!-- 付款方式分布圖 -->
+        <div class="col-md-6">
+            <div class="chart-container pie-chart">
+                <h5>付款方式分布</h5>
+                <canvas id="paymentMethodChart"></canvas>
+                <div class="loading">載入中...</div>
+            </div>
+        </div>
+        <!-- 縣市分布圖 -->
+        <div class="col-md-6">
+            <div class="chart-container pie-chart">
+                <h5>縣市分布</h5>
+                <canvas id="cityDistributionChart"></canvas>
+                <div class="loading">載入中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let trendChart = null;
+        let paymentMethodChart = null;
+        let cityDistributionChart = null;
+
+        // 定義顏色常數
+        const mainColor = '#3CDDD2';
+        const hoverColor = '#24B4A8';
+        const bgLight = '#F0F9F8';
+
+        // 初始化圖表
+        function initializeCharts(data) {
+            // 更新統計卡片
+            document.getElementById('totalTransactions').textContent = data.totalTransactions;
+            document.getElementById('totalAmount').textContent = '$' + data.totalAmount.toLocaleString();
+            document.getElementById('completedTransactions').textContent = data.completedTransactions;
+            document.getElementById('pendingTransactions').textContent = data.pendingTransactions;
+
+            // 銷毀舊的圖表
+            if (trendChart) trendChart.destroy();
+            if (paymentMethodChart) paymentMethodChart.destroy();
+            if (cityDistributionChart) cityDistributionChart.destroy();
+
+            // 每日交易趨勢圖
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: data.dailyTrends.map(item => item.date),
+                    datasets: [{
+                        label: '交易筆數',
+                        data: data.dailyTrends.map(item => item.count),
+                        borderColor: mainColor,
+                        backgroundColor: mainColor,
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    }, {
+                        label: '交易金額',
+                        data: data.dailyTrends.map(item => item.amount),
+                        borderColor: hoverColor,
+                        backgroundColor: hoverColor,
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 50
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: false
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: {
+                                display: false
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+            // 在圖表容器中添加垂直文字
+            const trendContainer = document.querySelector('.chart-container');
+            const transactionCountLabel = document.createElement('div');
+            transactionCountLabel.className = 'vertical-text left';
+            transactionCountLabel.textContent = '交易筆數';
+            trendContainer.appendChild(transactionCountLabel);
+
+            const transactionAmountLabel = document.createElement('div');
+            transactionAmountLabel.className = 'vertical-text right';
+            transactionAmountLabel.textContent = '交易金額';
+            trendContainer.appendChild(transactionAmountLabel);
+
+            // 付款方式分布圖
+            const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
+            paymentMethodChart = new Chart(paymentCtx, {
+                type: 'pie',
+                data: {
+                    labels: data.paymentMethods.map(item => item.method),
+                    datasets: [{
+                        data: data.paymentMethods.map(item => item.count),
+                        backgroundColor: [
+                            mainColor,
+                            hoverColor,
+                            bgLight,
+                            '#24B4A8',
+                            '#2AA39A',
+                            '#1F8C84',
+                            '#197570'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const item = data.paymentMethods[context.dataIndex];
+                                    return `${item.method}: ${item.count} (${item.percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 縣市分布圖
+            const cityCtx = document.getElementById('cityDistributionChart').getContext('2d');
+            cityDistributionChart = new Chart(cityCtx, {
+                type: 'pie',
+                data: {
+                    labels: data.cityDistribution.map(item => item.city),
+                    datasets: [{
+                        data: data.cityDistribution.map(item => item.count),
+                        backgroundColor: [
+                            mainColor,
+                            hoverColor,
+                            bgLight,
+                            '#24B4A8',
+                            '#2AA39A',
+                            '#1F8C84',
+                            '#197570'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const item = data.cityDistribution[context.dataIndex];
+                                    return `${item.city}: ${item.count} (${item.percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加載統計數據
+        async function fetchStats() {
+            toggleLoading(true);
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            try {
+                const response = await fetch(`/Admin/Finance/GetStats?startDate=${startDate}&endDate=${endDate}`);
+                if (!response.ok) {
+                    throw new Error('網路請求失敗');
+                }
+                const data = await response.json();
+                if (data.success) {
+                    initializeCharts(data.data);
+                } else {
+                    showError(data.message || '加載數據失敗');
+                }
+            } catch (error) {
+                showError(error.message);
+                console.error('請求失敗:', error);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // 顯示錯誤訊息
+        function showError(message) {
+            console.error(message);
+            alert(message);
+        }
+
+        // 顯示/隱藏載入中
+        function toggleLoading(show) {
+            const loadings = document.querySelectorAll('.loading');
+            loadings.forEach(loading => {
+                loading.style.display = show ? 'block' : 'none';
+            });
+        }
+
+        // 頁面加載完成後自動加載數據
+        document.addEventListener('DOMContentLoaded', fetchStats);
+    </script>
+}
