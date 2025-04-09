@@ -1,0 +1,80 @@
+﻿@model GeeYeangSore.Areas.Admin.ViewModels.DataAnalysisViewModel
+
+<!-- 年份下拉選單 -->
+<form class="d-flex justify-content-end mb-2">
+    <select id="propertyYearSelect" class="form-select form-select-sm w-50">
+        @foreach (var year in Model.PropertyAvailableYears)
+        {
+            <option value="@year" selected="@(year == Model.SelectedYear)">
+                @year 年
+            </option>
+        }
+    </select>
+</form>
+
+<!-- 圖表或提示訊息 -->
+@if (Model.MonthlyPropertyData == null || !Model.MonthlyPropertyData.Any())
+{
+    <div class="text-center text-muted p-5">
+        <i class="fa-solid fa-circle-info me-2"></i>
+        沒有此年份的房源資料
+    </div>
+}
+else
+{
+    <div class="chart-container-fixed">
+        <canvas id="monthlyPropertyChart"
+                data-labels='@Html.Raw(Json.Serialize(Model.MonthlyPropertyData.Select(m => m.Month)))'
+                data-values='@Html.Raw(Json.Serialize(Model.MonthlyPropertyData.Select(m => m.PropertyCount)))'>
+        </canvas>
+    </div>
+}
+
+<script>
+    $(function () {
+        const $canvas = $('#monthlyPropertyChart');
+        if (!$canvas.length) return;
+
+        const labels = JSON.parse($canvas.attr('data-labels'));
+        const values = JSON.parse($canvas.attr('data-values'));
+
+        if (window.monthlyChartInstance) {
+            window.monthlyChartInstance.destroy();
+        }
+
+        const ctx = $canvas[0].getContext('2d');
+        window.monthlyChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '新增物件數',
+                    data: values,
+                    borderColor: '#3CDDD2',
+                    fill: false
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.parsed.y;
+                                return `${value.toLocaleString()} 筆`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 年份切換
+        $('#propertyYearSelect').on('change', function () {
+            const selectedYear = $(this).val();
+            $.get('/Admin/DataAnalysis/LoadPropertyChart', { year: selectedYear }, function (result) {
+                $('#monthly-property-chart-container').html(result);
+            });
+        });
+    });
+</script>
