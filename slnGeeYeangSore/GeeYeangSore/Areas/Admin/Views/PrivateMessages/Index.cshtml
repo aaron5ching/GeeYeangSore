@@ -136,6 +136,10 @@
                                         刪除
                                     </button>
                                 }
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
+                                    檢舉
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -182,15 +186,42 @@
     </div>
 </div>
 
+<!-- 檢舉 Modal -->
+<div class="modal fade" id="reportMessageModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">檢舉訊息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Report" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="reportMessageId" name="messageId">
+                    <div class="mb-3">
+                        <label for="reportReason" class="form-label">檢舉原因</label>
+                        <textarea class="form-control" id="reportReason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning">提交檢舉</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // 確保 Bootstrap 已經載入
         document.addEventListener('DOMContentLoaded', function () {
             // 獲取 Modal 實例
             var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+            var reportModal = new bootstrap.Modal(document.getElementById('reportMessageModal'));
 
             // 為所有「查看詳情」按鈕添加點擊事件
-            document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function (button) {
+            document.querySelectorAll('[data-bs-target="#messageModal"]').forEach(function (button) {
                 button.addEventListener('click', function () {
                     const senderId = this.getAttribute('data-sender-id');
                     const receiverId = this.getAttribute('data-receiver-id');
@@ -206,27 +237,21 @@
 
                             messages.forEach(message => {
                                 const messageDiv = document.createElement('div');
-                                const isFromCurrentSender = message.hSenderId == senderId;
-                                messageDiv.className = `chat-message ${isFromCurrentSender ? 'sender' : 'receiver'} mb-3`;
+                                messageDiv.className = `chat-message ${message.hSenderId == senderId ? 'sender' : 'receiver'} mb-3`;
                                 messageDiv.innerHTML = `
-                                                <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}"
-                                                     style="background-color: ${isFromCurrentSender ? '#e3f2fd' : '#f5f5f5'};
-                                                            max-width: 80%;
-                                                            margin-${isFromCurrentSender ? 'right' : 'left'}: auto;">
-                                                    <div class="message-sender small text-muted mb-1">
-                                                        ${message.senderName}
-                                                        <small class="text-muted">
-                                                            (ID: ${message.hSenderId}${message.hSenderRole ? `, 角色: ${message.hSenderRole}` : ''})
-                                                        </small>
+                                                    <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
+                                                         style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
+                                                                max-width: 80%; 
+                                                                margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
+                                                        <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
+                                                        <div class="message-text">${message.hContent}</div>
+                                                        <div class="message-time text-muted small">
+                                                            ${new Date(message.hTimestamp).toLocaleString()}
+                                                            ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
+                                                            ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
+                                                        </div>
                                                     </div>
-                                                    <div class="message-text">${message.hContent}</div>
-                                                    <div class="message-time text-muted small">
-                                                        ${new Date(message.hTimestamp).toLocaleString()}
-                                                        ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
-                                                        ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
-                                                    </div>
-                                                </div>
-                                            `;
+                                                `;
                                 chatContainer.appendChild(messageDiv);
                             });
 
@@ -239,6 +264,15 @@
                         });
 
                     messageModal.show();
+                });
+            });
+
+            // 檢舉按鈕點擊事件
+            document.querySelectorAll('[data-bs-target="#reportMessageModal"]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const messageId = this.getAttribute('data-message-id');
+                    document.getElementById('reportMessageId').value = messageId;
+                    reportModal.show();
                 });
             });
         });

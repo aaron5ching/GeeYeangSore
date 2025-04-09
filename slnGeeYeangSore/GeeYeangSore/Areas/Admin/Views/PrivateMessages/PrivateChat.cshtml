@@ -51,7 +51,7 @@
                 bool isFromCurrentSender = message.HSenderId == senderId && message.HSenderRole == senderRole;
 
                 <div class="message @(isFromCurrentSender ? "message-right" : "message-left")"
-                     data-message-id="@message.HMessageId">
+                    data-message-id="@message.HMessageId">
                     <div class="message-sender">
                         @senderName
                         <small class="text-muted">
@@ -79,156 +79,258 @@
             }
         </div>
     </div>
-</div>
 
-<!-- 編輯訊息的Modal -->
-<div class="modal fade" id="editMessageModal" tabindex="-1" aria-labelledby="editMessageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editMessageModalLabel">編輯訊息</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editMessageForm">
-                    <input type="hidden" id="editMessageId" name="messageId">
-                    <div class="mb-3">
-                        <label for="editMessageContent" class="form-label">訊息內容</label>
-                        <textarea class="form-control" id="editMessageContent" name="content" rows="3"
-                                  required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="saveEditMessage">儲存</button>
+    <!-- 檢舉列表部分 -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="card-title">檢舉列表</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>檢舉ID</th>
+                            <th>被檢舉訊息</th>
+                            <th>檢舉原因</th>
+                            <th>檢舉者</th>
+                            <th>檢舉時間</th>
+                            <th>狀態</th>
+                            <th>處理者</th>
+                            <th>處理時間</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var report in ViewBag.Reports ?? new List<GeeYeangSore.Models.HReport>())
+                        {
+                            var message = report.HMessageId.HasValue &&
+                            ViewBag.Messages.ContainsKey(report.HMessageId.Value)
+                            ? ViewBag.Messages[report.HMessageId.Value]
+                            : null;
+                            <tr>
+                                <td>@report.HReportId</td>
+                                <td>
+                                    @if (message != null)
+                                    {
+                                        <button class="btn btn-link btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#messageModal-@report.HReportId">
+                                            查看訊息
+                                        </button>
+                                    }
+                                </td>
+                                <td>@report.HReason</td>
+                                <td>@report.HAuthorId (@report.HAuthorType)</td>
+                                <td>@report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge @(report.HStatus == "Pending" ? "bg-warning" : 
+                                                                                                report.HStatus == "Approved" ? "bg-success" : "bg-danger")">
+                                    @report.HStatus
+                                </span>
+                            </td>
+                            <td>@(report.HAdminId?.ToString() ?? "-")</td>
+                            <td>@(report.HReviewedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>
+                                @if (report.HStatus == "Pending")
+                                    {
+                                        <div class="btn-group">
+                                            <form asp-action="ProcessReport" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reportId" value="@report.HReportId" />
+                                                <input type="hidden" name="status" value="Approved" />
+                                                <button type="submit" class="btn btn-success btn-sm">通過</button>
+                                            </form>
+                                            <form asp-action="ProcessReport" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reportId" value="@report.HReportId" />
+                                                <input type="hidden" name="status" value="Rejected" />
+                                                <button type="submit" class="btn btn-danger btn-sm">拒絕</button>
+                                            </form>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+
+                            <!-- 訊息詳情 Modal -->
+                            @if (message != null)
+                            {
+                                <div class="modal fade" id="messageModal-@report.HReportId" tabindex="-1"
+                                    aria-labelledby="messageModalLabel-@report.HReportId" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="messageModalLabel-@report.HReportId">
+                                                    被檢舉訊息詳情
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>發送者：</strong>@message.HSenderId (@message.HSenderRole)</p>
+                                                <p><strong>接收者：</strong>@message.HReceiverId (@message.HReceiverRole)</p>
+                                                <p><strong>內容：</strong>@message.HContent</p>
+                                                <p><strong>時間：</strong>@message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    .chat-container {
-        padding: 20px;
-        background-color: #f8f9fa;
-    }
+    <!-- 編輯訊息的Modal -->
+    <div class="modal fade" id="editMessageModal" tabindex="-1" aria-labelledby="editMessageModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMessageModalLabel">編輯訊息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editMessageForm">
+                        <input type="hidden" id="editMessageId" name="messageId">
+                        <div class="mb-3">
+                            <label for="editMessageContent" class="form-label">訊息內容</label>
+                            <textarea class="form-control" id="editMessageContent" name="content" rows="3"
+                                required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveEditMessage">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    .message {
-        max-width: 70%;
-        margin-bottom: 15px;
-        padding: 10px;
-        border-radius: 10px;
-        position: relative;
-    }
+    <style>
+        .chat-container {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
 
-    .message-right {
-        margin-left: auto;
-        background-color: #dcf8c6;
-    }
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            position: relative;
+        }
 
-    .message-left {
-        margin-right: auto;
-        background-color: #fff;
-        border: 1px solid #e9ecef;
-    }
+        .message-right {
+            margin-left: auto;
+            background-color: #dcf8c6;
+        }
 
-    .message-sender {
-        font-size: 0.9em;
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #666;
-    }
+        .message-left {
+            margin-right: auto;
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+        }
 
-    .message-content {
-        word-wrap: break-word;
-        line-height: 1.4;
-    }
+        .message-sender {
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+        }
 
-    .message-timestamp {
-        font-size: 0.8em;
-        color: #666;
-        margin-top: 5px;
-        text-align: right;
-    }
+        .message-content {
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
 
-    .message-actions {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
+        .message-timestamp {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+            text-align: right;
+        }
 
-    .message:hover .message-actions {
-        opacity: 1;
-    }
+        .message-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
 
-    .deleted-message {
-        font-style: italic;
-        color: #999;
-    }
+        .message:hover .message-actions {
+            opacity: 1;
+        }
 
-    /* 防止訊息跳動 */
-    .card-body {
-        scroll-behavior: smooth;
-        overflow-anchor: none;
-    }
-</style>
+        .deleted-message {
+            font-style: italic;
+            color: #999;
+        }
+
+        /* 防止訊息跳動 */
+        .card-body {
+            scroll-behavior: smooth;
+            overflow-anchor: none;
+        }
+    </style>
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            // 頁面載入完成後滾動到最底部
-            var chatContainer = $('.chat-container');
-            chatContainer.scrollTop(chatContainer[0].scrollHeight);
+        <script>
+            $(document).ready(function () {
+                // 頁面載入完成後滾動到最底部
+                var chatContainer = $('.chat-container');
+                chatContainer.scrollTop(chatContainer[0].scrollHeight);
 
-            // 防止自動滾動
-            chatContainer.on('scroll', function () {
-                $(this).css('scroll-behavior', 'auto');
-            });
+                // 防止自動滾動
+                chatContainer.on('scroll', function () {
+                    $(this).css('scroll-behavior', 'auto');
+                });
 
-            // 編輯訊息按鈕點擊事件
-            $('.edit-message').click(function () {
-                var messageId = $(this).data('message-id');
-                var messageContent = $(this).closest('.message').find('.message-text').text();
+                // 編輯訊息按鈕點擊事件
+                $('.edit-message').click(function () {
+                    var messageId = $(this).data('message-id');
+                    var messageContent = $(this).closest('.message').find('.message-text').text();
 
-                $('#editMessageId').val(messageId);
-                $('#editMessageContent').val(messageContent);
-                $('#editMessageModal').modal('show');
-            });
+                    $('#editMessageId').val(messageId);
+                    $('#editMessageContent').val(messageContent);
+                    $('#editMessageModal').modal('show');
+                });
 
-            // 儲存編輯的訊息
-            $('#saveEditMessage').click(function () {
-                var messageId = $('#editMessageId').val();
-                var content = $('#editMessageContent').val();
-                var token = $('input[name="__RequestVerificationToken"]').val();
+                // 儲存編輯的訊息
+                $('#saveEditMessage').click(function () {
+                    var messageId = $('#editMessageId').val();
+                    var content = $('#editMessageContent').val();
+                    var token = $('input[name="__RequestVerificationToken"]').val();
 
-                $.ajax({
-                    url: '/Admin/PrivateMessages/Edit',
-                    type: 'POST',
-                    data: {
-                        id: messageId,
-                        content: content,
-                        __RequestVerificationToken: token
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            // 更新訊息內容
-                            var messageElement = $('.message[data-message-id="' + messageId + '"]');
-                            messageElement.find('.message-text').text(content);
-                            messageElement.find('.message-timestamp').append('<small class="text-muted">(已編輯)</small>');
+                    $.ajax({
+                        url: '/Admin/PrivateMessages/Edit',
+                        type: 'POST',
+                        data: {
+                            id: messageId,
+                            content: content,
+                            __RequestVerificationToken: token
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                // 更新訊息內容
+                                var messageElement = $('.message[data-message-id="' + messageId + '"]');
+                                messageElement.find('.message-text').text(content);
+                                messageElement.find('.message-timestamp').append('<small class="text-muted">(已編輯)</small>');
 
-                            $('#editMessageModal').modal('hide');
-                            alert('編輯成功');
-                        } else {
-                            alert(response.message);
+                                $('#editMessageModal').modal('hide');
+                                alert('編輯成功');
+                            } else {
+                                alert(response.message);
+                            }
+                        },
+                        error: function () {
+                            alert('編輯失敗，請稍後再試');
                         }
-                    },
-                    error: function () {
-                        alert('編輯失敗，請稍後再試');
-                    }
+                    });
                 });
             });
-        });
-    </script>
+        </script>
 }
