@@ -16,12 +16,13 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         {
             _db = db;
             _env = env;
-
+            //0
         }
 
 
         public IActionResult Index()
         {
+            //0
             return View();
         }
 
