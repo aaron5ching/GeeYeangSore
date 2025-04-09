@@ -16,10 +16,10 @@
         border: none;
     }
 
-        .btn-main:hover {
-            background-color: #24B4A8;
-            color: #222222;
-        }
+    .btn-main:hover {
+        background-color: #24B4A8;
+        color: #222222;
+    }
 
     .search-section {
         background-color: #F0F9F8;
@@ -63,10 +63,13 @@
     }
 
     <div class="search-section">
-        <form method="get" class="row g-3">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-md-2 d-flex justify-content-center align-items-center">
+                <a href="@Url.Action("ReportList")" class="btn btn-warning btn-sm px-2 py-1" style="font-size: 0.875rem;">檢舉列表</a>
+            </div>
             <div class="col-md-3">
                 <input type="text" name="searchString" class="form-control" placeholder="搜尋訊息內容..."
-                       value="@ViewBag.CurrentFilter">
+                    value="@ViewBag.CurrentFilter">
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-main">搜尋</button>
@@ -129,14 +132,14 @@
                                 @*         data-receiver="@($"{item.HReceiverId} ({item.HReceiverRole})")"> *@
                                 @*     查看詳情 *@
                                 @* </button> *@
-								<button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
-										data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
-									檢舉
-								</button>
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#reportMessageModal" data-message-id="@item.HMessageId">
+                                    檢舉
+                                </button>
                                 @if (item.HIsDeleted != 1)
                                 {
                                     <button type="button" class="btn btn-sm btn-danger"
-                                            onclick="deleteMessage(@item.HMessageId)">
+                                        onclick="deleteMessage(@item.HMessageId)">
                                         刪除
                                     </button>
                                 }
@@ -158,7 +161,7 @@
                 {
                     <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
                         <a class="page-link" asp-action="Index" asp-route-page="@i"
-                           asp-route-searchString="@ViewBag.SearchString">@i</a>
+                            asp-route-searchString="@ViewBag.SearchString">@i</a>
                     </li>
                 }
             </ul>
@@ -172,8 +175,8 @@
         <div class="modal-content">
             <div class="modal-header"> =
                 <h5 class="modal-title" id="messageModalLabel">對話詳情</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> 
-           </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
             <div class="modal-body">
                 <div class="chat-info mb-3">
                     <p><strong>對話者：</strong><span id="modalSender"></span> 與 <span id="modalReceiver"></span></p>
@@ -239,19 +242,19 @@
                                 const messageDiv = document.createElement('div');
                                 messageDiv.className = `chat-message ${message.hSenderId == senderId ? 'sender' : 'receiver'} mb-3`;
                                 messageDiv.innerHTML = `
-                                                    <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
-                                                         style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
-                                                                max-width: 80%; 
-                                                                margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
-                                                        <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
-                                                        <div class="message-text">${message.hContent}</div>
-                                                        <div class="message-time text-muted small">
-                                                            ${new Date(message.hTimestamp).toLocaleString()}
-                                                            ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
-                                                            ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
-                                                        </div>
-                                                    </div>
-                                                `;
+                                                            <div class="message-content p-3 rounded ${message.hIsDeleted == 1 ? 'deleted' : ''}" 
+                                                                 style="background-color: ${message.hSenderId == senderId ? '#e3f2fd' : '#f5f5f5'}; 
+                                                                        max-width: 80%; 
+                                                                        margin-${message.hSenderId == senderId ? 'right' : 'left'}: auto;">
+                                                                <div class="message-sender small text-muted mb-1">${message.hSenderId == senderId ? message.senderName : message.receiverName}</div>
+                                                                <div class="message-text">${message.hContent}</div>
+                                                                <div class="message-time text-muted small">
+                                                                    ${new Date(message.hTimestamp).toLocaleString()}
+                                                                    ${message.hIsDeleted == 1 ? '<span class="badge bg-danger ms-2">已刪除</span>' : ''}
+                                                                    ${message.hIsEdited == 1 ? '<span class="badge bg-warning ms-2">已編輯</span>' : ''}
+                                                                </div>
+                                                            </div>
+                                                        `;
                                 chatContainer.appendChild(messageDiv);
                             });
 
@@ -317,9 +320,9 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
-            .message-content.deleted {
-                opacity: 0.7;
-            }
+        .message-content.deleted {
+            opacity: 0.7;
+        }
 
         .chat-message {
             display: flex;
