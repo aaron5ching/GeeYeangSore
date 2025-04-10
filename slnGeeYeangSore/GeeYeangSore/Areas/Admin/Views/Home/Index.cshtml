@@ -8,7 +8,7 @@
 
     <!-- 統計數據區塊 -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
             <div class="card stat-card">
                 <div class="card-body text-center">
                     <h5 class="card-title">房源數</h5>
@@ -16,7 +16,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
             <div class="card stat-card">
                 <div class="card-body text-center">
                     <h5 class="card-title">新增用戶</h5>
@@ -24,7 +24,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-lg-4 col-md-12 col-sm-12 mb-3">
             <div class="card stat-card">
                 <div class="card-body text-center">
                     <h5 class="card-title">本月收入</h5>
@@ -34,66 +34,82 @@
         </div>
     </div>
 
-    <!-- 重要提醒 -->
-    <h2 class="section-title mb-3">重要提醒</h2>
-    <div class="card mb-4">
-        <div class="card-body">
-            <ul class="important-notification-list">
-                <li class="d-flex justify-content-between">
-                    <span>待審核房源</span>
-                    <span class="badge badge-pill badge-danger">@Model.PendingPropertyCount</span>
-                </li>
-                <li class="d-flex justify-content-between">
-                    <span>待處理檢舉訊息</span>
-                    <span class="badge badge-pill badge-warning">@Model.PendingReportCount</span>
-                </li>
-            </ul>
+    <div class="row mb-4">
+        <!-- 重要提醒 -->
+        <div class="col-lg-6 col-md-12 mb-3">
+            <h2 class="section-title mb-3">重要提醒</h2>
+            <div class="card h-80">
+                <div class="card-body">
+                    <ul class="important-notification-list">
+                        <li class="d-flex justify-content-between">
+                            <span>待審核房源</span>
+                            <span class="badge badge-pill badge-danger">@Model.PendingPropertyCount</span>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span>待處理檢舉訊息</span>
+                            <span class="badge badge-pill badge-warning">@Model.PendingReportCount</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- 系統公告 -->
-    <h2 class="section-title mb-3">系統公告</h2>
-    <div class="card mb-4">
-        <div class="card-body">
-            <ul class="system-announcement-list">
-                @foreach (var announcement in Model.SystemAnnouncements)
-                {
-                    <li class="announcement-item">
-                        <h5>@announcement.Title</h5>
-                    </li>
-                }
-            </ul>
+        <!-- 系統公告 -->
+        <div class="col-lg-6 col-md-12 mb-3">
+            <h2 class="section-title mb-3">系統公告</h2>
+            <div class="card h-80">
+                <div class="card-body">
+                    <ul class="system-announcement-list">
+                        @foreach (var announcement in Model.SystemAnnouncements)
+                        {
+                            <li class="announcement-item">
+                                <h5 class="announcement-title">@announcement.Title</h5>
+                                <p class="announcement-date text-muted">@announcement.Date</p>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- 快速連結 -->
     <h2 class="section-title mb-3">快速連結</h2>
     <div class="row quick-links mb-4">
-        <div class="col-md-3 mb-3">
-            @Html.ActionLink("房源審核", "Index", "Property", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+            <div class="custom-link-btn">
+                @Html.ActionLink("房源審核", "Index", "Property", new { area = "Admin" }, new { @class = "btn btn-info btn-block stretched-link" })
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            @Html.ActionLink("房東審核", "Audit", "Audit", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+            <div class="custom-link-btn">
+                @Html.ActionLink("房東審核", "Audit", "Audit", new { area = "Admin" }, new { @class = "btn btn-info btn-block stretched-link" })
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            @Html.ActionLink("使用者管理", "UserManagement", "User", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+            <div class="custom-link-btn">
+                @Html.ActionLink("使用者管理", "UserManagement", "User", new { area = "Admin" }, new { @class = "btn btn-info btn-block stretched-link" })
+            </div>
         </div>
-        <div class="col-md-3 mb-3">
-            @Html.ActionLink("金流統計", "Index", "Finance", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+            <div class="custom-link-btn">
+                @Html.ActionLink("金流統計", "Index", "Finance", new { area = "Admin" }, new { @class = "btn btn-info btn-block stretched-link" })
+            </div>
         </div>
     </div>
 </div>
 
 <style>
     .dashboard-container {
-        padding: 20px;
+        padding: 15px;
     }
 
     .dashboard-title {
-        color: #333;
-        background-color: #4ECDC4;
         color: white;
+        background-color: #4ECDC4;
         border-radius: 5px;
+        font-size: 1.5rem;
+        padding: 15px !important;
     }
 
     .stat-card {
@@ -109,14 +125,14 @@
     }
 
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.8rem;
         font-weight: bold;
         color: #333;
     }
 
     .section-title {
         color: #555;
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         border-bottom: 2px solid #4ECDC4;
         padding-bottom: 5px;
     }
@@ -130,11 +146,23 @@
     .important-notification-list li {
         padding: 10px;
         border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .announcement-item {
         padding: 10px;
         border-bottom: 1px solid #eee;
+    }
+
+    .announcement-title {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    .announcement-date {
+        font-size: 0.85rem;
     }
 
     .badge-danger {
@@ -145,14 +173,75 @@
         background-color: #FFD166;
     }
 
-    .quick-links .btn {
-        padding: 15px;
+    /* 新的快速連結按鈕樣式 */
+    .custom-link-btn {
+        height: 60px;
+        position: relative;
+    }
+
+    .custom-link-btn .btn {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-weight: bold;
         background-color: #4ECDC4;
         border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        line-height: 1.2;
+        color: white;
+        text-align: center;
     }
 
-    .quick-links .btn:hover {
+    .custom-link-btn .btn:hover {
         background-color: #36B5AC;
+        text-decoration: none;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    /* 大螢幕時的樣式 */
+    .dashboard-container-md {
+        padding: 20px;
+    }
+
+    .dashboard-title-md {
+        font-size: 2rem;
+    }
+
+    .stat-number-md {
+        font-size: 2rem;
+    }
+
+    .section-title-md {
+        font-size: 1.5rem;
+    }
+
+    .h-100 {
+        height: 100% !important;
     }
 </style>
+
+<!-- 添加響應式樣式的腳本 -->
+<script>
+    $(document).ready(function() {
+        // 如果螢幕寬度大於 768px，添加大螢幕的樣式類別
+        if ($(window).width() >= 768) {
+            $('.dashboard-container').addClass('dashboard-container-md');
+            $('.dashboard-title').addClass('dashboard-title-md');
+            $('.stat-number').addClass('stat-number-md');
+            $('.section-title').addClass('section-title-md');
+            $('.card-title').css('font-size', '1.2rem');
+            $('.custom-link-btn').css('height', '70px');
+            $('.custom-link-btn .btn').css('font-size', '18px');
+        }
+    });
+</script>
