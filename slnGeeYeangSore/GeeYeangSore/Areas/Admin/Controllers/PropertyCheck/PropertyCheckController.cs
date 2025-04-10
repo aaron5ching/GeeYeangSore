@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using X.PagedList;
 using X.PagedList.Extensions;
 using System.IO;
+using GeeYeangSore.Controllers;
 
 namespace GeeYeangSore.Areas.Admin.Controllers.PropertyCheck
 {
@@ -13,7 +14,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.PropertyCheck
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
 
-    public class PropertyCheckController : Controller
+    public class PropertyCheckController : SuperController
     {
         private readonly GeeYeangSoreContext _context;
 
@@ -25,6 +26,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.PropertyCheck
         
         public async Task<IActionResult> Index(int page = 1, string searchId = "", string searchRent = "")
         {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             int pageSize = 15; // 每頁15筆資料
 
             var query = _context.HProperties
@@ -62,6 +65,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.PropertyCheck
         // GET: Admin/PropertyCheck/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             if (id == null)
             {
                 return NotFound();
@@ -86,6 +91,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.PropertyCheck
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id)
         {
+            if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             var property = await _context.HProperties.FindAsync(id);
             if (property == null)
             {
