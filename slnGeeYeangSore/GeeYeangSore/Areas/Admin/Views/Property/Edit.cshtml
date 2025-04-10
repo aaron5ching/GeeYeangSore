@@ -44,22 +44,32 @@
     .image-preview {
         width: 150px;
         height: 150px;
-        object-fit: cover;
+        object-fit: contain;
         margin: 5px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: pointer;
+        background-color: #fff;
+        padding: 5px;
     }
     #imagePreviewContainer {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .property-image {
         width: 100%;
-        height: 200px;
-        object-fit: cover;
+        height: 250px;
+        object-fit: contain;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: pointer;
+        background-color: #fff;
+        padding: 5px;
     }
     .btn-danger {
         background-color: #dc3545;
@@ -71,9 +81,45 @@
         align-items: center;
         justify-content: center;
         padding: 0;
+        z-index: 1;
     }
     .btn-danger:hover {
         background-color: #c82333;
+    }
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* 添加圖片放大顯示的樣式 */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+    }
+    .modal-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90vh;
+        object-fit: contain;
+    }
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
     }
 </style>
 
@@ -275,9 +321,12 @@
                             {
                                 foreach (var image in Model.HPropertyImages)
                                 {
-                                    <div class="col-md-3 mb-3">
-                                        <div class="position-relative">
-                                            <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" class="img-fluid property-image" alt="房源照片">
+                                    <div class="col-md-4 mb-4">
+                                        <div class="image-container">
+                                            <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" 
+                                                 class="property-image" 
+                                                 alt="房源照片"
+                                                 onclick="openModal(this)">
                                             <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" onclick="deleteImage(this, @image.HImageId)">
                                                 <i class="fas fa-times"></i>
                                             </button>
@@ -320,6 +369,7 @@
                         const img = document.createElement('img');
                         img.src = e.target.result;
                         img.className = 'image-preview';
+                        img.onclick = function() { openModal(this); };
                         container.appendChild(img);
                     }
                     reader.readAsDataURL(file);
@@ -329,7 +379,7 @@
 
         function deleteImage(button, imageId) {
             if (confirm('確定要刪除這張照片嗎？')) {
-                const imageContainer = button.closest('.col-md-3');
+                const imageContainer = button.closest('.col-md-4');
                 imageContainer.remove();
                 
                 // 創建隱藏的輸入欄位來標記要刪除的照片
@@ -339,6 +389,33 @@
                 deleteInput.value = imageId;
                 document.querySelector('form').appendChild(deleteInput);
             }
+        }
+
+        // 添加圖片放大顯示的功能
+        function openModal(img) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.onclick = function() { 
+                this.style.display = 'none';
+                this.remove();
+            };
+            
+            const modalContent = document.createElement('img');
+            modalContent.className = 'modal-content';
+            modalContent.src = img.src;
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = function() { 
+                modal.style.display = 'none';
+                modal.remove();
+            };
+            
+            modal.appendChild(closeBtn);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
         }
     </script>
 } 
