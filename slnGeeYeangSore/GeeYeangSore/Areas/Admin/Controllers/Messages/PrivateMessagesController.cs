@@ -257,9 +257,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
             {
                 // 檢查管理者權限
                 if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                {
-                    return Json(new { success = false, message = "權限不足" });
-                }
+                    return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
                 // 檢查檢舉是否存在
                 var report = await _context.HReports.FindAsync(reportId);
@@ -346,7 +344,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Messages
         {
             // 檢查管理者權限
             if (!HasAnyRole("超級管理員", "系統管理員", "內容管理員"))
-                return Json(new { error = "權限不足" });
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             // 獲取房客資訊
             var tenants = await _context.HTenants
