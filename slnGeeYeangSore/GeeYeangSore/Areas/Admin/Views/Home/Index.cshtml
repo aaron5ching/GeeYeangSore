@@ -1,4 +1,158 @@
-﻿@{
-    ViewData["Title"] = "後台首頁";
+﻿@model GeeYeangSore.ViewModels.HomeDashboardViewModel
+@{
+    ViewData["Title"] = "後台管理系統總覽";
 }
-<h2>這是 Admin 區域的 HomeController 的 Index 頁面</h2>
+
+<div class="dashboard-container">
+    <h1 class="dashboard-title text-center p-3 mb-4">後台管理系統總覽</h1>
+
+    <!-- 統計數據區塊 -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">房源數</h5>
+                    <p class="card-text stat-number">@Model.PropertyCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">新增用戶</h5>
+                    <p class="card-text stat-number">@Model.NewUserCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">本月收入</h5>
+                    <p class="card-text stat-number">NT$@Model.MonthlyIncome.ToString("N0")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重要提醒 -->
+    <h2 class="section-title mb-3">重要提醒</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <ul class="important-notification-list">
+                <li class="d-flex justify-content-between">
+                    <span>待審核房源</span>
+                    <span class="badge badge-pill badge-danger">@Model.PendingPropertyCount</span>
+                </li>
+                <li class="d-flex justify-content-between">
+                    <span>待處理檢舉訊息</span>
+                    <span class="badge badge-pill badge-warning">@Model.PendingReportCount</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 系統公告 -->
+    <h2 class="section-title mb-3">系統公告</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <ul class="system-announcement-list">
+                @foreach (var announcement in Model.SystemAnnouncements)
+                {
+                    <li class="announcement-item">
+                        <h5>@announcement.Title</h5>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <!-- 快速連結 -->
+    <h2 class="section-title mb-3">快速連結</h2>
+    <div class="row quick-links mb-4">
+        <div class="col-md-3 mb-3">
+            @Html.ActionLink("房源審核", "Index", "Property", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        </div>
+        <div class="col-md-3 mb-3">
+            @Html.ActionLink("房東審核", "Audit", "Audit", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        </div>
+        <div class="col-md-3 mb-3">
+            @Html.ActionLink("使用者管理", "UserManagement", "User", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        </div>
+        <div class="col-md-3 mb-3">
+            @Html.ActionLink("金流統計", "Index", "Finance", new { area = "Admin" }, new { @class = "btn btn-info btn-block" })
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        padding: 20px;
+    }
+
+    .dashboard-title {
+        color: #333;
+        background-color: #4ECDC4;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .stat-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .section-title {
+        color: #555;
+        font-size: 1.5rem;
+        border-bottom: 2px solid #4ECDC4;
+        padding-bottom: 5px;
+    }
+
+    .important-notification-list,
+    .system-announcement-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .important-notification-list li {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .announcement-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .badge-danger {
+        background-color: #FF6B6B;
+    }
+
+    .badge-warning {
+        background-color: #FFD166;
+    }
+
+    .quick-links .btn {
+        padding: 15px;
+        font-weight: bold;
+        background-color: #4ECDC4;
+        border: none;
+    }
+
+    .quick-links .btn:hover {
+        background-color: #36B5AC;
+    }
+</style>
