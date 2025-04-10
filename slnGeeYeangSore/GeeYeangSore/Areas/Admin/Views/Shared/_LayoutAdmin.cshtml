@@ -18,7 +18,7 @@
 
 <body>
     <!-- 上方導覽列 -->
-    <nav class="navbar navbar-custom px-3 d-flex justify-content-between align-items-center">
+    <nav class="navbar navbar-custom fixed-top px-3 d-flex justify-content-between align-items-center">
         <a class="navbar-brand d-flex align-items-center" asp-area="Admin" asp-controller="Home" asp-action="Index">
             <img class="rounded-circle bg-white p-1" src="~/images/logo2.png" alt="Logo">
             <span class="text-white fw-bold ms-2">後台管理系統</span>
@@ -45,9 +45,11 @@
     </nav>
 
     <!-- 側邊欄 -->
-    <div id="adminSidebar" class="sidebar">
+    <div id="adminSidebar" class="sidebar"
+        style="padding-top: 56px; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto;">
         <div class="px-2 pt-3">
-            <button id="sidebarToggle" class="btn btn-sm btn-light d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+            <button id="sidebarToggle" class="btn btn-sm btn-light d-flex align-items-center justify-content-center"
+                style="width: 36px; height: 36px;">
                 <i class="fa fa-bars"></i>
             </button>
         </div>
@@ -55,38 +57,46 @@
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-users"></i> <span>使用者</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="User" asp-action="UserManagement">使用者管理</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="User" asp-action="UserManagement">使用者管理</a>
+                    </li>
                     <li>
-                        <a class="nav-link" asp-area="Admin" asp-controller="AdminManagement" asp-action="AdminManagement">管理者權限</a>
+                        <a class="nav-link" asp-area="Admin" asp-controller="AdminManagement"
+                            asp-action="AdminManagement">管理者權限</a>
                     </li>
                 </ul>
             </li>
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-home"></i> <span>房源</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="PropertyCheck" asp-action="Index">刊登審核</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="PropertyCheck" asp-action="Index">刊登審核</a>
+                    </li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="Property" asp-action="Index">房源列表</a></li>
                 </ul>
             </li>
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-envelope"></i><span>訊息</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="PrivateMessages" asp-action="Index">私人訊息管理</a></li>
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="GroupMessages" asp-action="Index">群組訊息管理</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="PrivateMessages"
+                            asp-action="Index">私人訊息管理</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="GroupMessages"
+                            asp-action="Index">群組訊息管理</a></li>
                 </ul>
             </li>
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-credit-card"></i> <span>金流管理</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="Transaction" asp-action="Index">交易紀錄</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="Transaction" asp-action="Index">交易紀錄</a>
+                    </li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="Finance" asp-action="Index">金流統計</a></li>
                 </ul>
             </li>
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-chart-line"></i> <span>數據分析</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="DataAnalysis" asp-action="Dashboard">數據分析儀表板</a></li>
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="DataAnalysis" asp-action="TenantDemandTable">用戶分析</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="DataAnalysis"
+                            asp-action="Dashboard">數據分析儀表板</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="DataAnalysis"
+                            asp-action="TenantDemandTable">用戶分析</a></li>
                 </ul>
             </li>
             <li>
@@ -103,7 +113,8 @@
     </div>
 
     <!-- 主體內容區塊 -->
-    <main id="adminMain" class="container-fluid transition" style="margin-left: 200px; padding-top: 70px;">
+    <main id="adminMain" class="container-fluid transition"
+        style="margin-left: 200px; padding-top: 70px; overflow-x: hidden; max-width: calc(100% - 200px);">
         @RenderBody()
     </main>
 
@@ -123,7 +134,14 @@
             const isCollapsed = sidebar.classList.toggle('collapsed');
             const submenus = sidebar.querySelectorAll('ul ul');
             submenus.forEach(ul => ul.style.display = 'none');
-            main.style.marginLeft = isCollapsed ? '60px' : '200px';
+
+            if (isCollapsed) {
+                main.style.marginLeft = '60px';
+                main.style.maxWidth = 'calc(100% - 60px)';
+            } else {
+                main.style.marginLeft = '200px';
+                main.style.maxWidth = 'calc(100% - 200px)';
+            }
         }
         document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
 
