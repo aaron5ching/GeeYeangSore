@@ -57,6 +57,11 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                     .Where(r => r.HStatus == "待處理")
                     .Count(),
 
+                // 從資料庫抓取待審核房東數
+                PendingLandlordCount = _context.HAudits
+                    .Where(a => a.HStatus == "待審核")
+                    .Count(),
+
                 // 系統公告
                 SystemAnnouncements = _context.HNews
                     .OrderByDescending(n => n.HCreatedAt)
