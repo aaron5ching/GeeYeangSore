@@ -35,8 +35,6 @@ public partial class HTenant
 
     public DateTime? HUpdateAt { get; set; }
 
-    public virtual HAudit? HAudit { get; set; }
-
     public virtual ICollection<HFavorite> HFavorites { get; set; } = new List<HFavorite>();
 
     public virtual ICollection<HLandlord> HLandlords { get; set; } = new List<HLandlord>();
