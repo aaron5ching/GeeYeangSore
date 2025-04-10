@@ -311,6 +311,7 @@
 			type: 'POST',
 			data: { id: id }, // ✅ 用傳統表單格式送出
 			success: function () {
+				alert("刪除成功！");
 				$('#searchForm').submit();
 			},
 			error: function () {
