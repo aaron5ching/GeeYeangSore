@@ -65,7 +65,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 // 系統公告
                 SystemAnnouncements = _context.HNews
                     .OrderByDescending(n => n.HCreatedAt)
-                    .Take(5)
+                    .Take(3)
                     .Select(n => new SystemAnnouncement
                     {
                         Title = n.HTitle,
