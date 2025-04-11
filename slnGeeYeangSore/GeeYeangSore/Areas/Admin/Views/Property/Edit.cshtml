@@ -41,25 +41,34 @@
     .text-danger {
         color: #dc3545 !important;
     }
-    .image-preview {
-        width: 150px;
-        height: 150px;
-        object-fit: cover;
-        margin: 5px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    #imagePreviewContainer {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
     .property-image {
         width: 100%;
-        height: 200px;
-        object-fit: cover;
+        height: 300px; /* 確保縮圖高度 */
+        object-fit: contain; /* 修改為 contain 以完整顯示 */
         border-radius: 8px;
+        margin-bottom: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    .property-image:hover {
+        transform: scale(1.02);
+    }
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        background-color: #f8f9fa; /* 添加背景色 */
+        border-radius: 8px; /* 配合圖片圓角 */
+    }
+    .no-image {
+        width: 100%;
+        height: 300px; /* 確保佔位符高度 */
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #666;
     }
     .btn-danger {
         background-color: #dc3545;
@@ -71,9 +80,32 @@
         align-items: center;
         justify-content: center;
         padding: 0;
+        z-index: 1;
     }
     .btn-danger:hover {
         background-color: #c82333;
+    }
+    /* 添加正確的圖片預覽模態框樣式 */
+    .modal-image {
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+    }
+    .modal-dialog {
+        max-width: 90%;
+    }
+    .modal-content {
+        background-color: #F0F9F8;
+    }
+    .modal-header {
+        background-color: #3CDDD2;
+        color: #222222;
+    }
+    .modal-body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
     }
 </style>
 
@@ -87,7 +119,7 @@
                 </div>
             </div>
 
-            <form asp-area="Admin" asp-controller="Property" asp-action="Edit" method="post" enctype="multipart/form-data">
+            <form asp-area="Admin" asp-controller="Property" asp-action="Edit" asp-route-id="@Model.HPropertyId" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
 
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -200,64 +232,124 @@
                                 var features = Model.HPropertyFeatures.FirstOrDefault();
                                 <div class="col-md-6">
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HAllowsAnimals" value="true" @(features?.HAllowsAnimals == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HAllowsAnimals" @(features?.HAllowsAnimals == true ? "checked" : "") />
                                         <label class="form-check-label">允許養寵物</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HHasFurniture" value="true" @(features?.HHasFurniture == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HAllowsDogs" @(features?.HAllowsDogs == true ? "checked" : "") />
+                                        <label class="form-check-label">允許養狗</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HAllowsCats" @(features?.HAllowsCats == true ? "checked" : "") />
+                                        <label class="form-check-label">允許養貓</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HAllowsCooking" @(features?.HAllowsCooking == true ? "checked" : "") />
+                                        <label class="form-check-label">允許開伙</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HHasFurniture" @(features?.HHasFurniture == true ? "checked" : "") />
                                         <label class="form-check-label">附家具</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HInternet" value="true" @(features?.HInternet == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HInternet" @(features?.HInternet == true ? "checked" : "") />
                                         <label class="form-check-label">網路</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HAirConditioning" value="true" @(features?.HAirConditioning == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HAirConditioning" @(features?.HAirConditioning == true ? "checked" : "") />
                                         <label class="form-check-label">冷氣</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HTv" value="true" @(features?.HTv == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HSharedRental" @(features?.HSharedRental == true ? "checked" : "") />
+                                        <label class="form-check-label">分租套房</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HTv" @(features?.HTv == true ? "checked" : "") />
                                         <label class="form-check-label">電視</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HRefrigerator" value="true" @(features?.HRefrigerator == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HRefrigerator" @(features?.HRefrigerator == true ? "checked" : "") />
                                         <label class="form-check-label">冰箱</label>
                                     </div>
-                                </div>
-                                <div class="col-md-6">
+
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HWashingMachine" value="true" @(features?.HWashingMachine == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HWashingMachine" @(features?.HWashingMachine == true ? "checked" : "") />
                                         <label class="form-check-label">洗衣機</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HBed" value="true" @(features?.HBed == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HBed" @(features?.HBed == true ? "checked" : "") />
                                         <label class="form-check-label">床</label>
                                     </div>
-
+                                </div>
+                                <div class="col-md-6">
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HWaterHeater" value="true" @(features?.HWaterHeater == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HWaterHeater" @(features?.HWaterHeater == true ? "checked" : "") />
                                         <label class="form-check-label">熱水器</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HGasStove" value="true" @(features?.HGasStove == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HGasStove" @(features?.HGasStove == true ? "checked" : "") />
                                         <label class="form-check-label">瓦斯爐</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HParking" value="true" @(features?.HParking == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HCableTv" @(features?.HCableTv == true ? "checked" : "") />
+                                        <label class="form-check-label">有線電視</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HWaterDispenser" @(features?.HWaterDispenser == true ? "checked" : "") />
+                                        <label class="form-check-label">飲水機</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HParking" @(features?.HParking == true ? "checked" : "") />
                                         <label class="form-check-label">停車位</label>
                                     </div>
 
                                     <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" name="HBalcony" value="true" @(features?.HBalcony == true ? "checked" : "") />
+                                        <input type="checkbox" class="form-check-input" name="HSocialHousing" @(features?.HSocialHousing == true ? "checked" : "") />
+                                        <label class="form-check-label">社會住宅</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HShortTermRent" @(features?.HShortTermRent == true ? "checked" : "") />
+                                        <label class="form-check-label">短期租賃</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HPublicElectricity" @(features?.HPublicElectricity == true ? "checked" : "") />
+                                        <label class="form-check-label">公共電費</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HPublicWatercharges" @(features?.HPublicWatercharges == true ? "checked" : "") />
+                                        <label class="form-check-label">公共水費</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HLandlordShared" @(features?.HLandlordShared == true ? "checked" : "") />
+                                        <label class="form-check-label">房東同住</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HBalcony" @(features?.HBalcony == true ? "checked" : "") />
                                         <label class="form-check-label">陽台</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HPublicEquipment" @(features?.HPublicEquipment == true ? "checked" : "") />
+                                        <label class="form-check-label">公共設備</label>
                                     </div>
                                 </div>
                             }
@@ -275,23 +367,36 @@
                             {
                                 foreach (var image in Model.HPropertyImages)
                                 {
-                                    <div class="col-md-3 mb-3">
-                                        <div class="position-relative">
-                                            <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" class="img-fluid property-image" alt="房源照片">
-                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" onclick="deleteImage(this, @image.HImageId)">
-                                                <i class="fas fa-times"></i>
+                                    <div class="col-md-4 mb-4">
+                                        <div class="image-container">
+                                            <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" 
+                                                 class="property-image" 
+                                                 alt="房源照片"
+                                                 data-bs-toggle="modal" 
+                                                 data-bs-target="#imageModal"
+                                                 onclick="showImage(this.src)">
+                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" 
+                                                    onclick="deleteImage(@image.HImageId)">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </div>
                                 }
                             }
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label>新增照片（將替換現有照片）</label>
-                                    <input type="file" name="images" multiple class="form-control" accept="image/*" onchange="previewImages(event)" />
-                                    <div id="imagePreviewContainer" class="mt-3"></div>
+                            else
+                            {
+                                <div class="col-12">
+                                    <div class="no-image">
+                                        <i class="fas fa-image fa-3x"></i>
+                                        <span class="ms-2">暫無照片</span>
+                                    </div>
                                 </div>
-                            </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">上傳新照片</label>
+                            <input type="file" class="form-control" name="newImages" multiple accept="image/*" onchange="previewImages(this)">
+                            <div id="imagePreview" class="row mt-3"></div>
                         </div>
                     </div>
                 </div>
@@ -304,40 +409,72 @@
     </div>
 </div>
 
+<!-- 添加圖片預覽模態框 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">房源照片</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" class="modal-image" src="" alt="房源照片">
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        function previewImages(event) {
-            const container = document.getElementById('imagePreviewContainer');
-            container.innerHTML = ''; // 清空預覽容器
+        function showImage(src) {
+            document.getElementById('modalImage').src = src;
+        }
+
+        function previewImages(input) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
             
-            const files = event.target.files;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (file.type.startsWith('image/')) {
+            if (input.files) {
+                for (let i = 0; i < input.files.length; i++) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'image-preview';
-                        container.appendChild(img);
+                        const div = document.createElement('div');
+                        div.className = 'col-md-4 mb-4';
+                        div.innerHTML = `
+                            <div class="image-container">
+                                <img src="${e.target.result}" 
+                                     class="property-image" 
+                                     alt="預覽圖片"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     onclick="showImage(this.src)">
+                            </div>
+                        `;
+                        preview.appendChild(div);
                     }
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(input.files[i]);
                 }
             }
         }
 
-        function deleteImage(button, imageId) {
-            if (confirm('確定要刪除這張照片嗎？')) {
-                const imageContainer = button.closest('.col-md-3');
-                imageContainer.remove();
+        function deleteImage(imageId) {
+            if (confirm('確定要刪除此照片嗎？')) {
+                const deletedImagesInput = document.getElementById('deletedImages');
+                if (!deletedImagesInput) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'deletedImages';
+                    input.id = 'deletedImages';
+                    document.querySelector('form').appendChild(input);
+                }
+                const currentValue = document.getElementById('deletedImages').value;
+                document.getElementById('deletedImages').value = currentValue 
+                    ? currentValue + ',' + imageId 
+                    : imageId;
                 
-                // 創建隱藏的輸入欄位來標記要刪除的照片
-                const deleteInput = document.createElement('input');
-                deleteInput.type = 'hidden';
-                deleteInput.name = 'deletedImageIds';
-                deleteInput.value = imageId;
-                document.querySelector('form').appendChild(deleteInput);
+                // 移除圖片元素
+                event.target.closest('.col-md-4').remove();
             }
         }
     </script>
