@@ -40,10 +40,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers
         public IActionResult Audit(int HAuditId,string typeString)
         {
             if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
-                //如果沒有權限就會顯示NoPermission頁面
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
-
-            //return View("Audit");
+            
             //（待審核/通過/退件）
             var audit = _db.HAudits.FirstOrDefault(item => item.HAuditId == HAuditId);
             if (audit != null)
