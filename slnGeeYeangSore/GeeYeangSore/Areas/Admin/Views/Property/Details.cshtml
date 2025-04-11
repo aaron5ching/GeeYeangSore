@@ -38,12 +38,13 @@
     }
     .property-image {
         width: 100%;
-        height: 200px;
-        object-fit: cover;
+        height: 300px; /* 確保縮圖高度 */
+        object-fit: contain; /* 修改為 contain 以完整顯示 */
         border-radius: 8px;
         margin-bottom: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         transition: transform 0.3s ease;
+        cursor: pointer;
     }
     .property-image:hover {
         transform: scale(1.02);
@@ -51,16 +52,40 @@
     .image-container {
         position: relative;
         overflow: hidden;
+        background-color: #f8f9fa; /* 添加背景色 */
+        border-radius: 8px; /* 配合圖片圓角 */
     }
     .no-image {
         width: 100%;
-        height: 200px;
+        height: 300px; /* 確保佔位符高度 */
         background-color: #f8f9fa;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 8px;
         color: #666;
+    }
+    /* 添加正確的圖片預覽模態框樣式 */
+    .modal-image {
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+    }
+    .modal-dialog {
+        max-width: 90%;
+    }
+    .modal-content {
+        background-color: #F0F9F8;
+    }
+    .modal-header {
+        background-color: #3CDDD2;
+        color: #222222;
+    }
+    .modal-body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
     }
 </style>
 
@@ -70,9 +95,9 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1>房源詳細資訊</h1>
                 <div>
-                    @* <a asp-action="Edit" asp-route-id="@Model.HPropertyId" class="btn btn-primary">
+                     <a asp-action="Edit" asp-route-id="@Model.HPropertyId" class="btn btn-primary">
                         <i class="fas fa-edit"></i> 編輯
-                    </a> *@
+                    </a> 
                     <a asp-action="Index" class="btn btn-main">返回列表</a>
                 </div>
             </div>
@@ -155,6 +180,15 @@
                                     <dt class="col-sm-6">允許養寵物</dt>
                                     <dd class="col-sm-6">@(features?.HAllowsAnimals == true ? "是" : "否")</dd>
 
+                                    <dt class="col-sm-6">允許養狗</dt>
+                                    <dd class="col-sm-6">@(features?.HAllowsDogs == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">允許養貓</dt>
+                                    <dd class="col-sm-6">@(features?.HAllowsCats == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">允許開伙</dt>
+                                    <dd class="col-sm-6">@(features?.HAllowsCooking == true ? "是" : "否")</dd>
+
                                     <dt class="col-sm-6">附家具</dt>
                                     <dd class="col-sm-6">@(features?.HHasFurniture == true ? "是" : "否")</dd>
 
@@ -164,32 +198,59 @@
                                     <dt class="col-sm-6">冷氣</dt>
                                     <dd class="col-sm-6">@(features?.HAirConditioning == true ? "是" : "否")</dd>
 
+                                    <dt class="col-sm-6">分租套房</dt>
+                                    <dd class="col-sm-6">@(features?.HSharedRental == true ? "是" : "否")</dd>
+
                                     <dt class="col-sm-6">電視</dt>
                                     <dd class="col-sm-6">@(features?.HTv == true ? "是" : "否")</dd>
 
                                     <dt class="col-sm-6">冰箱</dt>
                                     <dd class="col-sm-6">@(features?.HRefrigerator == true ? "是" : "否")</dd>
-                                </dl>
-                            </div>
-                            <div class="col-md-6">
-                                <dl class="row">
+
                                     <dt class="col-sm-6">洗衣機</dt>
                                     <dd class="col-sm-6">@(features?.HWashingMachine == true ? "是" : "否")</dd>
 
                                     <dt class="col-sm-6">床</dt>
                                     <dd class="col-sm-6">@(features?.HBed == true ? "是" : "否")</dd>
-
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row">
                                     <dt class="col-sm-6">熱水器</dt>
                                     <dd class="col-sm-6">@(features?.HWaterHeater == true ? "是" : "否")</dd>
 
                                     <dt class="col-sm-6">瓦斯爐</dt>
                                     <dd class="col-sm-6">@(features?.HGasStove == true ? "是" : "否")</dd>
 
+                                    <dt class="col-sm-6">有線電視</dt>
+                                    <dd class="col-sm-6">@(features?.HCableTv == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">飲水機</dt>
+                                    <dd class="col-sm-6">@(features?.HWaterDispenser == true ? "是" : "否")</dd>
+
                                     <dt class="col-sm-6">停車位</dt>
                                     <dd class="col-sm-6">@(features?.HParking == true ? "是" : "否")</dd>
 
+                                    <dt class="col-sm-6">社會住宅</dt>
+                                    <dd class="col-sm-6">@(features?.HSocialHousing == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">短期租賃</dt>
+                                    <dd class="col-sm-6">@(features?.HShortTermRent == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">公共電費</dt>
+                                    <dd class="col-sm-6">@(features?.HPublicElectricity == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">公共水費</dt>
+                                    <dd class="col-sm-6">@(features?.HPublicWatercharges == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">房東同住</dt>
+                                    <dd class="col-sm-6">@(features?.HLandlordShared == true ? "是" : "否")</dd>
+
                                     <dt class="col-sm-6">陽台</dt>
                                     <dd class="col-sm-6">@(features?.HBalcony == true ? "是" : "否")</dd>
+
+                                    <dt class="col-sm-6">公共設備</dt>
+                                    <dd class="col-sm-6">@(features?.HPublicEquipment == true ? "是" : "否")</dd>
                                 </dl>
                             </div>
                         }
@@ -209,7 +270,12 @@
                             {
                                 <div class="col-md-4 mb-4">
                                     <div class="image-container">
-                                        <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" class="property-image" alt="房源照片">
+                                        <img src="@Url.Content("~/images/Property/" + System.IO.Path.GetFileName(image.HImageUrl))" 
+                                             class="property-image" 
+                                             alt="房源照片"
+                                             data-bs-toggle="modal" 
+                                             data-bs-target="#imageModal"
+                                             onclick="showImage(this.src)">
                                     </div>
                                 </div>
                             }
@@ -226,6 +292,29 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 添加圖片預覽模態框 -->
+            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="imageModalLabel">房源照片</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <img id="modalImage" class="modal-image" src="" alt="房源照片">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div> 
+</div>
+
+@section Scripts {
+    <script>
+        function showImage(src) {
+            document.getElementById('modalImage').src = src;
+        }
+    </script>
+} 
