@@ -40,6 +40,7 @@
                     {
                         <div class="border border-info border-2 p-3">
                             <form action="Audit" method="post">
+                                <input type="hidden" name="HAuditId" value="@item.HAuditId">
                                 <button type="submit" class="btn btn-success" name="typeString" value="通過">通過
                                 </button>
                                 <button type="submit" class="btn btn-danger" name="typeString" value="退件">退件
@@ -123,7 +124,8 @@
                     {
                         <div class="border border-danger border-2 p-3">
                             <form action="Audit" method="post">
-
+                                <input type="hidden" name="HAuditId" value="@item.HAuditId">
+                                
                                 房客ID：
                                 <p class="card-title">@item.HTenantId</p>
                                 銀行名稱：
@@ -146,7 +148,7 @@
                                          alt="查無圖片"/>
                                 </div>
                                 <br/>
-                                <input type="hidden" name="HAuditId" value=@item.HAuditId/>
+
                                 @* <button type="submit" class="btn btn-success" name="typeString" value="通過">通過</button> *@
                                 @* 不需要button*@
                                 @* <button type="submit" class="btn btn-danger" name="typeString" value="退件">退件</button> *@
