@@ -232,6 +232,7 @@
                                 var features = Model.HPropertyFeatures.FirstOrDefault();
                                 <div class="col-md-6">
                                     <div class="form-check mb-3">
+
                                         <input type="checkbox" class="form-check-input" id="HAllowsAnimals" name="features.HAllowsAnimals" @(features?.HAllowsAnimals == true ? "checked" : "") />
                                         <label class="form-check-label" for="HAllowsAnimals">允許養寵物</label>
                                     </div>
@@ -289,9 +290,9 @@
                                     <div class="form-check mb-3">
                                         <input type="checkbox" class="form-check-input" id="HBed" name="features.HBed" @(features?.HBed == true ? "checked" : "") />
                                         <label class="form-check-label" for="HBed">床</label>
+
                                     </div>
-                                </div>
-                                <div class="col-md-6">
+
                                     <div class="form-check mb-3">
                                         <input type="checkbox" class="form-check-input" id="HWaterHeater" name="features.HWaterHeater" @(features?.HWaterHeater == true ? "checked" : "") />
                                         <label class="form-check-label" for="HWaterHeater">熱水器</label>
@@ -301,7 +302,8 @@
                                         <input type="checkbox" class="form-check-input" id="HGasStove" name="features.HGasStove" @(features?.HGasStove == true ? "checked" : "") />
                                         <label class="form-check-label" for="HGasStove">瓦斯爐</label>
                                     </div>
-
+                                </div>
+                                <div class="col-md-6">
                                     <div class="form-check mb-3">
                                         <input type="checkbox" class="form-check-input" id="HCableTv" name="features.HCableTv" @(features?.HCableTv == true ? "checked" : "") />
                                         <label class="form-check-label" for="HCableTv">有線電視</label>
@@ -350,6 +352,11 @@
                                     <div class="form-check mb-3">
                                         <input type="checkbox" class="form-check-input" id="HPublicEquipment" name="features.HPublicEquipment" @(features?.HPublicEquipment == true ? "checked" : "") />
                                         <label class="form-check-label" for="HPublicEquipment">公共設備</label>
+                                    </div>
+
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" name="HPublicEquipment" @(features?.HPublicEquipment == true ? "checked" : "") />
+                                        <label class="form-check-label">公共設備</label>
                                     </div>
                                 </div>
                             }
@@ -458,6 +465,7 @@
             }
         }
 
+
         function deleteImage(imageId, button) {
             if (confirm('確定要刪除此照片嗎？')) {
                 // 創建或獲取隱藏的輸入字段來存儲要刪除的圖片ID
@@ -493,7 +501,9 @@
                     `;
                     document.getElementById('existingImages').appendChild(noImageDiv);
                 }
+
             }
         }
     </script>
 } 
+

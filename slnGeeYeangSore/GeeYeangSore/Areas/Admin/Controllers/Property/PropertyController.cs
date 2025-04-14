@@ -494,6 +494,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.Property
                             // 處理 checkbox 值
                             try
                             {
+
                                 features.HAllowsAnimals = Request.Form["features.HAllowsAnimals"].ToString() == "on";
                                 features.HAllowsDogs = Request.Form["features.HAllowsDogs"].ToString() == "on";
                                 features.HAllowsCats = Request.Form["features.HAllowsCats"].ToString() == "on";
