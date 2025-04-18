@@ -12,69 +12,139 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalLabel">新增公告</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm">
+                        <div class="mb-3">
+                            <label for="AddTitle" class="form-label">公告標題</label>
+                            <input type="text" class="form-control" id="AddTitle" name="HTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="AddContent" class="form-label">公告內容</label>
+                            <textarea class="form-control" id="AddContent" name="HContent" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="AddImagePath" class="form-label">圖片</label>
+                            <input type="file" class="form-control" id="AddImagePath" name="HImagePath">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-success" id="saveAdd">新增公告</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <section id="announcement">
-        <h2>📢請輸入公告 </h2>
-        <p>
-            公告時間為：@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-        </p>
-        <div class="card-body mb-lg-2">
-            <form action="News" method="post" enctype="multipart/form-data">
-                公告標題：<input type="text" class="form-control" name="HTitle" id="HTitle">
-                <br>
-                公告內容：<textarea class="form-control" rows="4" name="HContent" id="HContent"></textarea>
-                <br>
-                
-                <label for="image">選擇圖片：</label>
-                <input type="file" name="image" class="form-control" name="Image">
-                <br>
-                @* <div></div> *@
-                <button type="submit" class="btn btn-success" id="submitNews">上傳公告請按我</button>
-            </form>
+        <!-- 編輯公告 Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">編輯公告</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="HTitle" class="form-label">公告標題</label>
+                                <input type="text" class="form-control" id="HTitle" name="HTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="HContent" class="form-label">公告內容</label>
+                                <textarea class="form-control" id="HContent" name="HContent" rows="4" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="HImagePath" class="form-label">圖片</label>
+                                <input type="file" class="form-control" id="HImagePath" name="HImagePath" accept="image/*">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                        <button type="button" class="btn btn-primary" id="saveChanges">保存變更</button>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <h2>📢請輸入公告</h2>
+        <form id="searchForm" class="mb-3">
+            <div class="row mb-2">
+                <div class="col-md-2">
+                    <input type="text" class="form-control" id="searchTitle" placeholder="請輸入公告標題" />
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <button type="button" class="btn btn-primary btn-lg me-1 btn-add">新增</button>
+                <button type="submit" class="btn btn-primary" style="width: 200px; background-color: #3CDDD2;">搜尋</button>
+            </div>
+        </form>
+        <hr />
+        <p>公告時間為：@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</p>
     </section>
 
     <section>
-        <div></div>
-    </section>
-
-    <section id="announcement">
-        <h2>📢 當前公告</h2>
-
         @if (Model.Any())
         {
-            foreach (var newsItem in Model)
-            {
-                <div class="card mb-4">
+            <div class="container my-4">
+                <div class="card shadow-lg rounded-4 p-4">
+                    <div class="card-header bg-primary text-white fs-4 fw-semibold">
+                        公告列表
+                    </div>
                     <div class="card-body">
-
-                        <form action="UpdateNews" method="post" id="UpdateNews">
-                            @* <input hidden  type="text" class="form-control" name="HNewsId" id="HNewsId" value="@newsItem.HNewsId"> *@
-                            <input hidden class="form-control" name="HNewsId" id="HNewsId" value="@newsItem.HNewsId">
-                            已公告之標題：<h5 class="card-title">@newsItem.HTitle</h5>
-
-                            已公告之內容：<textarea class="form-control" rows="4" name="HContent" id="HContent">@newsItem.HContent</textarea>
-
-                            <small style="margin-left: 50px; margin-top:10px; font-size: 20px;" class="text-muted">
-                                發布日期：@newsItem.HCreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                            </small>
-
-                            @* <small style="margin-left: 400px;" class="text-muted"> *@
-                            <small style="margin-left: 400px; ; margin-top:100px; font-size: 20px;" class="text-muted">
-                                修改日期：@newsItem.HUpdatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                            </small>
-                            <div style="position: relative; left: 300px;">
-                                @* <img src="~@newsItem.HImagePath" asp-append-version="true" alt="圖片顯示失敗" /> *@
-                                <img src="@Url.Content(newsItem.HImagePath)" asp-append-version="true" />
-
-                            </div>
-                            <button type="submit" class="btn btn-primary" name="type" value="修改文章">修改文章</button>
-                            <button type="submit" class="btn btn-danger" name="type" value="刪除文章">刪除文章</button>
-                        </form>
-
+                        <table class="table table-hover align-middle table-bordered table-striped table-lg">
+                            <thead class="table-primary text-center fs-5">
+                                <tr>
+                                    <th>標題</th>
+                                    <th>內容</th>
+                                    <th>圖片</th>
+                                    <th>公告時間</th>
+                                    <th>修改時間</th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="newsTableBody">
+                                @foreach (var item in Model)
+                                {
+                                    <tr class="news-item">
+                                        <td class="fs-5">@item.HTitle</td>
+                                        <td class="fs-5">@item.HContent</td>
+                                        <td>
+                                            <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
+                                                 style="width: 150px; height: auto;" class="img-thumbnail" />
+                                        </td>
+                                        <td class="fs-5">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                        <td class="fs-5">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-primary btn-lg w-100 me-1 btn-edit"
+                                                    data-id="@item.HNewsId"
+                                                    data-title="@item.HTitle"
+                                                    data-content="@item.HContent">
+                                                編輯
+                                            </button>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-danger btn-lg w-100 me-1">
+                                                禁用
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            }
+            </div>
         }
         else
         {
@@ -84,26 +154,108 @@
         }
     </section>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById("submitNews").addEventListener("click", function(event) {
-            let titleInput = document.getElementById("HTitle");
-            let contentInput = document.getElementById("HContent");
+        // 監聽搜尋框的變化，進行即時過濾
+        document.getElementById('searchTitle').addEventListener('input', function () {
+            var searchQuery = this.value.toLowerCase(); // 轉為小寫進行搜尋
+            var rows = document.querySelectorAll('.news-item'); // 獲取所有公告項目
 
-            if (titleInput.value.trim() === "") {
+            rows.forEach(function (row) {
+                var titleCell = row.querySelector('td:first-child'); // 取得標題欄位
+                var titleText = titleCell.textContent.toLowerCase(); // 標題文字也轉為小寫
 
-                event.preventDefault(); // 阻止表單提交
+                // 如果標題包含搜尋文字，顯示該行，否則隱藏
+                if (titleText.includes(searchQuery)) {
+                    row.style.display = ''; // 顯示該行
+                } else {
+                    row.style.display = 'none'; // 隱藏該行
+                }
+            });
+        });
 
-                alert("失敗！請輸入公告標題！");
+        document.querySelector('.btn-add').addEventListener('click', function () {
+            const addModal = new bootstrap.Modal(document.getElementById('addModal'));
+            addModal.show();
+        });
+
+        // ✅ 新增公告送出邏輯
+        document.getElementById('saveAdd').addEventListener('click', function () {
+            const title = document.getElementById('AddTitle').value;
+            const content = document.getElementById('AddContent').value;
+            const image = document.getElementById('AddImagePath').files[0];
+
+            const formData = new FormData();
+            formData.append('HTitle', title);
+            formData.append('HContent', content);
+            if (image) {
+                formData.append('HImagePath', image);
             }
 
-            if (contentInput.value.trim() === "") {
-                event.preventDefault(); // 阻止表單提交
-                alert("失敗！請輸入公告內容！");
+            fetch('/Admin/News/Create', {
+                method: 'POST',
+                body: formData
+            }).then(res => res.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('新增成功');
+                      location.reload();
+                  } else {
+                      alert('新增失敗');
+                  }
+              })
+              .catch(() => alert('新增失敗，請稍後再試'));
+        });
+
+        let editingId = null;
+
+        document.querySelectorAll('.btn-edit').forEach(button => {
+            button.addEventListener('click', function () {
+                editingId = this.getAttribute('data-id');
+                const title = this.getAttribute('data-title');
+                const content = this.getAttribute('data-content');
+
+                document.getElementById('HTitle').value = title;
+                document.getElementById('HContent').value = content;
+                document.getElementById('HImagePath').value = ""; // 清空 file input
+
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            });
+        });
+
+        document.getElementById('saveChanges').addEventListener('click', function () {
+            if (!editingId) return;
+
+            const updatedTitle = document.getElementById('HTitle').value;
+            const updatedContent = document.getElementById('HContent').value;
+            const imageInput = document.getElementById('HImagePath');
+            const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
+
+            const formData = new FormData();
+            formData.append('id', editingId);
+            formData.append('HTitle', updatedTitle);
+            formData.append('HContent', updatedContent);
+            if (imageFile) {
+                formData.append('HImagePath', imageFile);
             }
 
+            fetch('/Admin/News/Update', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('公告已更新');
+                    location.reload();
+                } else {
+                    alert('更新失敗');
+                }
+            })
+            .catch(() => alert('更新失敗，請稍後再試'));
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
 
+</body>
 </html>

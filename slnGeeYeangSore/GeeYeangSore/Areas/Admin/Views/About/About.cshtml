@@ -2,82 +2,133 @@
 @model IEnumerable<GeeYeangSore.Models.HAbout>
 
 <body>
-<!-- 顯示成功訊息 -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+    <!-- 顯示成功訊息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-<h2>📢請上傳關於我們... </h2>
-<section id="announcement" class="bg-light">
-    <div class="card mb-4">
-        <div class="card-body">
-            <form action="About" method="post">
-                <p class="card-title">標題：</p>
-                <input class="form-control" id="HTitle" name="HTitle">
-                <p class="card-title">內容：</p>
-                <textarea class="form-control replyContent" name="HContent" id="HContent"></textarea>
-                <p class="card-title"> 上傳時間：</p>
-                <br/>
-                <button type="submit" id="submitAbout" class="btn btn-success">提交關於</button>
-            </form>
+    <h2>📢請上傳關於我們</h2>
+    <section id="announcement" class="bg-light">
+        <!-- 新增關於我們 Modal -->
+        <div class="modal fade" id="addAboutModal" tabindex="-1" aria-labelledby="addAboutModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAboutModalLabel">新增關於我們</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="About" method="post" id="addAboutForm">
+                            <div class="mb-3">
+                                <label for="HTitle" class="form-label">標題</label>
+                                <input type="text" class="form-control" id="HTitle" name="HTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="HContent" class="form-label">內容</label>
+                                <textarea class="form-control" id="HContent" name="HContent" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">提交關於我們</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顯示新增關於我們按鈕 -->
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addAboutModal">新增關於我們</button>
+    </section>
+
+    <h2>📢已上傳關於我們：</h2>
+    <div class="container my-4">
+        <div class="card shadow-lg rounded-4 p-4">
+            <div class="card-header bg-primary text-white fs-4 fw-semibold">
+                關於我們列表
+            </div>
+            <div class="card-body">
+                <table class="table table-hover align-middle table-bordered table-striped table-lg">
+                    <thead class="table-primary text-center fs-5">
+                        <tr>
+                            <th>標題</th>
+                            <th>內容</th>
+                            <th>上傳時間</th>
+                            <th>修改時間</th>
+                            <th>編輯</th>
+                            <th>刪除</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.HTitle</td>
+                                <td>@item.HContent</td>
+                                <td>@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">
+                                    <!-- 編輯按鈕 -->
+                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
+                                        編輯
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <!-- 刪除按鈕 -->
+                                    <form action="DeleteAbout" method="post" style="display: inline;">
+                                        <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                                        <button type="submit" class="btn btn-danger">刪除</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- 編輯關於我們 Modal -->
+                            <div class="modal fade" id="editAboutModal_@item.HAboutId" tabindex="-1" aria-labelledby="editAboutModalLabel_@item.HAboutId" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editAboutModalLabel_@item.HAboutId">編輯關於我們</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="UpdateAbout" method="post">
+                                                <div class="mb-3">
+                                                    <label for="HTitle" class="form-label">標題</label>
+                                                    <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="HContent" class="form-label">內容</label>
+                                                    <textarea class="form-control" id="HContent" name="HContent" required>@item.HContent</textarea>
+                                                </div>
+                                                <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                                                <button type="submit" class="btn btn-success">更新關於我們</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</section>
 
-<h2>📢已上傳關於我們： </h2>
-<section>
-    <div class="card-body">
-        @foreach (var item in Model)
-        {
-            <div class="border border-primary border-2 p-3">
-                <form action="UpdateAbout" method="post">
+    <script>
+        // 表單驗證
+        document.getElementById("submitAbout").addEventListener("click", function (event) {
+            let titleInput = document.getElementById("HTitle");
+            let contentInput = document.getElementById("HContent");
 
-                    更新標題：
-                    <input class="form-control" id="HTitle" placeholder="請輸入要更新的標題" name="HTitle"
-                           value="@item.HTitle">
-                    更新內容：
-                    <textarea class="form-control replyContent" id="HContent" name="HContent"
-                              placeholder="請輸入要更新的內容">@item.HContent</textarea>
-                    <br/>
-                    上傳時間：
-                    <p class="card-title">@item.HCreatedAt</p>
-                    更新時間：
-                    <p class="card-title">@item.HUpdatedAt</p>
-                    <br/>
-                    <input type="hidden" name="HAboutId" value="@item.HAboutId"/>
-                    <button type="submit" id="submitAbout" class="btn btn-success">修改關於我們</button>
-                </form>
-                <br/>
-                <!-- 刪除的表單 -->
-                <form action="DeleteAbout" method="post">
-                    <input type="hidden" name="HAboutId" value="@item.HAboutId"/>
-                    <br/>
-                    <button type="submit" id="submitGuide" class="btn btn-danger">刪除公告</button>
-                </form>
-            </div>
-        }
-    </div>
-
-</section>
-
-<script>
-    document.getElementById("submitAbout").addEventListener("click", function (event) {
-        let titleInput = document.getElementById("HTitle");
-        let contentInput = document.getElementById("HContent");
-
-        if (titleInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入標題！");
-        }
-        if (contentInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入內容！");
-        }
-    });
-</script>
+            if (titleInput.value.trim() === "") {
+                event.preventDefault(); // 阻止表單提交
+                alert("失敗！請輸入標題！");
+            }
+            if (contentInput.value.trim() === "") {
+                event.preventDefault(); // 阻止表單提交
+                alert("失敗！請輸入內容！");
+            }
+        });
+    </script>
 </body>
-

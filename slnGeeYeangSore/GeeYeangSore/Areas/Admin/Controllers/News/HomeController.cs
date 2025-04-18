@@ -7,7 +7,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using GeeYeangSore.Controllers;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.News
 {
     [Area("Admin")]
     public class HomeController : SuperController

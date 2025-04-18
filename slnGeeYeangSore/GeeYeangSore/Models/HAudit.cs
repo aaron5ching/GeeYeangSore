@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace GeeYeangSore.Models;
 
 public partial class HAudit
 {
+    
+    
+    [Key]
     public int HAuditId { get; set; }
 
     public int HTenantId { get; set; }

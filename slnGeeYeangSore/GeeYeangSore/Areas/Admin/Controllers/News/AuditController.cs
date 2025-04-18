@@ -1,18 +1,18 @@
 ﻿using GeeYeangSore.Controllers;
+using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.News
 {
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
-
     public class AuditController : SuperController
     {
-
-        private readonly Models.GeeYeangSoreContext _db;
+        private readonly GeeYeangSoreContext _db;
         private readonly IWebHostEnvironment _env;
 
-        public AuditController(Models.GeeYeangSoreContext db, IWebHostEnvironment env)
+        public AuditController(GeeYeangSoreContext db, IWebHostEnvironment env)
         {
             _db = db;
             _env = env;
@@ -36,23 +36,25 @@ namespace GeeYeangSore.Areas.Admin.Controllers
             var contact = _db.HAudits.ToList();
             return View(contact);
         }
+
         [HttpPost]
-        public IActionResult Audit(int HAuditId,string typeString)
+        public IActionResult Audit(int HAuditId, string typeString)
         {
             if (!HasAnyRole("超級管理員", "內容管理員", "系統管理員"))
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
-            
+
             //（待審核/通過/退件）
             var audit = _db.HAudits.FirstOrDefault(item => item.HAuditId == HAuditId);
             if (audit != null)
             {
-                    audit.HStatus = typeString;
-                    audit.HReviewedAt = DateTime.Now;
+                Console.WriteLine($"Old: {audit.HStatus}, New: {typeString}");
+                audit.HStatus = typeString;
+                audit.HReviewedAt = DateTime.Now;
                 _db.SaveChanges();
             }
+
             var contact = _db.HAudits.ToList();
             return View(contact);
-
         }
 
         //[HttpPost]
