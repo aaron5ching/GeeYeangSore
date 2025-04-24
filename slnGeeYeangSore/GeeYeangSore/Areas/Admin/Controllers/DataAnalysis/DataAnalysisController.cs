@@ -83,14 +83,12 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 .Sum(t => t.HAmount ?? 0);
 
             dataAnalysis.CurrentMonthUsers = _context.HLandlords
-                .Where(l => l.HCreatedAt.HasValue &&
-                            l.HCreatedAt.Value.Year == year &&
-                            l.HCreatedAt.Value.Month == month)
+                .Where(l => l.HCreatedAt.Year == year &&
+                            l.HCreatedAt.Month == month)
                 .Count() +
                 _context.HTenants
-                .Where(t => t.HCreatedAt.HasValue &&
-                            t.HCreatedAt.Value.Year == year &&
-                            t.HCreatedAt.Value.Month == month)
+                .Where(t => t.HCreatedAt.Year == year &&
+                            t.HCreatedAt.Month == month)
                 .Count();
 
             // 總數據
