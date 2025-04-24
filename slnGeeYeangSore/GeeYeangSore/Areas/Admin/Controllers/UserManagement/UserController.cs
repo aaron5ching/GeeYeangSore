@@ -39,9 +39,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                         LandlordId = landlord?.HLandlordId.ToString() ?? "-",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
-                        RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
-                        IsTenant = t.HIsTenant ?? false,
-                        IsLandlord = t.HIsLandlord ?? false
+                        RegisterDate = t.HCreatedAt,
+                        IsTenant = t.HIsTenant,
+                        IsLandlord = t.HIsLandlord
                     };
                 })
                 .ToPagedList(page, pageSize);
@@ -72,9 +72,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                         LandlordId = landlord?.HLandlordId.ToString() ?? "-",
                         LandlordStatus = landlord?.HStatus?.Trim() ?? "未驗證",
                         Name = t.HUserName ?? "未填寫",
-                        RegisterDate = t.HCreatedAt ?? DateTime.MinValue,
-                        IsTenant = t.HIsTenant ?? false,
-                        IsLandlord = t.HIsLandlord ?? false
+                        RegisterDate = t.HCreatedAt,
+                        IsTenant = t.HIsTenant,
+                        IsLandlord = t.HIsLandlord
                     };
                 })
                 .Where(u =>
@@ -137,8 +137,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 existing.HUserName = updated.HUserName;
                 existing.HStatus = updated.HStatus;
-                existing.HBirthday = updated.HBirthday;
-                existing.HGender = updated.HGender;
+                existing.HBirthday = updated.HBirthday.Value; // 取出 DateTime? 的實際值
+                existing.HGender = updated.HGender.Value;     // 取出 bool? 的實際值
                 existing.HAddress = updated.HAddress;
                 existing.HPhoneNumber = updated.HPhoneNumber;
                 existing.HEmail = updated.HEmail;
@@ -297,8 +297,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var tenant = new HTenant
                 {
                     HUserName = newUser.HUserName,
-                    HBirthday = newUser.HBirthday,
-                    HGender = newUser.HGender,
+                    HBirthday = newUser.HBirthday.Value, // 取出 DateTime? 的值
+                    HGender = newUser.HGender.Value,     // 取出 bool? 的值
                     HPhoneNumber = newUser.HPhoneNumber,
                     HEmail = newUser.HEmail,
                     HPassword = newUser.HPassword,
