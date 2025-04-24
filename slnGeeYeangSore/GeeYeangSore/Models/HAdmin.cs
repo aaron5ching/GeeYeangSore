@@ -7,15 +7,19 @@ public partial class HAdmin
 {
     public int HAdminId { get; set; }
 
-    public string? HRoleLevel { get; set; }
+    public string HAccount { get; set; } = null!;
 
-    public string? HAccount { get; set; }
+    public string HPassword { get; set; } = null!;
 
-    public string? HPassword { get; set; }
+    public string HSalt { get; set; } = null!;
 
-    public DateTime? HCreatedAt { get; set; }
+    public string HRoleLevel { get; set; } = null!;
 
-    public DateTime? HUpdateAt { get; set; }
+    public DateTime HCreatedAt { get; set; }
+
+    public DateTime HUpdateAt { get; set; }
+
+    public bool HIsDeleted { get; set; }
 
     public virtual ICollection<HAdminLog> HAdminLogs { get; set; } = new List<HAdminLog>();
 

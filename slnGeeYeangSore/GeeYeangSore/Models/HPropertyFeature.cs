@@ -59,6 +59,8 @@ public partial class HPropertyFeature
 
     public bool? HPublicEquipment { get; set; }
 
+    public bool? HIsDelete { get; set; }
+
     public virtual HLandlord HLandlord { get; set; } = null!;
 
     public virtual HProperty HProperty { get; set; } = null!;

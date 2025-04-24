@@ -13,7 +13,7 @@ public partial class HAudit
 
     public string HIdCardBackPath { get; set; } = null!;
 
-    public string HBankAccount { get; set; } = null!;
+    public string? HBankAccount { get; set; }
 
     public string HBankName { get; set; } = null!;
 

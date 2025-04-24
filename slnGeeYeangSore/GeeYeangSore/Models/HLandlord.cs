@@ -9,23 +9,23 @@ public partial class HLandlord
 
     public int HTenantId { get; set; }
 
-    public string? HLandlordName { get; set; }
+    public string HLandlordName { get; set; } = null!;
 
-    public string? HBankName { get; set; }
+    public string HBankName { get; set; } = null!;
 
-    public string? HBankAccount { get; set; }
+    public string HBankAccount { get; set; } = null!;
 
-    public string? HIdCardFrontUrl { get; set; }
+    public string HIdCardFrontUrl { get; set; } = null!;
 
-    public string? HIdCardBackUrl { get; set; }
+    public string HIdCardBackUrl { get; set; } = null!;
 
-    public int? HRating { get; set; }
+    public DateTime HCreatedAt { get; set; }
 
-    public DateTime? HCreatedAt { get; set; }
+    public DateTime HUpdateAt { get; set; }
 
-    public DateTime? HUpdateAt { get; set; }
+    public string HStatus { get; set; } = null!;
 
-    public string? HStatus { get; set; }
+    public bool HIsDeleted { get; set; }
 
     public virtual ICollection<HAd> HAds { get; set; } = new List<HAd>();
 
