@@ -51,6 +51,12 @@ public partial class HProperty
 
     public string? HStatus { get; set; }
 
+    public bool? HIsDelete { get; set; }
+
+    public decimal? HLatitude { get; set; }
+
+    public decimal? HLongitude { get; set; }
+
     public virtual ICollection<HAd> HAds { get; set; } = new List<HAd>();
 
     public virtual ICollection<HChat> HChats { get; set; } = new List<HChat>();

@@ -9,11 +9,11 @@ public partial class HMblacklist
 
     public int HTenantId { get; set; }
 
-    public string? HEntityType { get; set; }
+    public string HEntityType { get; set; } = null!;
 
-    public string? HReason { get; set; }
+    public string HReason { get; set; } = null!;
 
-    public DateTime? HAddedDate { get; set; }
+    public DateTime HAddedDate { get; set; }
 
     public DateTime? HExpirationDate { get; set; }
 

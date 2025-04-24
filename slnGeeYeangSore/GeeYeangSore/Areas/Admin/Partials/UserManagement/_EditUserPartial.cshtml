@@ -34,7 +34,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">生日</label>
-                    <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday?.ToString("yyyy-MM-dd")" />
+                    <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">性別</label>
@@ -100,11 +100,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">身份建立時間</label>
-                        <input class="form-control" value="@landlord.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")" readonly />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">評價</label>
-                        <input class="form-control" value="@(landlord.HRating.HasValue ? landlord.HRating.Value.ToString("0.0") : "無資料")" readonly />
+                        <input class="form-control" value="@landlord.HCreatedAt.ToString("yyyy-MM-dd HH:mm")" readonly />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">銀行名稱</label>

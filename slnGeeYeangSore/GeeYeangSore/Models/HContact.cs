@@ -9,7 +9,7 @@ public partial class HContact
 
     public int HTenantId { get; set; }
 
-    public int HAdminId { get; set; }
+    public int? HAdminId { get; set; }
 
     public string HPhoneNumber { get; set; } = null!;
 
@@ -23,9 +23,9 @@ public partial class HContact
 
     public DateTime HCreatedAt { get; set; }
 
-    public DateTime HReplyAt { get; set; }
+    public DateTime? HReplyAt { get; set; }
 
     public string? HReplyContent { get; set; }
 
-    public virtual HAdmin HAdmin { get; set; } = null!;
+    public virtual HAdmin? HAdmin { get; set; }
 }

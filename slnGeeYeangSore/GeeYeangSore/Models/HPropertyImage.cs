@@ -19,6 +19,8 @@ public partial class HPropertyImage
 
     public DateTime? HLastUpDated { get; set; }
 
+    public bool? HIsDelete { get; set; }
+
     public virtual HLandlord? HLandlord { get; set; }
 
     public virtual HProperty? HProperty { get; set; }

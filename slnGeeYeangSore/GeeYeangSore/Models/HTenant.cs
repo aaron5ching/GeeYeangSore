@@ -7,33 +7,47 @@ public partial class HTenant
 {
     public int HTenantId { get; set; }
 
-    public string? HUserName { get; set; }
+    public string HUserName { get; set; } = null!;
 
-    public DateTime? HBirthday { get; set; }
+    public DateTime HBirthday { get; set; }
 
-    public bool? HGender { get; set; }
+    public bool HGender { get; set; }
 
-    public string? HAddress { get; set; }
+    public string HAddress { get; set; } = null!;
 
-    public string? HPhoneNumber { get; set; }
+    public string HPhoneNumber { get; set; } = null!;
 
-    public string? HEmail { get; set; }
+    public string HEmail { get; set; } = null!;
 
     public string? HPassword { get; set; }
 
+    public string? HSalt { get; set; }
+
+    public string? HEmailToken { get; set; }
+
+    public string HAuthProvider { get; set; } = null!;
+
+    public string? HProviderId { get; set; }
+
     public string? HImages { get; set; }
 
-    public string? HToken { get; set; }
+    public string HStatus { get; set; } = null!;
 
-    public string? HStatus { get; set; }
+    public bool HIsTenant { get; set; }
 
-    public bool? HIsTenant { get; set; }
+    public bool HIsLandlord { get; set; }
 
-    public bool? HIsLandlord { get; set; }
+    public DateTime HCreatedAt { get; set; }
 
-    public DateTime? HCreatedAt { get; set; }
+    public DateTime HUpdateAt { get; set; }
 
-    public DateTime? HUpdateAt { get; set; }
+    public bool HIsDeleted { get; set; }
+
+    public string? HLastLoginIp { get; set; }
+
+    public DateTime? HLastLoginAt { get; set; }
+
+    public int HLoginFailCount { get; set; }
 
     public virtual ICollection<HFavorite> HFavorites { get; set; } = new List<HFavorite>();
 
@@ -46,4 +60,6 @@ public partial class HTenant
     public virtual ICollection<HMblacklist> HMblacklists { get; set; } = new List<HMblacklist>();
 
     public virtual ICollection<HNotify> HNotifies { get; set; } = new List<HNotify>();
+
+    public virtual ICollection<HPasswordReset> HPasswordResets { get; set; } = new List<HPasswordReset>();
 }

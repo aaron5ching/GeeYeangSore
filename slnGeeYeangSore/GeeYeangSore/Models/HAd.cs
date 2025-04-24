@@ -35,6 +35,12 @@ public partial class HAd
 
     public DateTime? HEndDate { get; set; }
 
+    public bool? HIsDelete { get; set; }
+
+    public DateTime? HCreatedDate { get; set; }
+
+    public DateTime? HLastUpdated { get; set; }
+
     public virtual HLandlord HLandlord { get; set; } = null!;
 
     public virtual HProperty HProperty { get; set; } = null!;
