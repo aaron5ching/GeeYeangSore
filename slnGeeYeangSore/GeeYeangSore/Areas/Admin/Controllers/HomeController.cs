@@ -36,7 +36,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers
                 // 從資料庫抓取新增用戶數（過去 30 天內註冊的用戶）
                 // 參考 DataAnalysisController 的寫法
                 NewUserCount = _context.HTenants
-                    .Where(t => t.HCreatedAt.HasValue && t.HCreatedAt.Value >= thirtyDaysAgo)
+                    .Where(t => t.HCreatedAt >= thirtyDaysAgo)
                     .Count(),
 
                 // 從資料庫抓取本月收入（參考 DataAnalysisController 的寫法）
