@@ -62,7 +62,7 @@
                             </small>
 
                             <small style="margin-left: 400px; margin-top: 100px; font-size: 20px;" class="text-muted">
-                                回覆日期：@newsItem.HReplyAt.ToString("yyyy-MM-dd HH:mm:ss")
+                                回覆日期：@newsItem.HReplyAt?.ToString("yyyy-MM-dd HH:mm:ss")
                             </small>
                             @* <button type="submit" class="btn btn-info" id="Reply">提交回覆</button> *@
                         </form>
@@ -105,7 +105,7 @@
                         </small>
 
                         <small style="margin-left: 400px; margin-top: 100px; font-size: 20px;" class="text-muted">
-                            回覆日期：@newsItem.HReplyAt.ToString("yyyy-MM-dd HH:mm:ss")
+                            回覆日期：@newsItem.HReplyAt?.ToString("yyyy-MM-dd HH:mm:ss")
                         </small>
 
                     </form>
