@@ -40,8 +40,8 @@
                 }
 
                 <td>@admin.HRoleLevel</td>
-                <td>@(admin.HCreatedAt?.ToString("yyyy-MM-dd HH:mm"))</td>
-                <td>@(admin.HUpdateAt?.ToString("yyyy-MM-dd HH:mm"))</td>
+                <td>@(admin.HCreatedAt.ToString("yyyy-MM-dd HH:mm"))</td>
+                <td>@(admin.HUpdateAt.ToString("yyyy-MM-dd HH:mm"))</td>
 
                 @if (ViewBag.IsSuperAdmin == true)
                 {
