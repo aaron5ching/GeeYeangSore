@@ -65,15 +65,20 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
             };
 
             // 當月統計
-            dataAnalysis.CurrentMonthSharedProperties = _context.HProperties.Count(p =>
-                p.HIsShared == true && p.HPublishedDate.HasValue &&
+            dataAnalysis.CurrentMonthProperties = _context.HProperties.Count(p =>
+                p.HPublishedDate.HasValue &&
                 p.HPublishedDate.Value.Year == year &&
                 p.HPublishedDate.Value.Month == month);
 
-            dataAnalysis.CurrentMonthNonSharedProperties = _context.HProperties.Count(p =>
-                p.HIsShared == false && p.HPublishedDate.HasValue &&
-                p.HPublishedDate.Value.Year == year &&
-                p.HPublishedDate.Value.Month == month);
+            dataAnalysis.CurrentMonthVipAds = _context.HAds
+                .Where(ad =>
+                    (ad.HCategory == "VIP1" || ad.HCategory == "VIP2" || ad.HCategory == "VIP3") &&
+                     ad.HStartDate.HasValue &&
+                     ad.HStartDate.Value.Year == year &&
+                     ad.HStartDate.Value.Month == month &&
+                     ad.HIsDelete != true &&
+                     ad.HStatus == "進行中") 
+                .Count();
 
             dataAnalysis.CurrentMonthRevenue = _context.HTransactions
                 .Where(t => t.HPaymentDate.HasValue &&
@@ -97,12 +102,16 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 .Where(r => r.HReportDate.HasValue && r.HReportDate.Value.Year == year)
                 .Sum(r => r.HTotalIncome ?? 0);
 
-            // 租房類型圓餅圖
-            dataAnalysis.SharedPropertiesCount = _context.HProperties.Count(p => p.HIsShared == true);
-            dataAnalysis.NonSharedPropertiesCount = _context.HProperties.Count(p => !p.HIsShared == true);
 
             dataAnalysis.TotalLandlords = _context.HLandlords.Count();
             dataAnalysis.TotalTenants = _context.HTenants.Count();
+
+            dataAnalysis.VipCategoryDistribution = _context.HAds
+                .Where(ad =>
+                    (ad.HCategory == "VIP1" || ad.HCategory == "VIP2" || ad.HCategory == "VIP3") &&
+                    ad.HIsDelete != true && ad.HStatus == "進行中")
+                .GroupBy(ad => ad.HCategory)
+                .ToDictionary(g => g.Key, g => g.Count());
 
             // 地區柱狀圖
             dataAnalysis.PropertiesByCity = _context.HProperties

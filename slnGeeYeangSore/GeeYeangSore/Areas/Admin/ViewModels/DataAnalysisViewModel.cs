@@ -6,11 +6,10 @@
         // 小卡資訊
         public int TotalUsers { get; set; }
         public decimal TotalRevenue { get; set; }
-        
 
-        // 圓餅圖: 合租 vs 一般租房
-        public int SharedPropertiesCount { get; set; }
-        public int NonSharedPropertiesCount { get; set; }
+
+        // 圓餅圖: VIP廣告分布
+        public Dictionary<string, int> VipCategoryDistribution { get; set; } = new();
 
         // 圓餅圖: 房東 vs 房客人數比例
         public int TotalLandlords { get; set; }
@@ -41,8 +40,8 @@
         public List<int> RevenueAvailableYears { get; set; } = new();
 
         // 當月數據
-        public int CurrentMonthSharedProperties { get; set; }
-        public int CurrentMonthNonSharedProperties { get; set; }
+        public int CurrentMonthProperties { get; set; }
+        public int CurrentMonthVipAds { get; set; }
         public int CurrentMonthUsers { get; set; }
         public decimal CurrentMonthRevenue { get; set; }
 
