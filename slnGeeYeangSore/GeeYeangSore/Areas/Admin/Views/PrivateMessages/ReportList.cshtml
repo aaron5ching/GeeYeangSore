@@ -1,188 +1,125 @@
 @model IEnumerable<GeeYeangSore.Models.HReport>
-@using Microsoft.AspNetCore.Http
-@inject IHttpContextAccessor HttpContextAccessor
-
+@Html.AntiForgeryToken()
 @{
-    ViewBag.Title = "檢舉清單";
-    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
-    var messages = ViewBag.Messages as Dictionary<int, GeeYeangSore.Models.HMessage>;
+    ViewData["Title"] = "檢舉列表";
 }
 
-@section Scripts {
-    <script>
-        function updateStatus(reportId, status) {
-            if (confirm('確定要更新此檢舉的狀態嗎？')) {
-                $.ajax({
-                    url: '@Url.Action("ProcessReport", "PrivateMessages", new { area = "Admin" })',
-                    type: 'POST',
-                    data: {
-                        reportId: reportId,
-                        status: status
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            alert(response.message);
-                            location.reload();
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        if (xhr.status === 401) {
-                            alert('登入狀態異常，請重新登入！');
-                            window.location.href = '/Admin/Account/Login';
-                        } else {
-                            alert('更新失敗，請稍後再試。錯誤：' + error);
-                        }
-                    }
-                });
-            }
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+        .btn-main:hover {
+            background-color: #24B4A8;
+            border-color: #24B4A8;
+            color: white;
         }
 
-        function showStatus(status) {
-            const pendingSection = document.getElementById('pending-reports');
-            const historySection = document.getElementById('history-reports');
-            const buttons = document.querySelectorAll('.btn-group .btn');
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
 
-            if (status === 'pending') {
-                pendingSection.style.display = 'block';
-                historySection.style.display = 'none';
-                buttons[0].classList.add('active', 'btn-primary');
-                buttons[0].classList.remove('btn-outline-primary');
-                buttons[1].classList.remove('active', 'btn-primary');
-                buttons[1].classList.add('btn-outline-primary');
-            } else {
-                pendingSection.style.display = 'none';
-                historySection.style.display = 'block';
-                buttons[0].classList.remove('active', 'btn-primary');
-                buttons[0].classList.add('btn-outline-primary');
-                buttons[1].classList.add('active', 'btn-primary');
-                buttons[1].classList.remove('btn-outline-primary');
-            }
+    .table th {
+        background-color: #F0F9F8;
+        color: #222222;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+    }
+
+    .pagination .page-link {
+        color: #222222;
+    }
+
+        .pagination .page-link:hover {
+            color: #24B4A8;
         }
-    </script>
-}
 
-<div class="container">
+    .text-subtle {
+        color: #666666;
+    }
+</style>
+
+<div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>檢舉列表</h1>
-        <div class="btn-group">
-            <button type="button" class="btn btn-primary active" onclick="showStatus('pending')">待處理</button>
-            <button type="button" class="btn btn-outline-primary" onclick="showStatus('history')">歷史記錄</button>
-        </div>
+        <h2>檢舉列表</h2>
+        <a href="@Url.Action("Index", "PrivateMessages", new { area = "Admin" })" class="btn btn-main">返回列表</a>
     </div>
 
-    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <div id="pending-reports" class="report-section">
-        <table class="table table-bordered">
+    <div class="table-responsive">
+        <table class="table table-hover">
             <thead>
                 <tr>
                     <th>檢舉ID</th>
-                    <th>訊息內容</th>
-                    <th>原因</th>
+                    <th>訊息ID</th>
+                    <th>被檢舉訊息內容</th>
+                    <th>檢舉原因</th>
+                    <th>檢舉時間</th>
                     <th>狀態</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var report in Model.Where(r => r.HStatus == "待處理"))
+                @foreach (var report in Model)
                 {
-                    <tr id="report-row-@report.HReportId">
-                        <td>@report.HReportId</td>
-                        <td>
-                            @{
-                                string messageContent = "訊息不存在";
-                                if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
-                                messages.ContainsKey(report.HMessageId.Value))
-                                {
-                                    messageContent = messages[report.HMessageId.Value].HContent;
-                                }
-                            }
-                            @messageContent
-                        </td>
-                        <td>@report.HReason</td>
-                        <td id="status-@report.HReportId">
-                            <span class="badge bg-warning">待處理</span>
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-success"
-                                    onclick="updateStatus(@report.HReportId, '已核准')">
-                                    <i class="fas fa-check"></i> 核准
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                    onclick="updateStatus(@report.HReportId, '已拒絕')">
-                                    <i class="fas fa-times"></i> 拒絕
-                                </button>
-                                @if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
-                                                            messages.ContainsKey(report.HMessageId.Value))
-                                {
-                                    var message = messages[report.HMessageId.Value];
-                                    <a class="btn btn-info btn-sm ms-2"
-                                        href="/Admin/PrivateMessages/PrivateChat/@message.HSenderId/@message.HReceiverId"
-                                        target="_blank">詳細對話</a>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                    var statusBadge = "bg-warning";
+                    var statusText = "待處理";
 
-    <div id="history-reports" class="report-section" style="display: none;">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>檢舉ID</th>
-                    <th>訊息內容</th>
-                    <th>原因</th>
-                    <th>狀態</th>
-                    <th>處理資訊</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in Model.Where(r => r.HStatus != "待處理"))
-                {
+                    if (!string.IsNullOrEmpty(report.HStatus))
+                    {
+                        switch (report.HStatus)
+                        {
+                            case "已核准":
+                                statusBadge = "bg-danger";
+                                statusText = "檢舉成立";
+                                break;
+                            case "已拒絕":
+                                statusBadge = "bg-secondary";
+                                statusText = "檢舉駁回";
+                                break;
+                        }
+                    }
+
                     <tr>
                         <td>@report.HReportId</td>
+                        <td>@(report.HMessageId ?? 0)</td>  <!-- 訊息 ID -->
+                        <td>@(report.HMessage?.HContent ?? "訊息不存在")</td>
+                        <td>@(report.HReason ?? "無原因")</td>
+                        <td>@(report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "無時間")</td>
+                        <td><span class="badge @statusBadge">@statusText</span></td>
                         <td>
-                            @{
-                                string messageContent = "訊息不存在";
-                                if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
-                                messages.ContainsKey(report.HMessageId.Value))
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="@Url.Action("PrivateChat", "PrivateMessages", new { area = "Admin", senderId = report.HMessage?.HSenderId, receiverId = report.HMessage?.HReceiverId })" class="btn btn-main btn-sm">
+                                    <i class="bi bi-eye"></i> 查看訊息
+                                </a>
+
+                                @if (report.HStatus == null || report.HStatus == "待處理")
                                 {
-                                    messageContent = messages[report.HMessageId.Value].HContent;
+                                    <button type="button" class="btn btn-success btn-sm" onclick="processReport(@report.HReportId, '已核准')">
+                                        <i class="bi bi-check2"></i> 核准
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="processReport(@report.HReportId, '已拒絕')">
+                                        <i class="bi bi-x"></i> 拒絕
+                                    </button>
                                 }
-                            }
-                            @messageContent
-                        </td>
-                        <td>@report.HReason</td>
-                        <td>
-                            @{
-                                var statusClass = report.HStatus switch
+                                else
                                 {
-                                    "已核准" => "badge bg-danger",
-                                    "已拒絕" => "badge bg-secondary",
-                                    _ => "badge bg-warning"
-                                };
-                            }
-                            <span class="@statusClass">@report.HStatus</span>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="text-muted">
-                                    由 @(report.HAdmin?.HAccount ?? "未知管理員") 處理於
-                                    @report.HReviewedAt?.ToString("yyyy-MM-dd HH:mm")
-                                </span>
-                                @if (report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
-                                                            messages.ContainsKey(report.HMessageId.Value))
-                                {
-                                    var message = messages[report.HMessageId.Value];
-                                    <a class="btn btn-info btn-sm ms-2"
-                                        href="/Admin/PrivateMessages/PrivateChat/@message.HSenderId/@message.HReceiverId"
-                                        target="_blank">詳細對話</a>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>已處理</button>
                                 }
                             </div>
                         </td>
@@ -193,9 +130,31 @@
     </div>
 </div>
 
-<script>
-    $(document).ready(function () {
-        // 將函數設為全局變數，以便在 HTML 中調用
-        window.showStatus = showStatus;
-    });
-</script>
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script>   function processReport(reportId, status) {
+        var token = $('input[name="__RequestVerificationToken"]').val();
+
+        $.ajax({
+            url: '@Url.Action("ProcessReport", "PrivateMessages", new { area = "Admin" })',
+            type: 'POST',
+            data: {
+                reportId: reportId,
+                status: status,
+                __RequestVerificationToken: token
+            },
+            success: function (response) {
+                if (response.success) {
+                    alert('處理成功！');
+                    location.reload(); // 重新整理頁面
+                } else {
+                    alert('處理失敗：' + response.message);
+                }
+            },
+                   error: function (xhr, status, error) {
+            alert('伺服器錯誤：' + xhr.responseText);
+        }
+        });
+    }
+    </script>
+}

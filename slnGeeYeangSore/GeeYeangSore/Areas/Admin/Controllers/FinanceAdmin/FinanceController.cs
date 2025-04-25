@@ -39,7 +39,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.FinanceAdmin
         public async Task<IActionResult> GetDailyStats(DateTime startDate, DateTime endDate)
         {
             if (!HasAnyRole("超級管理員", "系統管理員", "財務管理員"))
-                return Json(new { success = false, message = "權限不足" });
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var dailyStats = await (from t in _context.HTransactions
                                     where t.HPaymentDate >= startDate && t.HPaymentDate <= endDate
@@ -61,7 +61,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.FinanceAdmin
         public async Task<IActionResult> GetStats(DateTime? startDate, DateTime? endDate)
         {
             if (!HasAnyRole("超級管理員", "系統管理員", "財務管理員"))
-                return Json(new { success = false, message = "權限不足" });
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             try
             {
