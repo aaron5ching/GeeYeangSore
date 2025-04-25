@@ -139,8 +139,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 existing.HUserName = updated.HUserName;
                 existing.HStatus = updated.HStatus;
-                existing.HBirthday = updated.HBirthday.Value; // 取出 DateTime? 的實際值
-                existing.HGender = updated.HGender.Value;     // 取出 bool? 的實際值
+                existing.HBirthday = updated.HBirthday ?? existing.HBirthday; // 若為 null 則保留原值 // 取出 DateTime? 的實際值
+                existing.HGender = updated.HGender ?? existing.HGender;     // 取出 bool? 的實際值
                 existing.HAddress = updated.HAddress;
                 existing.HPhoneNumber = updated.HPhoneNumber;
                 existing.HEmail = updated.HEmail;
@@ -295,24 +295,28 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         public IActionResult Create([FromBody] CEditUserViewModel newUser)
         {
             if (!ModelState.IsValid)
-                return BadRequest("模型驗證失敗");
+                return BadRequest("未完成資料填寫");
 
             try
             {
                 var tenant = new HTenant
                 {
-                    HUserName = newUser.HUserName,
-                    HBirthday = newUser.HBirthday.Value, // 取出 DateTime? 的值
-                    HGender = newUser.HGender.Value,     // 取出 bool? 的值
-                    HPhoneNumber = newUser.HPhoneNumber,
-                    HEmail = newUser.HEmail,
-                    HPassword = newUser.HPassword,
-                    HAddress = newUser.HAddress,
+                    HUserName = newUser.HUserName ?? "未命名",          // 若為 null 則提供預設值
+                    HBirthday = newUser.HBirthday ?? DateTime.Today,    // 避免 null
+                    HGender = newUser.HGender ?? true,                  // 預設為男性或女性
+                    HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",
+                    HEmail = newUser.HEmail ?? "未填寫",
+                    HPassword = newUser.HPassword ?? "000000",
+                    HAddress = newUser.HAddress ?? "未填寫",
                     HStatus = newUser.HStatus ?? "未驗證",
+                    HAuthProvider = "local",                            // 🔥 最常忽略的欄位
+                    HProviderId = null,
                     HImages = newUser.HImages,
                     HCreatedAt = DateTime.Now,
+                    HUpdateAt = DateTime.Now,
                     HIsTenant = true,
-                    HIsLandlord = false
+                    HIsLandlord = false,
+                    HIsDeleted = false
                 };
 
                 _context.HTenants.Add(tenant);
@@ -326,5 +330,6 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 return StatusCode(500, "建立失敗，請稍後再試");
             }
         }
+
     }
 }
