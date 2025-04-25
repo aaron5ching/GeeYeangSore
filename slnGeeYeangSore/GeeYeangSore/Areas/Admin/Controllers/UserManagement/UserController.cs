@@ -27,6 +27,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             int pageSize = 15;
             var allUsers = _context.HTenants
+                .Where(t => !t.HIsDeleted) // 過濾未被刪除的使用者
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
                 .Select(t =>
@@ -60,6 +61,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             int pageSize = 15;
 
             var result = _context.HTenants
+                .Where(t => !t.HIsDeleted) // 過濾未被刪除的使用者
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
                 .Select(t =>
@@ -192,7 +194,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var tenant = _context.HTenants.FirstOrDefault(t => t.HTenantId == id);
                 if (tenant != null)
                 {
-                    _context.HTenants.Remove(tenant);
+                    tenant.HIsDeleted = true; // 設為軟刪除
+                    tenant.HUpdateAt = DateTime.Now; // 更新修改時間
+                    _context.HTenants.Update(tenant);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -200,10 +204,11 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ 刪除失敗：{ex.Message}");
+                Console.WriteLine($"❌ 軟刪除失敗：{ex.Message}");
                 return StatusCode(500, "刪除失敗，請稍後再試");
             }
         }
+
 
         [HttpPost]
         public IActionResult UploadTenantPhoto(IFormFile photo)
