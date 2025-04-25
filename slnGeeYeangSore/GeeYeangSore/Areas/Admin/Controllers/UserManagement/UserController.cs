@@ -295,7 +295,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         public IActionResult Create([FromBody] CEditUserViewModel newUser)
         {
             if (!ModelState.IsValid)
-                return BadRequest("未完成資料填寫");
+                return BadRequest("未完成檔案填寫");
 
             try
             {
