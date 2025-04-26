@@ -60,6 +60,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 if (string.IsNullOrWhiteSpace(newAdmin.HAccount) || string.IsNullOrWhiteSpace(newAdmin.HPassword))
                     return BadRequest("帳號或密碼不得為空");
 
+                // 處理密碼加鹽哈希
+                string salt = PasswordHasher.GenerateSalt();
+                string hashedPassword = PasswordHasher.HashPassword(newAdmin.HPassword, salt);
+                
+                // 將原始密碼替換為哈希後的密碼，並保存鹽值
+                newAdmin.HSalt = salt;
+                newAdmin.HPassword = hashedPassword;
+                
                 newAdmin.HCreatedAt = DateTime.Now;
                 newAdmin.HUpdateAt = DateTime.Now;
 
@@ -104,8 +112,17 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 admin.HAccount = edited.HAccount;
 
+                // 如果提供了新密碼，則進行加鹽哈希處理
                 if (!string.IsNullOrWhiteSpace(edited.HPassword))
-                    admin.HPassword = edited.HPassword;
+                {
+                    // 檢查密碼是否已被哈希（如果與數據庫中相同，則表示沒有修改，直接使用表單提交的值）
+                    if (edited.HPassword != admin.HPassword)
+                    {
+                        string salt = PasswordHasher.GenerateSalt();
+                        admin.HPassword = PasswordHasher.HashPassword(edited.HPassword, salt);
+                        admin.HSalt = salt;
+                    }
+                }
 
                 admin.HRoleLevel = edited.HRoleLevel;
                 admin.HUpdateAt = DateTime.Now;

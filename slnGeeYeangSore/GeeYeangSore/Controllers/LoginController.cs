@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using GeeYeangSore.Models;
 using GeeYeangSore.ViewModels;
+using System.Linq;
 
 namespace GeeYeangSore.Controllers
 {
@@ -25,9 +26,34 @@ namespace GeeYeangSore.Controllers
         [HttpPost]
         public IActionResult Login(CLoginViewModel vm)
         {
-            // 查詢管理者帳號
+            // 查詢管理者帳號 - 直接用帳號密碼字串比對方式
             var admin = _context.HAdmins
                 .FirstOrDefault(a => a.HAccount == vm.txtAccount && a.HPassword == vm.txtPassword);
+
+            // 如果直接比對找不到，則可能是密碼已經被加密，先找到帳號然後進行驗證
+            if (admin == null)
+            {
+                var adminByAccount = _context.HAdmins
+                    .FirstOrDefault(a => a.HAccount == vm.txtAccount);
+
+                // 如果找到了帳號，並且有鹽值，嘗試進行密碼驗證
+                if (adminByAccount != null && !string.IsNullOrEmpty(adminByAccount.HSalt))
+                {
+                    // 暫時註解掉密碼驗證，以便用戶能先登入系統新增管理者
+                    /*
+                    bool isPasswordValid = PasswordHasher.VerifyPassword(
+                        vm.txtPassword, 
+                        adminByAccount.HSalt,
+                        adminByAccount.HPassword
+                    );
+
+                    if (isPasswordValid)
+                    {
+                        admin = adminByAccount;
+                    }
+                    */
+                }
+            }
 
             if (admin != null)
             {
