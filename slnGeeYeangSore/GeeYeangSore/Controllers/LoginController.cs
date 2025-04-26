@@ -26,59 +26,64 @@ namespace GeeYeangSore.Controllers
         [HttpPost]
         public IActionResult Login(CLoginViewModel vm)
         {
-            // 查詢管理者帳號 - 直接用帳號密碼字串比對方式
-            var admin = _context.HAdmins
-                .FirstOrDefault(a => a.HAccount == vm.txtAccount && a.HPassword == vm.txtPassword);
-
-            // 如果直接比對找不到，則可能是密碼已經被加密，先找到帳號然後進行驗證
-            if (admin == null)
+            try
             {
+                // 先嘗試根據帳號查詢管理者
                 var adminByAccount = _context.HAdmins
                     .FirstOrDefault(a => a.HAccount == vm.txtAccount);
 
-                // 如果找到了帳號，並且有鹽值，嘗試進行密碼驗證
-                if (adminByAccount != null && !string.IsNullOrEmpty(adminByAccount.HSalt))
+                if (adminByAccount != null)
                 {
-                    // 暫時註解掉密碼驗證，以便用戶能先登入系統新增管理者
-                    /*
-                    bool isPasswordValid = PasswordHasher.VerifyPassword(
-                        vm.txtPassword, 
-                        adminByAccount.HSalt,
-                        adminByAccount.HPassword
-                    );
+                    bool isAuthenticated = false;
 
-                    if (isPasswordValid)
+                    // 1. 檢查是否有鹽值，如果有則使用加鹽哈希驗證
+                    if (!string.IsNullOrEmpty(adminByAccount.HSalt))
                     {
-                        admin = adminByAccount;
+                        isAuthenticated = PasswordHasher.VerifyPassword(
+                            vm.txtPassword,
+                            adminByAccount.HSalt,
+                            adminByAccount.HPassword
+                        );
                     }
-                    */
+                    // 2. 否則使用直接比對（向後兼容）
+                    else if (adminByAccount.HPassword == vm.txtPassword)
+                    {
+                        isAuthenticated = true;
+                    }
+
+                    if (isAuthenticated)
+                    {
+                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, adminByAccount.HAccount);
+                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, adminByAccount.HRoleLevel);
+                        HttpContext.Session.SetString("UserType", "Admin");
+
+                        return RedirectToAction("Index", "Home", new { area = "Admin" });
+                    }
                 }
-            }
 
-            if (admin != null)
+                // 查詢前台租客帳號
+                var tenant = _context.HTenants
+                    .FirstOrDefault(t => t.HUserName == vm.txtAccount && t.HPassword == vm.txtPassword);
+
+                if (tenant != null)
+                {
+                    HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, tenant.HUserName);
+                    HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, "User");
+                    HttpContext.Session.SetString("UserType", "Tenant");
+
+                    return RedirectToAction("Index", "Home"); // 前台頁面
+                }
+
+                ViewBag.LoginError = "帳號或密碼錯誤";
+                return View();
+            }
+            catch (Exception ex)
             {
-                HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, admin.HAccount);
-                HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, admin.HRoleLevel);
-                HttpContext.Session.SetString("UserType", "Admin");
-
-                return RedirectToAction("Index", "Home", new { area = "Admin" });
+                // 記錄錯誤
+                Console.WriteLine($"登入失敗: {ex.Message}");
+                ViewBag.LoginError = "登入處理發生錯誤，請稍後再試";
+                return View();
             }
-
-            // 查詢前台租客帳號
-            var tenant = _context.HTenants
-                .FirstOrDefault(t => t.HUserName == vm.txtAccount && t.HPassword == vm.txtPassword);
-
-            if (tenant != null)
-            {
-                HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, tenant.HUserName);
-                HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, "User");
-                HttpContext.Session.SetString("UserType", "Tenant");
-
-                return RedirectToAction("Index", "Home"); // 前台頁面
-            }
-
-            ViewBag.LoginError = "帳號或密碼錯誤";
-            return View();
         }
 
         // 登出

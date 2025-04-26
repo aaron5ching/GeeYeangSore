@@ -42,9 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-
-
-            function clearSearch() {
+        function clearSearch() {
             document.getElementById("searchAccount").value = "";
             document.forms[0].submit(); // 送出表單，相當於清空條件重新載入
         }
@@ -89,8 +87,7 @@
             });
         });
 
-
-                // 顯示編輯視窗
+        // 顯示編輯視窗
         $(document).on('click', '.btn-edit', function () {
             const id = $(this).data('id');
             $.get(`/Admin/AdminManagement/Edit?id=${id}`, function (html) {
@@ -106,7 +103,7 @@
             const data = {
                 HAdminId: this.HAdminId.value,
                 HAccount: this.HAccount.value.trim(),
-                HPassword: this.HPassword.value.trim(), // 可為空
+                HPassword: this.HPassword.value.trim(), // 空值表示不修改密碼
                 HRoleLevel: this.HRoleLevel.value
             };
 
@@ -116,37 +113,30 @@
                 data: JSON.stringify(data),
                 contentType: 'application/json',
                 success: function () {
-                    console.log('✅ success triggered');
-                    alert('✅ 編輯成功！');
+                    alert('✅ 修改成功！');
                     location.reload();
                 },
                 error: function (xhr) {
-                    alert('儲存失敗：' + (xhr.responseText || '未知錯誤'));
+                    alert('修改失敗：' + (xhr.responseText || '未知錯誤'));
                 }
             });
         });
 
-
-                // ✅ 點擊刪除按鈕
-        $(document).on('click', '.btn-delete', function () {
-            const id = $(this).data('id');
-            if (!confirm("⚠️確定要刪除這位管理員嗎？")) return;
-
-            $.ajax({
-                type: 'POST',
-                url: '/Admin/AdminManagement/Delete',
-                data: { id: id },
-                success: function () {
-                    alert("✅ 已成功刪除！");
-                    location.reload();
-                },
-                error: function (xhr) {
-                    alert("刪除失敗：" + (xhr.responseText || "未知錯誤"));
-                }
-            });
-        });
-
-
-
+        // 刪除確認
+        function confirmDelete(id) {
+            if (confirm('確定要刪除此管理員？此操作無法復原！')) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/Admin/AdminManagement/Delete?id=' + id,
+                    success: function () {
+                        alert('✅ 刪除成功！');
+                        location.reload();
+                    },
+                    error: function (xhr) {
+                        alert('刪除失敗：' + (xhr.responseText || '未知錯誤'));
+                    }
+                });
+            }
+        }
     </script>
 }
