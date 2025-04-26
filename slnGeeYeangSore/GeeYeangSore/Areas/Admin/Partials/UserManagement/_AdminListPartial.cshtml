@@ -37,7 +37,11 @@
                 @if (ViewBag.IsSuperAdmin == true)
                 {
                     <td>
-                        @if (!string.IsNullOrEmpty(admin.HSalt))
+                        @if (admin.HAccount.ToLower() == "admin01")
+                        {
+                            <span class="text-muted">(保護中)</span>
+                        }
+                        else if (!string.IsNullOrEmpty(admin.HSalt))
                         {
                             <span class="text-muted"><i class="fa-solid fa-lock"></i> (加密保護)</span>
                         }
@@ -55,13 +59,20 @@
                 @if (ViewBag.IsSuperAdmin == true)
                 {
                     <td>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="@admin.HAdminId">編輯</button>
-                            @if (admin.HRoleLevel != "超級管理員")
-                            {
-                                <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete(@admin.HAdminId)">刪除</button>
-                            }
-                        </div>
+                        @if (admin.HAccount.ToLower() == "admin01")
+                        {
+                            <span class="text-muted">(保護中)</span>
+                        }
+                        else
+                        {
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-primary btn-edit" data-id="@admin.HAdminId">編輯</button>
+                                @if (admin.HRoleLevel != "超級管理員")
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete(@admin.HAdminId)">刪除</button>
+                                }
+                            </div>
+                        }
                     </td>
                 }
             </tr>

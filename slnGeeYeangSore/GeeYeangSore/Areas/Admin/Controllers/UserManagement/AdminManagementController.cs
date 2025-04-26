@@ -91,6 +91,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var admin = _context.HAdmins.Find(id);
                 if (admin == null)
                     return NotFound();
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法編輯");
 
                 return PartialView("~/Areas/Admin/Partials/UserManagement/_EditAdminPartial.cshtml", admin);
             }
@@ -109,6 +113,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var admin = _context.HAdmins.Find(edited.HAdminId);
                 if (admin == null)
                     return NotFound();
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法編輯");
 
                 admin.HAccount = edited.HAccount;
 
@@ -155,6 +163,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 if (admin.HRoleLevel == "超級管理員")
                     return BadRequest("不可刪除超級管理員");
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法刪除");
 
                 _context.HAdmins.Remove(admin);
                 _context.SaveChanges();
