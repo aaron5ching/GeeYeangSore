@@ -1,7 +1,47 @@
 ﻿@using System.Diagnostics
 @model IEnumerable<GeeYeangSore.Models.HAbout>
 
-<body>
+@{
+    ViewData["Title"] = "關於我們";
+}
+
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .text-truncate-container {
+        max-height: 80px;
+        overflow: hidden;
+    }
+    
+    .text-truncate-toggle {
+        cursor: pointer;
+        color: #3CDDD2;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>關於我們</h2>
+        <a href="/Admin/Home/Index" class="btn btn-main">返回首頁</a>
+    </div>
+
     <!-- 顯示成功訊息 -->
     @if (TempData["Success"] != null)
     {
@@ -11,78 +51,68 @@
         </div>
     }
 
-    <h2>關於我們</h2>
-    <section id="announcement" class="bg-light">
-        <!-- 新增關於我們 Modal -->
-        <div class="modal fade" id="addAboutModal" tabindex="-1" aria-labelledby="addAboutModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addAboutModalLabel">新增關於我們</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="About" method="post" id="addAboutForm">
-                            <div class="mb-3">
-                                <label for="HTitle" class="form-label">標題</label>
-                                <input type="text" class="form-control" id="HTitle" name="HTitle" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="HContent" class="form-label">內容</label>
-                                <textarea class="form-control" id="HContent" name="HContent" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success">提交關於我們</button>
-                        </form>
-                    </div>
-                </div>
+    <!-- 操作區域 -->
+    <div class="search-section mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="searchTitle" class="form-label">搜尋標題</label>
+                <input type="text" class="form-control" id="searchTitle" placeholder="請輸入關於我們標題" onkeyup="searchAbout()" />
+            </div>
+            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button class="btn btn-warning me-2" style="width: 180px;" data-bs-toggle="modal" data-bs-target="#addAboutModal">新增關於我們</button>
+                <button type="button" id="btnClear" class="btn btn-secondary" style="width: 150px">清除篩選</button>
             </div>
         </div>
+    </div>
 
-        <!-- 顯示新增關於我們按鈕 -->
-        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addAboutModal">新增關於我們</button>
-    </section>
-
-    
-    <div class="container my-4">
-        <div class="card shadow-lg rounded-4 p-4">
-            <div class="card-body">
-                <table class="table table-hover align-middle table-bordered table-striped table-lg">
-                    <thead class="table-primary text-center fs-5">
+    <!-- 表格卡片 -->
+    <div class="card shadow-lg rounded-4 mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">關於我們列表</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered table-striped mb-0">
+                    <thead class="table-primary text-center">
                         <tr>
-                            <th>標題</th>
-                            <th>內容</th>
-                            <th>上傳時間</th>
-                            <th>修改時間</th>
-                            <th>編輯</th>
-                            <th>刪除</th>
+                            <th style="width: 20%;">標題</th>
+                            <th style="width: 40%;">內容</th>
+                            <th style="width: 15%;">上傳時間</th>
+                            <th style="width: 15%;">修改時間</th>
+                            <th style="width: 10%;" colspan="2">操作</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="aboutTableBody">
                         @foreach (var item in Model)
                         {
-                            <tr>
+                            <tr class="about-item" data-title="@item.HTitle">
                                 <td>@item.HTitle</td>
-                                <td>@item.HContent</td>
-                                <td>@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
-                                <td>@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <div class="text-truncate-container" id="content-@item.HAboutId">
+                                        <p class="mb-0">@item.HContent</p>
+                                    </div>
+                                    <small class="text-truncate-toggle" data-id="@item.HAboutId">展開全文</small>
+                                </td>
+                                <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
                                 <td class="text-center">
                                     <!-- 編輯按鈕 -->
-                                    <button class="btn bg-primary" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
+                                    <button class="btn btn-warning btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
                                         編輯
                                     </button>
                                 </td>
                                 <td class="text-center">
                                     <!-- 刪除按鈕 -->
-                                    <form action="DeleteAbout" method="post" style="display: inline;">
+                                    <form action="DeleteAbout" method="post" style="display: inline;" onsubmit="return confirm('確定要刪除此內容嗎？');">
                                         <input type="hidden" name="HAboutId" value="@item.HAboutId" />
-                                        <button type="submit" class="btn btn-danger">刪除</button>
+                                        <button type="submit" class="btn btn-danger btn-sm w-100">刪除</button>
                                     </form>
                                 </td>
                             </tr>
 
                             <!-- 編輯關於我們 Modal -->
                             <div class="modal fade" id="editAboutModal_@item.HAboutId" tabindex="-1" aria-labelledby="editAboutModalLabel_@item.HAboutId" aria-hidden="true">
-                                <div class="modal-dialog">
+                                <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="editAboutModalLabel_@item.HAboutId">編輯關於我們</h5>
@@ -96,10 +126,13 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="HContent" class="form-label">內容</label>
-                                                    <textarea class="form-control" id="HContent" name="HContent" required>@item.HContent</textarea>
+                                                    <textarea class="form-control" id="HContent" name="HContent" rows="6" required>@item.HContent</textarea>
                                                 </div>
                                                 <input type="hidden" name="HAboutId" value="@item.HAboutId" />
-                                                <button type="submit" class="btn btn-success">更新關於我們</button>
+                                                <div class="d-flex justify-content-end mt-4">
+                                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+                                                    <button type="submit" class="btn btn-success">更新</button>
+                                                </div>
                                             </form>
                                         </div>
                                     </div>
@@ -112,20 +145,88 @@
         </div>
     </div>
 
-    <script>
-        // 表單驗證
-        document.getElementById("submitAbout").addEventListener("click", function (event) {
-            let titleInput = document.getElementById("HTitle");
-            let contentInput = document.getElementById("HContent");
+    <!-- 新增關於我們 Modal -->
+    <div class="modal fade" id="addAboutModal" tabindex="-1" aria-labelledby="addAboutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAboutModalLabel">新增關於我們</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="About" method="post" id="addAboutForm">
+                        <div class="mb-3">
+                            <label for="HTitle" class="form-label">標題</label>
+                            <input type="text" class="form-control" id="HTitle" name="HTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="HContent" class="form-label">內容</label>
+                            <textarea class="form-control" id="HContent" name="HContent" rows="6" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-success" id="submitAbout">提交</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            if (titleInput.value.trim() === "") {
-                event.preventDefault(); // 阻止表單提交
-                alert("失敗！請輸入標題！");
-            }
-            if (contentInput.value.trim() === "") {
-                event.preventDefault(); // 阻止表單提交
-                alert("失敗！請輸入內容！");
+<script>
+    // 搜尋關於我們
+    function searchAbout() {
+        let searchValue = document.getElementById("searchTitle").value.toLowerCase();
+        let aboutItems = document.querySelectorAll(".about-item");
+
+        aboutItems.forEach(function(item) {
+            let title = item.getAttribute("data-title").toLowerCase();
+            if (title.includes(searchValue)) {
+                item.style.display = "";
+            } else {
+                item.style.display = "none";
             }
         });
-    </script>
-</body>
+    }
+
+    // 清除搜尋
+    document.getElementById('btnClear').addEventListener('click', function() {
+        document.getElementById('searchTitle').value = '';
+        searchAbout();
+    });
+
+    // 展開/收合內容
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggles = document.querySelectorAll('.text-truncate-toggle');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const contentDiv = document.getElementById('content-' + id);
+                
+                if (contentDiv.classList.contains('text-truncate-container')) {
+                    contentDiv.classList.remove('text-truncate-container');
+                    this.textContent = '收合';
+                } else {
+                    contentDiv.classList.add('text-truncate-container');
+                    this.textContent = '展開全文';
+                }
+            });
+        });
+    });
+
+    // 表單驗證
+    document.getElementById("submitAbout").addEventListener("click", function (event) {
+        let titleInput = document.getElementById("HTitle");
+        let contentInput = document.getElementById("HContent");
+
+        if (titleInput.value.trim() === "") {
+            event.preventDefault(); // 阻止表單提交
+            alert("失敗！請輸入標題！");
+        }
+        if (contentInput.value.trim() === "") {
+            event.preventDefault(); // 阻止表單提交
+            alert("失敗！請輸入內容！");
+        }
+    });
+</script>
