@@ -14,7 +14,7 @@
     <section id="announcement">
         <!-- 新增指南 Modal -->
         <div class="modal fade" id="addGuideModal" tabindex="-1" aria-labelledby="addGuideModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="addGuideModalLabel">新增指南</h5>
@@ -46,7 +46,7 @@
         <button class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#addGuideModal">新增指南</button>
     </section>
 
-    <div class="container my-4">
+    <div class="container-fluid my-4">
         <div class="card shadow-lg rounded-4 p-4">
 
             <div class="card-body">
@@ -56,77 +56,79 @@
                     <input type="text" class="form-control" id="searchTitle" placeholder="搜尋指南標題" onkeyup="searchGuides()" />
                 </div>
 
-                <table class="table table-hover align-middle table-bordered table-striped table-lg">
-                    <thead class="table-primary text-center fs-5">
-                        <tr>
-                            <th>標題</th>
-                            <th>內容</th>
-                            <th>圖片</th>
-                            <th>公告時間</th>
-                            <th>修改時間</th>
-                            <th>修改</th>
-                            <th>刪除</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guideTableBody">
-                        @foreach (var item in Model)
-                        {
-                            <tr class="guide-item" data-title="@item.HTitle">
-                                <td class="fs-5">@item.HTitle</td>
-                                <td class="fs-5">@item.HContent</td>
-                                <td>
-                                    <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
-                                         style="width: 150px; height: auto;" class="img-thumbnail" />
-                                </td>
-                                <td class="fs-5">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
-                                <td class="fs-5">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
-                                <td class="text-center">
-                                    <!-- 編輯按鈕，觸發編輯Modal -->
-                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editGuideModal_@item.HGuideId">
-                                        編輯
-                                    </button>
-                                </td>
-                                <td class="text-center">
-                                    <!-- 刪除按鈕 -->
-                                    <form action="DeleteGuide" method="post" style="display: inline;">
-                                        <input type="hidden" name="HGuideId" value="@item.HGuideId" />
-                                        <button type="submit" class="btn btn-danger">刪除</button>
-                                    </form>
-                                </td>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle table-bordered table-striped">
+                        <thead class="table-primary text-center fs-5">
+                            <tr>
+                                <th style="width: 15%;">標題</th>
+                                <th style="width: 30%;">內容</th>
+                                <th style="width: 15%;">圖片</th>
+                                <th style="width: 10%;">公告時間</th>
+                                <th style="width: 10%;">修改時間</th>
+                                <th style="width: 10%;">修改</th>
+                                <th style="width: 10%;">刪除</th>
                             </tr>
+                        </thead>
+                        <tbody id="guideTableBody">
+                            @foreach (var item in Model)
+                            {
+                                <tr class="guide-item" data-title="@item.HTitle">
+                                    <td class="fs-5">@item.HTitle</td>
+                                    <td class="fs-5 text-truncate" style="max-width: 300px;" title="@item.HContent">@item.HContent</td>
+                                    <td class="text-center">
+                                        <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
+                                             style="width: 120px; height: auto; max-height: 100px;" class="img-thumbnail" />
+                                    </td>
+                                    <td class="fs-5 text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                    <td class="fs-5 text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center">
+                                        <!-- 編輯按鈕，觸發編輯Modal -->
+                                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editGuideModal_@item.HGuideId">
+                                            編輯
+                                        </button>
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- 刪除按鈕 -->
+                                        <form action="DeleteGuide" method="post" style="display: inline;">
+                                            <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                            <button type="submit" class="btn btn-danger">刪除</button>
+                                        </form>
+                                    </td>
+                                </tr>
 
-                            <!-- 編輯指南 Modal -->
-                            <div class="modal fade" id="editGuideModal_@item.HGuideId" tabindex="-1" aria-labelledby="editGuideModalLabel_@item.HGuideId" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="editGuideModalLabel_@item.HGuideId">編輯指南</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <form action="UpdateGuide" method="post" enctype="multipart/form-data">
-                                                <div class="mb-3">
-                                                    <label for="HTitle" class="form-label">標題</label>
-                                                    <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="HContent" class="form-label">內容</label>
-                                                    <textarea class="form-control" id="HContent" name="HContent" required>@item.HContent</textarea>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="Image" class="form-label">選擇圖片</label>
-                                                    <input type="file" class="form-control" name="Image">
-                                                </div>
-                                                <input type="hidden" name="HGuideId" value="@item.HGuideId" />
-                                                <button type="submit" class="btn btn-success">更新公告</button>
-                                            </form>
+                                <!-- 編輯指南 Modal -->
+                                <div class="modal fade" id="editGuideModal_@item.HGuideId" tabindex="-1" aria-labelledby="editGuideModalLabel_@item.HGuideId" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editGuideModalLabel_@item.HGuideId">編輯指南</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="UpdateGuide" method="post" enctype="multipart/form-data">
+                                                    <div class="mb-3">
+                                                        <label for="HTitle" class="form-label">標題</label>
+                                                        <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="HContent" class="form-label">內容</label>
+                                                        <textarea class="form-control" id="HContent" name="HContent" required>@item.HContent</textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="Image" class="form-label">選擇圖片</label>
+                                                        <input type="file" class="form-control" name="Image">
+                                                    </div>
+                                                    <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                                    <button type="submit" class="btn btn-success">更新公告</button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </tbody>
-                </table>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -146,5 +148,21 @@
                 }
             });
         }
+
+        // 點擊內容時展開完整內容
+        document.addEventListener('DOMContentLoaded', function() {
+            const contentCells = document.querySelectorAll('td.text-truncate');
+            contentCells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    if (this.classList.contains('text-truncate')) {
+                        this.classList.remove('text-truncate');
+                        this.style.maxWidth = 'none';
+                    } else {
+                        this.classList.add('text-truncate');
+                        this.style.maxWidth = '300px';
+                    }
+                });
+            });
+        });
     </script>
 </body>
