@@ -33,6 +33,25 @@
 <!-- Toast提示容器 -->
 <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050"></div>
 
+<!-- 刪除確認模態框 -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">確認刪除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>確定要刪除此管理員？此操作無法復原！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">確認刪除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 📋 管理員清單 -->
 <div id="adminListContainer">
     @await Html.PartialAsync("~/Areas/Admin/Partials/UserManagement/_AdminListPartial.cshtml", Model)
@@ -205,23 +224,37 @@
             });
         });
 
-        // 刪除確認
+        // 存放當前要刪除的管理員ID
+        let currentDeleteId = null;
+        
+        // 顯示刪除確認模態框
         function confirmDelete(id) {
-            if (confirm('確定要刪除此管理員？此操作無法復原！')) {
+            currentDeleteId = id;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        }
+        
+        // 處理確認刪除按鈕的點擊事件
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (currentDeleteId !== null) {
                 $.ajax({
                     type: 'POST',
-                    url: '/Admin/AdminManagement/Delete?id=' + id,
+                    url: '/Admin/AdminManagement/Delete?id=' + currentDeleteId,
                     success: function () {
+                        // 隱藏模態框
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
                         showToast('✅ 刪除成功！', true);
                         setTimeout(() => {
                             location.reload();
                         }, 1000);
                     },
                     error: function (xhr) {
+                        // 隱藏模態框
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
                         showToast('❌ 刪除失敗：' + (xhr.responseText || '未知錯誤'), false);
                     }
                 });
             }
-        }
+        });
     </script>
 }
