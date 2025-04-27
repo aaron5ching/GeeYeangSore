@@ -40,13 +40,15 @@
                                 <span class="nav-link text-dark">歡迎，@loginUser (@loginRole)</span>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Logout">登出</a>
+                                <a class="btn fw-bold" style="background-color: #3CDDD2; color: white; border-radius: 5px; padding: 6px 15px;" asp-area="" asp-controller="Login" asp-action="Logout">
+                                    <i class="fa-solid fa-sign-out-alt me-1"></i> 登出
+                                </a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <button type="button" class="btn" style="background-color: #3CDDD2; color: white; border-radius: 20px; padding: 6px 15px;" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                                <button type="button" class="btn fw-bold" style="background-color: #ffd166; color: white; border-radius: 5px; padding: 6px 15px;" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
                                     <i class="fa-solid fa-sign-in-alt me-1"></i> 登入
                                 </button>
                             </li>
