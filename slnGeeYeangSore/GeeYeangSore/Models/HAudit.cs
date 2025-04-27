@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace GeeYeangSore.Models;
 
 public partial class HAudit
 {
-
-
+    public int HAuditId { get; set; }
 
     public int HTenantId { get; set; }
 
@@ -26,11 +24,4 @@ public partial class HAudit
     public DateTime HSubmittedAt { get; set; }
 
     public DateTime? HReviewedAt { get; set; }
-
-
-    /// <summary>
-    /// 
-    /// </summary>
-    [Key]
-    public int HAuditId { get; set; }
 }

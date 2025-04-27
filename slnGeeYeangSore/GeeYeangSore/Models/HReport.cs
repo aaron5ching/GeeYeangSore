@@ -27,6 +27,10 @@ public partial class HReport
 
     public int? HRelatedChatId { get; set; }
 
+    public string? HAdminNote { get; set; }
+
+    public int? HReportedUserId { get; set; }
+
     public virtual HAdmin? HAdmin { get; set; }
 
     public virtual HMessage? HMessage { get; set; }

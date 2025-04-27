@@ -7,7 +7,7 @@ public partial class HReaction
 {
     public int HReactionId { get; set; }
 
-    public int? HAuthorId { get; set; }
+    public int? HTenantId { get; set; }
 
     public string? HAuthorType { get; set; }
 
