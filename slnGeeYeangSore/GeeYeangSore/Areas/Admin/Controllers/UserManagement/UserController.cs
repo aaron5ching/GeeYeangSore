@@ -137,6 +137,22 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     return NotFound();
                 }
 
+                // 檢查電話是否被其他使用者使用
+                if (!string.IsNullOrEmpty(updated.HPhoneNumber) && 
+                    existing.HPhoneNumber != updated.HPhoneNumber && 
+                    _context.HTenants.Any(t => t.HPhoneNumber == updated.HPhoneNumber && t.HTenantId != updated.HTenantId && !t.HIsDeleted))
+                {
+                    return BadRequest("電話號碼已被其他使用者使用，請使用其他電話號碼");
+                }
+
+                // 檢查電子郵件是否被其他使用者使用
+                if (!string.IsNullOrEmpty(updated.HEmail) && 
+                    existing.HEmail != updated.HEmail && 
+                    _context.HTenants.Any(t => t.HEmail == updated.HEmail && t.HTenantId != updated.HTenantId && !t.HIsDeleted))
+                {
+                    return BadRequest("電子郵件已被其他使用者使用，請使用其他電子郵件");
+                }
+
                 existing.HUserName = updated.HUserName ?? existing.HUserName;
                 existing.HStatus = updated.HStatus ?? existing.HStatus;
                 existing.HBirthday = updated.HBirthday ?? existing.HBirthday; // 若為 null 則保留原值 // 取出 DateTime? 的實際值
@@ -330,6 +346,20 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             try
             {
+                // 檢查電話是否重複
+                if (!string.IsNullOrEmpty(newUser.HPhoneNumber) && 
+                    _context.HTenants.Any(t => t.HPhoneNumber == newUser.HPhoneNumber && !t.HIsDeleted))
+                {
+                    return BadRequest("電話號碼已被使用，請使用其他電話號碼");
+                }
+
+                // 檢查電子郵件是否重複
+                if (!string.IsNullOrEmpty(newUser.HEmail) && 
+                    _context.HTenants.Any(t => t.HEmail == newUser.HEmail && !t.HIsDeleted))
+                {
+                    return BadRequest("電子郵件已被使用，請使用其他電子郵件");
+                }
+
                 // 生成鹽值與哈希密碼
                 string salt = PasswordHasher.GenerateSalt();
                 string hashedPassword = PasswordHasher.HashPassword(newUser.HPassword ?? "000000", salt);
@@ -365,6 +395,30 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 Console.WriteLine($"❌ 建立房客失敗：{ex.Message}");
                 return StatusCode(500, "建立失敗，請稍後再試");
             }
+        }
+
+        // 檢查電話號碼是否存在
+        [HttpGet]
+        public IActionResult CheckPhoneExists(string phoneNumber, int? excludeId = null)
+        {
+            bool exists = _context.HTenants
+                .Any(t => t.HPhoneNumber == phoneNumber && 
+                         !t.HIsDeleted && 
+                         (!excludeId.HasValue || t.HTenantId != excludeId.Value));
+                         
+            return Json(new { exists });
+        }
+
+        // 檢查電子郵件是否存在
+        [HttpGet]
+        public IActionResult CheckEmailExists(string email, int? excludeId = null)
+        {
+            bool exists = _context.HTenants
+                .Any(t => t.HEmail == email && 
+                         !t.HIsDeleted && 
+                         (!excludeId.HasValue || t.HTenantId != excludeId.Value));
+                         
+            return Json(new { exists });
         }
 
     }
