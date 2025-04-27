@@ -30,15 +30,15 @@
 
                 <div class="col-md-4">
                     <label class="form-label">姓名</label>
-                    <input class="form-control" name="HUserName" value="@Model.HUserName" />
+                    <input class="form-control" name="HUserName" value="@Model.HUserName" required />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">生日</label>
-                    <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday.ToString("yyyy-MM-dd")" max="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    <input type="date" class="form-control" name="HBirthday" value="@Model.HBirthday.ToString("yyyy-MM-dd")" max="@DateTime.Now.ToString("yyyy-MM-dd")" required />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">性別</label>
-                    <select class="form-select" name="HGender">
+                    <select class="form-select" name="HGender" required>
                         <option value="true" selected="@(Model.HGender == true)">男</option>
                         <option value="false" selected="@(Model.HGender == false)">女</option>
                     </select>
@@ -46,11 +46,11 @@
 
                 <div class="col-md-4">
                     <label class="form-label">電話</label>
-                    <input class="form-control" name="HPhoneNumber" value="@Model.HPhoneNumber" />
+                    <input class="form-control" name="HPhoneNumber" value="@Model.HPhoneNumber" required />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">電子郵件</label>
-                    <input type="email" class="form-control" name="HEmail" value="@Model.HEmail" />
+                    <input type="email" class="form-control" name="HEmail" value="@Model.HEmail" required />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">密碼</label>
@@ -68,7 +68,7 @@
 
                 <div class="col-md-12">
                     <label class="form-label">居住地</label>
-                    <input class="form-control" name="HAddress" value="@Model.HAddress" />
+                    <input class="form-control" name="HAddress" value="@Model.HAddress" required />
                 </div>
 
                 <div class="col-md-6 d-flex flex-column">
