@@ -29,7 +29,12 @@
 
                     <div class="mb-2">
                         <label>密碼：</label>
-                        <input type="text" class="form-control" name="HPassword" required />
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="HPassword" id="create-admin-password-field" required />
+                            <span class="input-group-text" style="cursor: pointer;" onclick="toggleCreateAdminPassword()">
+                                <i class="fa-solid fa-eye" id="create-admin-password-toggle-icon"></i>
+                            </span>
+                        </div>
                     </div>
 
 

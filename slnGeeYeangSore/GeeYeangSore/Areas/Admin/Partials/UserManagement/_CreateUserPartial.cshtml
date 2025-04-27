@@ -42,7 +42,12 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">密碼</label>
-                    <input type="password" class="form-control" name="HPassword" />
+                    <div class="input-group">
+                        <input type="password" class="form-control" name="HPassword" id="create-password-field" />
+                        <span class="input-group-text" style="cursor: pointer;" onclick="toggleCreatePassword()">
+                            <i class="fa-solid fa-eye" id="create-password-toggle-icon"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">居住地</label>

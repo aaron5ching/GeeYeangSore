@@ -51,6 +51,22 @@
             $.get('/Admin/AdminManagement/Create', function (html) {
                 $('#adminModalContainer').empty().html(html);
                 $('#createAdminModal').modal('show');
+                
+                // 添加密碼顯示切換功能
+                window.toggleCreateAdminPassword = function() {
+                    const passwordField = document.getElementById('create-admin-password-field');
+                    const icon = document.getElementById('create-admin-password-toggle-icon');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
             });
         }
 
@@ -93,6 +109,22 @@
             $.get(`/Admin/AdminManagement/Edit?id=${id}`, function (html) {
                 $('#adminModalContainer').html(html);
                 $('#editAdminModal').modal('show');
+                
+                // 添加密碼顯示切換功能
+                window.toggleEditAdminPassword = function() {
+                    const passwordField = document.getElementById('edit-admin-password-field');
+                    const icon = document.getElementById('edit-admin-password-toggle-icon');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
             });
         });
 

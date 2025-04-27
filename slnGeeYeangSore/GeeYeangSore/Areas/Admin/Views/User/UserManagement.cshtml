@@ -184,6 +184,22 @@
 				return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
 			};
 
+            // 密碼顯示切換功能
+            window.toggleEditPassword = function() {
+                const passwordField = document.getElementById('edit-password-field');
+                const icon = document.getElementById('edit-password-toggle-icon');
+                
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordField.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            };
+
 			// ✅ 房客照片上傳
 			$(document).on('change', '#uploadTenantPhotoInput', function () {
 				const file = this.files[0];
@@ -329,6 +345,22 @@
 				if (!filename) return "";
 				return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
 			};
+
+            // 密碼顯示切換功能
+            window.toggleCreatePassword = function() {
+                const passwordField = document.getElementById('create-password-field');
+                const icon = document.getElementById('create-password-toggle-icon');
+                
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordField.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            };
 
 			// ✅ 房客照片上傳（新增）
 			$(document).on('change', '#uploadTenantPhotoInput', function () {
