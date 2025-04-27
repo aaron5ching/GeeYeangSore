@@ -100,6 +100,16 @@
     .col-actions {
         width: 200px;
     }
+    /* 新增房源按鈕樣式 */
+    .btn-yellow {
+        background-color: #FFD700; /* 黃金色 */
+        color: #222222;
+        border: none;
+    }
+    .btn-yellow:hover {
+        background-color: #FFC107; /* 深一點的黃色 */
+        color: #222222;
+    }
 </style>
 
 <div class="container-fluid px-4">
@@ -109,7 +119,7 @@
     </div>
     
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <a asp-action="Create" class="btn btn-light">
+        <a asp-action="Create" class="btn btn-yellow">
             <i class="fas fa-plus"></i> 新增房源
         </a>
     </div>
