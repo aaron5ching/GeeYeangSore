@@ -216,11 +216,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
             }
 
-  
-            int year = selectedYear ?? _context.HFavorites
+            //所有的 HFavorites 記錄中 HCreatedAt 都是 null
+            int year = selectedYear ?? (_context.HFavorites
                 .Where(f => f.HCreatedAt.HasValue)
                 .Select(f => f.HCreatedAt.Value.Year)
-                .Max();
+                .Any() ? _context.HFavorites
+                    .Where(f => f.HCreatedAt.HasValue)
+                    .Select(f => f.HCreatedAt.Value.Year)
+                    .Max() : DateTime.Now.Year);
 
             var favoritePropertyIds = _context.HFavorites
                 .Where(f => f.HCreatedAt.HasValue && f.HCreatedAt.Value.Year == year)
