@@ -46,8 +46,8 @@
                         else
                         {
                             <li class="nav-item">
-                                <button type="button" class="btn nav-link text-dark" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
-                                    <i class="fa-solid fa-sign-in-alt"></i> 登入
+                                <button type="button" class="btn" style="background-color: #3CDDD2; color: white; border-radius: 20px; padding: 6px 15px;" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                                    <i class="fa-solid fa-sign-in-alt me-1"></i> 登入
                                 </button>
                             </li>
                         }
@@ -72,30 +72,34 @@
     @if (string.IsNullOrEmpty(loginUser))
     {
         <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="adminLoginModalLabel">管理員登入</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header" style="background-color: #3CDDD2; color: white;">
+                        <h5 class="modal-title fw-bold" id="adminLoginModalLabel">
+                            <i class="fa-solid fa-user-shield me-2"></i>管理員登入
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div id="loginErrorAlert" class="alert alert-danger d-none" role="alert"></div>
                         <form id="adminLoginForm">
-                            <div class="mb-3">
-                                <label for="txtAccount" class="form-label">帳號</label>
-                                <input type="text" class="form-control" id="txtAccount" name="txtAccount" required>
+                            <div class="mb-4">
+                                <label for="txtAccount" class="form-label fw-bold"><i class="fa-solid fa-user me-2"></i>帳號</label>
+                                <input type="text" class="form-control form-control-lg" id="txtAccount" name="txtAccount" required placeholder="請輸入管理員帳號">
                             </div>
-                            <div class="mb-3">
-                                <label for="txtPassword" class="form-label">密碼</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="txtPassword" name="txtPassword" required>
+                            <div class="mb-4">
+                                <label for="txtPassword" class="form-label fw-bold"><i class="fa-solid fa-lock me-2"></i>密碼</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="password" class="form-control" id="txtPassword" name="txtPassword" required placeholder="請輸入密碼">
                                     <span class="input-group-text" style="cursor: pointer;" onclick="togglePasswordVisibility()">
                                         <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
                                     </span>
                                 </div>
                             </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">登入</button>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-lg" style="background-color: #3CDDD2; color: white; font-weight: bold;">
+                                    <i class="fa-solid fa-sign-in-alt me-2"></i>登入系統
+                                </button>
                             </div>
                         </form>
                     </div>
