@@ -24,7 +24,16 @@
 
                     <div class="mb-2">
                         <label>密碼：</label>
-                        <input type="text" class="form-control" name="HPassword" value="@Model.HPassword" />
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="HPassword" id="edit-admin-password-field" placeholder="@(string.IsNullOrEmpty(Model.HSalt) ? "請輸入密碼" : "請輸入新密碼")" />
+                            <span class="input-group-text" style="cursor: pointer;" onclick="toggleEditAdminPassword()">
+                                <i class="fa-solid fa-eye" id="edit-admin-password-toggle-icon"></i>
+                            </span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.HSalt))
+                        {
+                            <small class="text-muted">目前密碼已加密保護，留空表示不修改密碼。</small>
+                        }
                     </div>
 
                     <div class="mb-2">

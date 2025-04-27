@@ -36,7 +36,20 @@
 
                 @if (ViewBag.IsSuperAdmin == true)
                 {
-                    <td>@admin.HPassword</td>
+                    <td>
+                        @if (admin.HAccount.ToLower() == "admin01")
+                        {
+                            <span class="text-muted">(保護中)</span>
+                        }
+                        else if (!string.IsNullOrEmpty(admin.HSalt))
+                        {
+                            <span class="text-muted"><i class="fa-solid fa-lock"></i> (加密保護)</span>
+                        }
+                        else
+                        {
+                            @admin.HPassword
+                        }
+                    </td>
                 }
 
                 <td>@admin.HRoleLevel</td>
@@ -45,21 +58,25 @@
 
                 @if (ViewBag.IsSuperAdmin == true)
                 {
-                    <td class="text-center">
-                        @if (admin.HRoleLevel != "超級管理員")
+                    <td>
+                        @if (admin.HAccount.ToLower() == "admin01")
                         {
-                            <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
-                                    data-id="@admin.HAdminId">
-                                <i class="fa fa-edit"></i> 編輯
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete"
-                                    data-id="@admin.HAdminId">
-                                <i class="fa fa-trash"></i> 刪除
-                            </button>
+                            <span class="text-muted">(保護中)</span>
                         }
                         else
                         {
-                            <span class="text-muted">（保護中）</span>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-edit" data-id="@admin.HAdminId">
+                                    <i class="fa fa-edit"></i> 編輯
+                                </button>
+                                @if (admin.HRoleLevel != "超級管理員")
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@admin.HAdminId)">
+                                        <i class="fa fa-trash"></i> 刪除
+                                    </button>
+                                }
+
+                            </div>
                         }
                     </td>
                 }

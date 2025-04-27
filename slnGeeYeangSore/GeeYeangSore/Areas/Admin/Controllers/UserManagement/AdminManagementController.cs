@@ -60,6 +60,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 if (string.IsNullOrWhiteSpace(newAdmin.HAccount) || string.IsNullOrWhiteSpace(newAdmin.HPassword))
                     return BadRequest("帳號或密碼不得為空");
 
+                // 處理密碼加鹽哈希
+                string salt = PasswordHasher.GenerateSalt();
+                string hashedPassword = PasswordHasher.HashPassword(newAdmin.HPassword, salt);
+                
+                // 將原始密碼替換為哈希後的密碼，並保存鹽值
+                newAdmin.HSalt = salt;
+                newAdmin.HPassword = hashedPassword;
+                
                 newAdmin.HCreatedAt = DateTime.Now;
                 newAdmin.HUpdateAt = DateTime.Now;
 
@@ -83,6 +91,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var admin = _context.HAdmins.Find(id);
                 if (admin == null)
                     return NotFound();
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法編輯");
 
                 return PartialView("~/Areas/Admin/Partials/UserManagement/_EditAdminPartial.cshtml", admin);
             }
@@ -101,11 +113,24 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var admin = _context.HAdmins.Find(edited.HAdminId);
                 if (admin == null)
                     return NotFound();
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法編輯");
 
                 admin.HAccount = edited.HAccount;
 
+                // 如果提供了新密碼，則進行加鹽哈希處理
                 if (!string.IsNullOrWhiteSpace(edited.HPassword))
-                    admin.HPassword = edited.HPassword;
+                {
+                    // 檢查密碼是否已被哈希（如果與數據庫中相同，則表示沒有修改，直接使用表單提交的值）
+                    if (edited.HPassword != admin.HPassword)
+                    {
+                        string salt = PasswordHasher.GenerateSalt();
+                        admin.HPassword = PasswordHasher.HashPassword(edited.HPassword, salt);
+                        admin.HSalt = salt;
+                    }
+                }
 
                 admin.HRoleLevel = edited.HRoleLevel;
                 admin.HUpdateAt = DateTime.Now;
@@ -138,6 +163,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 if (admin.HRoleLevel == "超級管理員")
                     return BadRequest("不可刪除超級管理員");
+                
+                // 檢查是否為保護中的 Admin01 帳號
+                if (admin.HAccount.ToLower() == "admin01")
+                    return BadRequest("此帳號受到保護，無法刪除");
 
                 _context.HAdmins.Remove(admin);
                 _context.SaveChanges();

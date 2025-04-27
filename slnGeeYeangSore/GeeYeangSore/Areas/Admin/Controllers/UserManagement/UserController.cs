@@ -27,6 +27,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             int pageSize = 15;
             var allUsers = _context.HTenants
+                .Where(t => !t.HIsDeleted) // 過濾未被刪除的使用者
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
                 .Select(t =>
@@ -60,6 +61,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             int pageSize = 15;
 
             var result = _context.HTenants
+                .Where(t => !t.HIsDeleted) // 過濾未被刪除的使用者
                 .Include(t => t.HLandlords)
                 .AsEnumerable()
                 .Select(t =>
@@ -135,14 +137,55 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     return NotFound();
                 }
 
-                existing.HUserName = updated.HUserName;
-                existing.HStatus = updated.HStatus;
-                existing.HBirthday = updated.HBirthday.Value; // 取出 DateTime? 的實際值
-                existing.HGender = updated.HGender.Value;     // 取出 bool? 的實際值
-                existing.HAddress = updated.HAddress;
-                existing.HPhoneNumber = updated.HPhoneNumber;
-                existing.HEmail = updated.HEmail;
-                existing.HPassword = updated.HPassword;
+                // 檢查電話是否被其他使用者使用
+                if (!string.IsNullOrEmpty(updated.HPhoneNumber) && 
+                    existing.HPhoneNumber != updated.HPhoneNumber && 
+                    _context.HTenants.Any(t => t.HPhoneNumber == updated.HPhoneNumber && t.HTenantId != updated.HTenantId && !t.HIsDeleted))
+                {
+                    return BadRequest("電話號碼已被其他使用者使用，請使用其他電話號碼");
+                }
+
+                // 檢查電子郵件是否被其他使用者使用
+                if (!string.IsNullOrEmpty(updated.HEmail) && 
+                    existing.HEmail != updated.HEmail && 
+                    _context.HTenants.Any(t => t.HEmail == updated.HEmail && t.HTenantId != updated.HTenantId && !t.HIsDeleted))
+                {
+                    return BadRequest("電子郵件已被其他使用者使用，請使用其他電子郵件");
+                }
+
+                existing.HUserName = updated.HUserName ?? existing.HUserName;
+                existing.HStatus = updated.HStatus ?? existing.HStatus;
+                existing.HBirthday = updated.HBirthday ?? existing.HBirthday; // 若為 null 則保留原值 // 取出 DateTime? 的實際值
+                existing.HGender = updated.HGender ?? existing.HGender;     // 取出 bool? 的實際值
+                existing.HAddress = updated.HAddress ?? existing.HAddress;
+                existing.HPhoneNumber = updated.HPhoneNumber ?? existing.HPhoneNumber;
+                existing.HEmail = updated.HEmail ?? existing.HEmail;
+
+                // 處理密碼更新，檢查是否需要更新密碼
+                if (!string.IsNullOrWhiteSpace(updated.HPassword))
+                {
+                    // 檢查密碼是否與資料庫中的雜湊密碼不同
+                    bool needsUpdate = true;
+                    if (!string.IsNullOrEmpty(existing.HSalt))
+                    {
+                        // 如果已有鹽值，檢查提交的密碼是否與雜湊後的密碼相同
+                        needsUpdate = !PasswordHasher.VerifyPassword(updated.HPassword, existing.HSalt, existing.HPassword);
+                    }
+                    else
+                    {
+                        // 如果沒有鹽值（舊帳號），檢查密碼是否與明文密碼相同
+                        needsUpdate = updated.HPassword != existing.HPassword;
+                    }
+
+                    // 需要更新密碼
+                    if (needsUpdate)
+                    {
+                        string salt = PasswordHasher.GenerateSalt();
+                        existing.HPassword = PasswordHasher.HashPassword(updated.HPassword, salt);
+                        existing.HSalt = salt;
+                    }
+                }
+
                 existing.HImages = string.IsNullOrWhiteSpace(updated.HImages) ? existing.HImages : updated.HImages;
 
                 var updatedLandlord = updated.HLandlords.FirstOrDefault();
@@ -158,12 +201,18 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
                     Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
 
-                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName;
-                    existingLandlord.HStatus = updatedLandlord.HStatus;
-                    existingLandlord.HBankName = updatedLandlord.HBankName;
-                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount;
-                    existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
-                    existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
+                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName ?? existingLandlord.HLandlordName;
+                    existingLandlord.HStatus = updatedLandlord.HStatus ?? existingLandlord.HStatus;
+                    existingLandlord.HBankName = updatedLandlord.HBankName ?? existingLandlord.HBankName;
+                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount ?? existingLandlord.HBankAccount;
+                    existingLandlord.HIdCardFrontUrl = string.IsNullOrWhiteSpace(updatedLandlord.HIdCardFrontUrl)
+                        ? existingLandlord.HIdCardFrontUrl
+                        : updatedLandlord.HIdCardFrontUrl;
+                    existingLandlord.HIdCardBackUrl = string.IsNullOrWhiteSpace(updatedLandlord.HIdCardBackUrl)
+                        ? existingLandlord.HIdCardBackUrl
+                        : updatedLandlord.HIdCardBackUrl;
+
+
 
                     _context.HLandlords.Update(existingLandlord);
                 }
@@ -192,7 +241,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 var tenant = _context.HTenants.FirstOrDefault(t => t.HTenantId == id);
                 if (tenant != null)
                 {
-                    _context.HTenants.Remove(tenant);
+                    tenant.HIsDeleted = true; // 設為軟刪除
+                    tenant.HUpdateAt = DateTime.Now; // 更新修改時間
+                    _context.HTenants.Update(tenant);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -200,10 +251,11 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ 刪除失敗：{ex.Message}");
+                Console.WriteLine($"❌ 軟刪除失敗：{ex.Message}");
                 return StatusCode(500, "刪除失敗，請稍後再試");
             }
         }
+
 
         [HttpPost]
         public IActionResult UploadTenantPhoto(IFormFile photo)
@@ -290,24 +342,47 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         public IActionResult Create([FromBody] CEditUserViewModel newUser)
         {
             if (!ModelState.IsValid)
-                return BadRequest("模型驗證失敗");
+                return BadRequest("未完成檔案填寫");
 
             try
             {
+                // 檢查電話是否重複
+                if (!string.IsNullOrEmpty(newUser.HPhoneNumber) && 
+                    _context.HTenants.Any(t => t.HPhoneNumber == newUser.HPhoneNumber && !t.HIsDeleted))
+                {
+                    return BadRequest("電話號碼已被使用，請使用其他電話號碼");
+                }
+
+                // 檢查電子郵件是否重複
+                if (!string.IsNullOrEmpty(newUser.HEmail) && 
+                    _context.HTenants.Any(t => t.HEmail == newUser.HEmail && !t.HIsDeleted))
+                {
+                    return BadRequest("電子郵件已被使用，請使用其他電子郵件");
+                }
+
+                // 生成鹽值與哈希密碼
+                string salt = PasswordHasher.GenerateSalt();
+                string hashedPassword = PasswordHasher.HashPassword(newUser.HPassword ?? "000000", salt);
+
                 var tenant = new HTenant
                 {
-                    HUserName = newUser.HUserName,
-                    HBirthday = newUser.HBirthday.Value, // 取出 DateTime? 的值
-                    HGender = newUser.HGender.Value,     // 取出 bool? 的值
-                    HPhoneNumber = newUser.HPhoneNumber,
-                    HEmail = newUser.HEmail,
-                    HPassword = newUser.HPassword,
-                    HAddress = newUser.HAddress,
+                    HUserName = newUser.HUserName ?? "未命名",          // 若為 null 則提供預設值
+                    HBirthday = newUser.HBirthday ?? DateTime.Today,    // 避免 null
+                    HGender = newUser.HGender ?? true,                  // 預設為男性或女性
+                    HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",
+                    HEmail = newUser.HEmail ?? "未填寫",
+                    HPassword = hashedPassword,
+                    HSalt = salt,
+                    HAddress = newUser.HAddress ?? "未填寫",
                     HStatus = newUser.HStatus ?? "未驗證",
+                    HAuthProvider = "local",                            // 🔥 最常忽略的欄位
+                    HProviderId = null,
                     HImages = newUser.HImages,
                     HCreatedAt = DateTime.Now,
+                    HUpdateAt = DateTime.Now,
                     HIsTenant = true,
-                    HIsLandlord = false
+                    HIsLandlord = false,
+                    HIsDeleted = false
                 };
 
                 _context.HTenants.Add(tenant);
@@ -321,5 +396,30 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 return StatusCode(500, "建立失敗，請稍後再試");
             }
         }
+
+        // 檢查電話號碼是否存在
+        [HttpGet]
+        public IActionResult CheckPhoneExists(string phoneNumber, int? excludeId = null)
+        {
+            bool exists = _context.HTenants
+                .Any(t => t.HPhoneNumber == phoneNumber && 
+                         !t.HIsDeleted && 
+                         (!excludeId.HasValue || t.HTenantId != excludeId.Value));
+                         
+            return Json(new { exists });
+        }
+
+        // 檢查電子郵件是否存在
+        [HttpGet]
+        public IActionResult CheckEmailExists(string email, int? excludeId = null)
+        {
+            bool exists = _context.HTenants
+                .Any(t => t.HEmail == email && 
+                         !t.HIsDeleted && 
+                         (!excludeId.HasValue || t.HTenantId != excludeId.Value));
+                         
+            return Json(new { exists });
+        }
+
     }
 }

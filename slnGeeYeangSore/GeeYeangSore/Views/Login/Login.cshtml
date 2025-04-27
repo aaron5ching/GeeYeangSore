@@ -18,7 +18,31 @@
     </div>
     <div class="form-group mb-3">
         <label asp-for="txtPassword" class="form-label">密碼</label>
-        <input asp-for="txtPassword" type="password" class="form-control" />
+        <div class="input-group">
+            <input asp-for="txtPassword" type="password" class="form-control" id="password-field" />
+            <span class="input-group-text" style="cursor: pointer;" onclick="togglePassword()">
+                <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+            </span>
+        </div>
     </div>
     <button type="submit" class="btn btn-primary w-100">登入</button>
 </form>
+
+@section Scripts {
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById('password-field');
+            const icon = document.getElementById('password-toggle-icon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+}

@@ -86,6 +86,47 @@
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 	<script>
+		// 顯示提示訊息的函數
+		function showToast(message, isSuccess = true) {
+			const toastContainer = document.getElementById('toast-container');
+			if (!toastContainer) {
+				// 如果不存在toast容器，則創建一個
+				const container = document.createElement('div');
+				container.id = 'toast-container';
+				container.className = 'position-fixed top-0 end-0 p-3';
+				container.style.zIndex = '1050';
+				document.body.appendChild(container);
+			}
+			
+			// 生成唯一ID
+			const toastId = 'toast-' + new Date().getTime();
+			
+			// 創建toast元素
+			const toastHTML = `
+				<div id="${toastId}" class="toast align-items-center ${isSuccess ? 'text-bg-success' : 'text-bg-danger'}" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="d-flex">
+						<div class="toast-body">
+							${message}
+						</div>
+						<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+					</div>
+				</div>
+			`;
+			
+			// 添加到容器中
+			document.getElementById('toast-container').innerHTML += toastHTML;
+			
+			// 初始化並顯示toast
+			const toastElement = document.getElementById(toastId);
+			const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+			toast.show();
+			
+			// 自動移除DOM元素
+			toastElement.addEventListener('hidden.bs.toast', function() {
+				this.remove();
+			});
+		}
+
 		function loadPage(page) {
 			const formData = {
 				userId: $('input[name="userId"]').val() || null,
@@ -184,13 +225,103 @@
 				return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
 			};
 
-			// ✅ 房客照片上傳
-			$(document).on('change', '#uploadTenantPhotoInput', function () {
+            // 密碼顯示切換功能
+            window.toggleEditPassword = function() {
+                const passwordField = document.getElementById('edit-password-field');
+                const icon = document.getElementById('edit-password-toggle-icon');
+                
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordField.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            };
+
+            // 儲存當前編輯的用戶ID
+            let currentEditId = 0;
+
+            // 設置顯示資料
+            editModal.showFunction = function (targetUserId) {
+                currentEditId = targetUserId;
+                // 其他原有代碼...
+                $.ajax({
+                    url: `/Admin/User/GetUser?id=${targetUserId}`,
+                    method: 'GET',
+                    success: function (user) {
+                        const dateObj = new Date(user.hBirthday);
+                        const formattedDate = dateObj.toISOString().split('T')[0];
+                        
+                        $('#editForm').find('input[name="HTenantId"]').val(user.hTenantId);
+                        $('#editForm').find('input[name="HUserName"]').val(user.hUserName);
+                        $('#editForm').find('input[name="HBirthday"]').val(formattedDate);
+                        $('#editForm').find('select[name="HGender"]').val(user.hGender ? "true" : "false");
+                        $('#editForm').find('input[name="HPhoneNumber"]').val(user.hPhoneNumber);
+                        $('#editForm').find('input[name="HEmail"]').val(user.hEmail);
+                        $('#editForm').find('input[name="HPassword"]').val(''); // 不顯示密碼
+                        $('#editForm').find('input[name="HAddress"]').val(user.hAddress);
+                        $('#editForm').find('select[name="HStatus"]').val(user.hStatus);
+                        
+                        const thumbnailPath = user.hImages;
+                        if (thumbnailPath) {
+                            $('#editTenantPhotoPreview').attr('src', thumbnailPath);
+                            $('#edit-HImages').val(thumbnailPath);
+                        } else {
+                            $('#editTenantPhotoPreview').attr('src', '/images/User/default-user.png');
+                            $('#edit-HImages').val('');
+                        }
+                        
+                        editModal.modal.show();
+                    }
+                });
+            };
+
+            // 檢查電話唯一性
+            $('input[name="HPhoneNumber"]', '#editForm').on('blur', function() {
+                const phoneNumber = $(this).val().trim();
+                if (phoneNumber) {
+                    $.getJSON(`/Admin/User/CheckPhoneExists?phoneNumber=${encodeURIComponent(phoneNumber)}&excludeId=${currentEditId}`, function(data) {
+                        if (data.exists) {
+                            $('input[name="HPhoneNumber"]', '#editForm').addClass('is-invalid').focus();
+                            if (!$('input[name="HPhoneNumber"]', '#editForm').next('.invalid-feedback').length) {
+                                $('input[name="HPhoneNumber"]', '#editForm').after('<div class="invalid-feedback">此電話號碼已被使用，請使用其他電話號碼</div>');
+                            }
+                        } else {
+                            $('input[name="HPhoneNumber"]', '#editForm').removeClass('is-invalid').addClass('is-valid');
+                            $('input[name="HPhoneNumber"]', '#editForm').next('.invalid-feedback').remove();
+                        }
+                    });
+                }
+            });
+
+            // 檢查電子郵件唯一性
+            $('input[name="HEmail"]', '#editForm').on('blur', function() {
+                const email = $(this).val().trim();
+                if (email) {
+                    $.getJSON(`/Admin/User/CheckEmailExists?email=${encodeURIComponent(email)}&excludeId=${currentEditId}`, function(data) {
+                        if (data.exists) {
+                            $('input[name="HEmail"]', '#editForm').addClass('is-invalid').focus();
+                            if (!$('input[name="HEmail"]', '#editForm').next('.invalid-feedback').length) {
+                                $('input[name="HEmail"]', '#editForm').after('<div class="invalid-feedback">此電子郵件已被使用，請使用其他電子郵件</div>');
+                            }
+                        } else {
+                            $('input[name="HEmail"]', '#editForm').removeClass('is-invalid').addClass('is-valid');
+                            $('input[name="HEmail"]', '#editForm').next('.invalid-feedback').remove();
+                        }
+                    });
+                }
+            });
+
+			// 房客照片上傳（編輯）
+			$(document).on('change', '#editTenantPhotoInput', function () {
 				const file = this.files[0];
 				if (!file) return;
 
-				const url = URL.createObjectURL(file);
-				$('#tenantPhotoPreview').attr('src', url);
+				const previewUrl = URL.createObjectURL(file);
+				$('#editTenantPhotoPreview').attr('src', previewUrl);
 
 				const formData = new FormData();
 				formData.append('photo', file);
@@ -203,84 +334,77 @@
 					contentType: false,
 					success: function (url) {
 						const fileName = url.split('/').pop();
-						$('#HImages').val(fileName);
+						$('#edit-HImages').val(fileName);
 					}
 				});
 			});
 
-			// ✅ 身分證正面
-			$(document).on('change', '#uploadIdCardFrontInput', function () {
-				const file = this.files[0];
-				if (!file) return;
-
-				const url = URL.createObjectURL(file);
-				$('#idCardFrontPreview').attr('src', url);
-
-				const formData = new FormData();
-				formData.append('photo', file);
-
-				$.ajax({
-					url: '/Admin/User/UploadLandlordIdFront',
-					type: 'POST',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function (url) {
-						const fileName = url.split('/').pop();
-						$('#HIdCardFrontUrl').val(fileName);
-					}
-				});
-			});
-
-			// ✅ 身分證反面
-			$(document).on('change', '#uploadIdCardBackInput', function () {
-				const file = this.files[0];
-				if (!file) return;
-
-				const url = URL.createObjectURL(file);
-				$('#idCardBackPreview').attr('src', url);
-
-				const formData = new FormData();
-				formData.append('photo', file);
-
-				$.ajax({
-					url: '/Admin/User/UploadLandlordIdBack',
-					type: 'POST',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function (url) {
-						const fileName = url.split('/').pop();
-						$('#HIdCardBackUrl').val(fileName);
-					}
-				});
-			});
-
-			// ✅ 儲存資料事件（你原本就有）
+			// 綁定編輯表單送出事件
 			$('#editForm').off('submit').on('submit', function (e) {
 				e.preventDefault();
 
-				const formData = {
-					HTenantId: parseInt($('input[name="HTenantId"]').val()),
-					HUserName: $('input[name="HUserName"]').val(),
-					HStatus: $('select[name="HStatus"]').val(),
-					HBirthday: $('input[name="HBirthday"]').val(),
-					HGender: $('select[name="HGender"]').val() === "true",
-					HAddress: $('input[name="HAddress"]').val(),
-					HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
-					HEmail: $('input[name="HEmail"]').val(),
-					HPassword: $('input[name="HPassword"]').val(),
-					HImages: normalizeImagePath($('#HImages').val()),
-					HLandlords: [
-						{
-							HLandlordName: $('input[name="HLandlordName"]').val(),
-							HStatus: $('select[name="HLandlordStatus"]').val(),
-							HBankName: $('input[name="HBankName"]').val(),
-							HBankAccount: $('input[name="HBankAccount"]').val(),
-							HIdCardFrontUrl: normalizeImagePath($('#HIdCardFrontUrl').val()),
-							HIdCardBackUrl: normalizeImagePath($('#HIdCardBackUrl').val())
+				// 檢查必填欄位
+				const userName = $('input[name="HUserName"]', '#editForm').val().trim();
+				const birthday = $('input[name="HBirthday"]', '#editForm').val();
+				const phoneNumber = $('input[name="HPhoneNumber"]', '#editForm').val().trim();
+				const email = $('input[name="HEmail"]', '#editForm').val().trim();
+				const address = $('input[name="HAddress"]', '#editForm').val().trim();
+
+				if (!userName || !birthday || !phoneNumber || !email || !address) {
+					// 對每個空欄位添加無效提示
+					if (!userName) {
+						$('input[name="HUserName"]', '#editForm').addClass('is-invalid');
+						if (!$('input[name="HUserName"]', '#editForm').next('.invalid-feedback').length) {
+							$('input[name="HUserName"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
 						}
-					]
+					}
+					if (!birthday) {
+						$('input[name="HBirthday"]', '#editForm').addClass('is-invalid');
+						if (!$('input[name="HBirthday"]', '#editForm').next('.invalid-feedback').length) {
+							$('input[name="HBirthday"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!phoneNumber) {
+						$('input[name="HPhoneNumber"]', '#editForm').addClass('is-invalid');
+						if (!$('input[name="HPhoneNumber"]', '#editForm').next('.invalid-feedback').length) {
+							$('input[name="HPhoneNumber"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!email) {
+						$('input[name="HEmail"]', '#editForm').addClass('is-invalid');
+						if (!$('input[name="HEmail"]', '#editForm').next('.invalid-feedback').length) {
+							$('input[name="HEmail"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!address) {
+						$('input[name="HAddress"]', '#editForm').addClass('is-invalid');
+						if (!$('input[name="HAddress"]', '#editForm').next('.invalid-feedback').length) {
+							$('input[name="HAddress"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					
+					// 聚焦第一個無效欄位
+					$('.is-invalid', '#editForm').first().focus();
+					return;
+				}
+
+                // 檢查是否有欄位標記為無效
+                if ($('.is-invalid', '#editForm').length > 0) {
+                    $('.is-invalid', '#editForm').first().focus();
+                    return;
+                }
+
+				const formData = {
+					HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
+					HUserName: userName,
+					HBirthday: birthday,
+					HGender: $('#editForm').find('select[name="HGender"]').val() === "true",
+					HPhoneNumber: phoneNumber,
+					HEmail: email,
+					HPassword: $('#editForm').find('input[name="HPassword"]').val().trim(),
+					HAddress: address,
+					HStatus: $('#editForm').find('select[name="HStatus"]').val(),
+					HImages: normalizeImagePath($('#edit-HImages').val())
 				};
 
 				$.ajax({
@@ -288,15 +412,14 @@
 					url: '/Admin/User/Edit',
 					contentType: 'application/json',
 					data: JSON.stringify(formData),
-		success: function () {
-			alert('儲存成功 ✅ ');
-			// ✅ 不自動關閉彈窗
-			$('#searchForm').submit(); // 可更新搜尋結果
-		}
-		,
+					success: function () {
+						showToast('✅ 更新成功', true);
+						const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+						modal.hide();
+						$('#searchForm').submit(); // 重新載入搜尋結果
+					},
 					error: function (xhr) {
-						console.error('❌ 儲存失敗：', xhr.responseText);
-						alert('儲存失敗：' + xhr.responseText);
+						showToast('❌ 更新失敗：' + xhr.responseText, false);
 					}
 				});
 			});
@@ -311,11 +434,11 @@
 			type: 'POST',
 			data: { id: id }, // ✅ 用傳統表單格式送出
 			success: function () {
-				alert("刪除成功！");
+				showToast('刪除成功！', true);
 				$('#searchForm').submit();
 			},
 			error: function () {
-				alert("刪除失敗！");
+				showToast('刪除失敗！', false);
 			}
 		});
 
@@ -329,6 +452,58 @@
 				if (!filename) return "";
 				return filename.replace(/^\/?images\/User\/?/i, "/images/User/");
 			};
+
+            // 密碼顯示切換功能
+            window.toggleCreatePassword = function() {
+                const passwordField = document.getElementById('create-password-field');
+                const icon = document.getElementById('create-password-toggle-icon');
+                
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordField.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            };
+
+            // 檢查電話唯一性
+            $('input[name="HPhoneNumber"]').on('blur', function() {
+                const phoneNumber = $(this).val().trim();
+                if (phoneNumber) {
+                    $.getJSON(`/Admin/User/CheckPhoneExists?phoneNumber=${encodeURIComponent(phoneNumber)}`, function(data) {
+                        if (data.exists) {
+                            $('input[name="HPhoneNumber"]').addClass('is-invalid').focus();
+                            if (!$('input[name="HPhoneNumber"]').next('.invalid-feedback').length) {
+                                $('input[name="HPhoneNumber"]').after('<div class="invalid-feedback">此電話號碼已被使用，請使用其他電話號碼</div>');
+                            }
+                        } else {
+                            $('input[name="HPhoneNumber"]').removeClass('is-invalid').addClass('is-valid');
+                            $('input[name="HPhoneNumber"]').next('.invalid-feedback').remove();
+                        }
+                    });
+                }
+            });
+
+            // 檢查電子郵件唯一性
+            $('input[name="HEmail"]').on('blur', function() {
+                const email = $(this).val().trim();
+                if (email) {
+                    $.getJSON(`/Admin/User/CheckEmailExists?email=${encodeURIComponent(email)}`, function(data) {
+                        if (data.exists) {
+                            $('input[name="HEmail"]').addClass('is-invalid').focus();
+                            if (!$('input[name="HEmail"]').next('.invalid-feedback').length) {
+                                $('input[name="HEmail"]').after('<div class="invalid-feedback">此電子郵件已被使用，請使用其他電子郵件</div>');
+                            }
+                        } else {
+                            $('input[name="HEmail"]').removeClass('is-invalid').addClass('is-valid');
+                            $('input[name="HEmail"]').next('.invalid-feedback').remove();
+                        }
+                    });
+                }
+            });
 
 			// ✅ 房客照片上傳（新增）
 			$(document).on('change', '#uploadTenantPhotoInput', function () {
@@ -358,14 +533,72 @@
 			$('#createForm').off('submit').on('submit', function (e) {
 				e.preventDefault();
 
+				// 檢查必填欄位
+				const userName = $('input[name="HUserName"]').val().trim();
+				const birthday = $('input[name="HBirthday"]').val();
+				const phoneNumber = $('input[name="HPhoneNumber"]').val().trim();
+				const email = $('input[name="HEmail"]').val().trim();
+				const password = $('input[name="HPassword"]').val().trim();
+				const address = $('input[name="HAddress"]').val().trim();
+
+				if (!userName || !birthday || !phoneNumber || !email || !password || !address) {
+					// 對每個空欄位添加無效提示
+					if (!userName) {
+						$('input[name="HUserName"]').addClass('is-invalid');
+						if (!$('input[name="HUserName"]').next('.invalid-feedback').length) {
+							$('input[name="HUserName"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!birthday) {
+						$('input[name="HBirthday"]').addClass('is-invalid');
+						if (!$('input[name="HBirthday"]').next('.invalid-feedback').length) {
+							$('input[name="HBirthday"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!phoneNumber) {
+						$('input[name="HPhoneNumber"]').addClass('is-invalid');
+						if (!$('input[name="HPhoneNumber"]').next('.invalid-feedback').length) {
+							$('input[name="HPhoneNumber"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!email) {
+						$('input[name="HEmail"]').addClass('is-invalid');
+						if (!$('input[name="HEmail"]').next('.invalid-feedback').length) {
+							$('input[name="HEmail"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!password) {
+						$('input[name="HPassword"]').addClass('is-invalid');
+						if (!$('input[name="HPassword"]').next('.invalid-feedback').length) {
+							$('input[name="HPassword"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					if (!address) {
+						$('input[name="HAddress"]').addClass('is-invalid');
+						if (!$('input[name="HAddress"]').next('.invalid-feedback').length) {
+							$('input[name="HAddress"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+						}
+					}
+					
+					// 聚焦第一個無效欄位
+					$('.is-invalid').first().focus();
+					return;
+				}
+
+                // 檢查是否有欄位標記為無效
+                if ($('.is-invalid').length > 0) {
+                    $('.is-invalid').first().focus();
+                    return;
+                }
+
 				const formData = {
-					HUserName: $('input[name="HUserName"]').val(),
-					HBirthday: $('input[name="HBirthday"]').val(),
+					HUserName: userName,
+					HBirthday: birthday,
 					HGender: $('select[name="HGender"]').val() === "true",
-					HPhoneNumber: $('input[name="HPhoneNumber"]').val(),
-					HEmail: $('input[name="HEmail"]').val(),
-					HPassword: $('input[name="HPassword"]').val(),
-					HAddress: $('input[name="HAddress"]').val(),
+					HPhoneNumber: phoneNumber,
+					HEmail: email,
+					HPassword: password,
+					HAddress: address,
 					HStatus: $('select[name="HStatus"]').val(),
 					HImages: normalizeImagePath($('#HImages').val()),
 					HLandlords: [] // 🐥暫不建立房東資料
@@ -377,13 +610,13 @@
 					contentType: 'application/json',
 					data: JSON.stringify(formData),
 					success: function () {
-						alert('✅ 新增成功');
+						showToast('✅ 新增成功', true);
 						const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
 						modal.hide();
 						$('#searchForm').submit(); // 重新載入搜尋結果
 					},
 					error: function (xhr) {
-						alert('❌ 新增失敗：' + xhr.responseText);
+						showToast('❌ 新增失敗：' + xhr.responseText, false);
 					}
 				});
 			});

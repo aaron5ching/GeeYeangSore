@@ -30,7 +30,27 @@
 <!-- 🔽 彈出視窗容器 -->
 <div id="adminModalContainer"></div>
 
+<!-- Toast提示容器 -->
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050"></div>
 
+<!-- 刪除確認模態框 -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">確認刪除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>確定要刪除此管理員？此操作無法復原！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">確認刪除</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 📋 管理員清單 -->
 <div id="adminListContainer">
@@ -42,9 +62,38 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-
-
-            function clearSearch() {
+        // 顯示提示訊息的函數
+        function showToast(message, isSuccess = true) {
+            // 生成唯一ID
+            const toastId = 'toast-' + new Date().getTime();
+            
+            // 創建toast元素
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center ${isSuccess ? 'text-bg-success' : 'text-bg-danger'}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到容器中
+            document.getElementById('toast-container').innerHTML += toastHTML;
+            
+            // 初始化並顯示toast
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+            toast.show();
+            
+            // 自動移除DOM元素
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                this.remove();
+            });
+        }
+        
+        function clearSearch() {
             document.getElementById("searchAccount").value = "";
             document.forms[0].submit(); // 送出表單，相當於清空條件重新載入
         }
@@ -53,6 +102,22 @@
             $.get('/Admin/AdminManagement/Create', function (html) {
                 $('#adminModalContainer').empty().html(html);
                 $('#createAdminModal').modal('show');
+                
+                // 添加密碼顯示切換功能
+                window.toggleCreateAdminPassword = function() {
+                    const passwordField = document.getElementById('create-admin-password-field');
+                    const icon = document.getElementById('create-admin-password-toggle-icon');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
             });
         }
 
@@ -64,7 +129,22 @@
             const roleLevel = this.HRoleLevel.value;
 
             if (!account || !password) {
-                alert("帳號與密碼不得為空");
+                // 對每個空欄位添加無效提示
+                if (!account) {
+                    $('#createAdminForm input[name="HAccount"]').addClass('is-invalid');
+                    if (!$('#createAdminForm input[name="HAccount"]').next('.invalid-feedback').length) {
+                        $('#createAdminForm input[name="HAccount"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+                    }
+                }
+                if (!password) {
+                    $('#createAdminForm input[name="HPassword"]').addClass('is-invalid');
+                    if (!$('#createAdminForm input[name="HPassword"]').next('.invalid-feedback').length) {
+                        $('#createAdminForm input[name="HPassword"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
+                    }
+                }
+                
+                // 聚焦第一個無效欄位
+                $('#createAdminForm .is-invalid').first().focus();
                 return;
             }
 
@@ -80,22 +160,39 @@
                 data: JSON.stringify(data),
                 contentType: 'application/json',
                 success: function () {
-                    alert('✅ 新增成功！');
-                    location.reload();
+                    showToast('✅ 新增成功！', true);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 },
                 error: function (xhr) {
-                    alert('建立失敗：' + (xhr.responseText || '未知錯誤'));
+                    showToast('❌ 建立失敗：' + (xhr.responseText || '未知錯誤'), false);
                 }
             });
         });
 
-
-                // 顯示編輯視窗
+        // 顯示編輯視窗
         $(document).on('click', '.btn-edit', function () {
             const id = $(this).data('id');
             $.get(`/Admin/AdminManagement/Edit?id=${id}`, function (html) {
                 $('#adminModalContainer').html(html);
                 $('#editAdminModal').modal('show');
+                
+                // 添加密碼顯示切換功能
+                window.toggleEditAdminPassword = function() {
+                    const passwordField = document.getElementById('edit-admin-password-field');
+                    const icon = document.getElementById('edit-admin-password-toggle-icon');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
             });
         });
 
@@ -106,7 +203,7 @@
             const data = {
                 HAdminId: this.HAdminId.value,
                 HAccount: this.HAccount.value.trim(),
-                HPassword: this.HPassword.value.trim(), // 可為空
+                HPassword: this.HPassword.value.trim(), // 空值表示不修改密碼
                 HRoleLevel: this.HRoleLevel.value
             };
 
@@ -116,37 +213,48 @@
                 data: JSON.stringify(data),
                 contentType: 'application/json',
                 success: function () {
-                    console.log('✅ success triggered');
-                    alert('✅ 編輯成功！');
-                    location.reload();
+                    showToast('✅ 修改成功！', true);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 },
                 error: function (xhr) {
-                    alert('儲存失敗：' + (xhr.responseText || '未知錯誤'));
+                    showToast('❌ 修改失敗：' + (xhr.responseText || '未知錯誤'), false);
                 }
             });
         });
 
-
-                // ✅ 點擊刪除按鈕
-        $(document).on('click', '.btn-delete', function () {
-            const id = $(this).data('id');
-            if (!confirm("⚠️確定要刪除這位管理員嗎？")) return;
-
-            $.ajax({
-                type: 'POST',
-                url: '/Admin/AdminManagement/Delete',
-                data: { id: id },
-                success: function () {
-                    alert("✅ 已成功刪除！");
-                    location.reload();
-                },
-                error: function (xhr) {
-                    alert("刪除失敗：" + (xhr.responseText || "未知錯誤"));
-                }
-            });
+        // 存放當前要刪除的管理員ID
+        let currentDeleteId = null;
+        
+        // 顯示刪除確認模態框
+        function confirmDelete(id) {
+            currentDeleteId = id;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        }
+        
+        // 處理確認刪除按鈕的點擊事件
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (currentDeleteId !== null) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/Admin/AdminManagement/Delete?id=' + currentDeleteId,
+                    success: function () {
+                        // 隱藏模態框
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                        showToast('✅ 刪除成功！', true);
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    },
+                    error: function (xhr) {
+                        // 隱藏模態框
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                        showToast('❌ 刪除失敗：' + (xhr.responseText || '未知錯誤'), false);
+                    }
+                });
+            }
         });
-
-
-
     </script>
 }
