@@ -11,7 +11,7 @@
         </div>
     }
 
-    <h2>📢請上傳關於我們</h2>
+    <h2>關於我們</h2>
     <section id="announcement" class="bg-light">
         <!-- 新增關於我們 Modal -->
         <div class="modal fade" id="addAboutModal" tabindex="-1" aria-labelledby="addAboutModalLabel" aria-hidden="true">
@@ -42,12 +42,9 @@
         <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addAboutModal">新增關於我們</button>
     </section>
 
-    <h2>📢已上傳關於我們：</h2>
+    
     <div class="container my-4">
         <div class="card shadow-lg rounded-4 p-4">
-            <div class="card-header bg-primary text-white fs-4 fw-semibold">
-                關於我們列表
-            </div>
             <div class="card-body">
                 <table class="table table-hover align-middle table-bordered table-striped table-lg">
                     <thead class="table-primary text-center fs-5">
@@ -70,7 +67,7 @@
                                 <td>@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
                                 <td class="text-center">
                                     <!-- 編輯按鈕 -->
-                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
+                                    <button class="btn bg-primary" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
                                         編輯
                                     </button>
                                 </td>
