@@ -16,10 +16,12 @@ namespace GeeYeangSore.Controllers
 
             if (!HttpContext.Session.Keys.Contains(CDictionary.SK_LOGINED_USER))
             {
+                // 未登入的用戶重定向到首頁，而不是登入頁面
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new
                 {
-                    controller = "Login",
-                    action = "Login"
+                    area = "Admin",
+                    controller = "Home",
+                    action = "Index"
                 }));
             }
         }

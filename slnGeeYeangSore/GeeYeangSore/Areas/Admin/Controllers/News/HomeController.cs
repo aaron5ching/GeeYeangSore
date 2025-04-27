@@ -6,11 +6,12 @@ using GeeYeangSore.Models;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using GeeYeangSore.Controllers;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace GeeYeangSore.Areas.Admin.Controllers.News
 {
     [Area("Admin")]
-    public class HomeController : SuperController
+    public class HomeController : Controller
     {
         private readonly GeeYeangSoreContext _context;
 

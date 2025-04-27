@@ -62,11 +62,18 @@ app.UseSession();
 
 app.UseAuthorization();
 
-// 設定路由
+// 修改路由配置，添加一個新的默認路由指向 Admin 區域的 Home/Index
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}",
+    defaults: new { area = "Admin" });
+
+// 原有的 areas 路由
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// 原有的普通路由（當 URL 沒有指定 area 時使用）
 app.MapControllerRoute(
     name: "nonarea",
     pattern: "{controller=Home}/{action=Index}/{id?}"
