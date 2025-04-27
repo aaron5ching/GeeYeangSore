@@ -144,7 +144,32 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                 existing.HAddress = updated.HAddress ?? existing.HAddress;
                 existing.HPhoneNumber = updated.HPhoneNumber ?? existing.HPhoneNumber;
                 existing.HEmail = updated.HEmail ?? existing.HEmail;
-                existing.HPassword = updated.HPassword ?? existing.HPassword;
+
+                // 處理密碼更新，檢查是否需要更新密碼
+                if (!string.IsNullOrWhiteSpace(updated.HPassword))
+                {
+                    // 檢查密碼是否與資料庫中的雜湊密碼不同
+                    bool needsUpdate = true;
+                    if (!string.IsNullOrEmpty(existing.HSalt))
+                    {
+                        // 如果已有鹽值，檢查提交的密碼是否與雜湊後的密碼相同
+                        needsUpdate = !PasswordHasher.VerifyPassword(updated.HPassword, existing.HSalt, existing.HPassword);
+                    }
+                    else
+                    {
+                        // 如果沒有鹽值（舊帳號），檢查密碼是否與明文密碼相同
+                        needsUpdate = updated.HPassword != existing.HPassword;
+                    }
+
+                    // 需要更新密碼
+                    if (needsUpdate)
+                    {
+                        string salt = PasswordHasher.GenerateSalt();
+                        existing.HPassword = PasswordHasher.HashPassword(updated.HPassword, salt);
+                        existing.HSalt = salt;
+                    }
+                }
+
                 existing.HImages = string.IsNullOrWhiteSpace(updated.HImages) ? existing.HImages : updated.HImages;
 
                 var updatedLandlord = updated.HLandlords.FirstOrDefault();
@@ -305,6 +330,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             try
             {
+                // 生成鹽值與哈希密碼
+                string salt = PasswordHasher.GenerateSalt();
+                string hashedPassword = PasswordHasher.HashPassword(newUser.HPassword ?? "000000", salt);
+
                 var tenant = new HTenant
                 {
                     HUserName = newUser.HUserName ?? "未命名",          // 若為 null 則提供預設值
@@ -312,7 +341,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     HGender = newUser.HGender ?? true,                  // 預設為男性或女性
                     HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",
                     HEmail = newUser.HEmail ?? "未填寫",
-                    HPassword = newUser.HPassword ?? "000000",
+                    HPassword = hashedPassword,
+                    HSalt = salt,
                     HAddress = newUser.HAddress ?? "未填寫",
                     HStatus = newUser.HStatus ?? "未驗證",
                     HAuthProvider = "local",                            // 🔥 最常忽略的欄位

@@ -54,7 +54,11 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">密碼</label>
-                    <input type="text" class="form-control" name="HPassword" value="@Model.HPassword" />
+                    <input type="password" class="form-control" name="HPassword" placeholder="@(string.IsNullOrEmpty(Model.HSalt) ? "請輸入密碼" : "如需修改請輸入新密碼，否則留空")" />
+                    @if (!string.IsNullOrEmpty(Model.HSalt))
+                    {
+                        <small class="text-muted">目前密碼已加密保護，留空表示不修改密碼</small>
+                    }
                 </div>
 
                 <div class="col-md-12">
