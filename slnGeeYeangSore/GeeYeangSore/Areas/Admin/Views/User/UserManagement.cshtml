@@ -1,12 +1,35 @@
 ﻿@model X.PagedList.IPagedList<GeeYeangSore.Areas.Admin.ViewModels.UserManagement.CUserViewModels>
 
-
-
 @{
 	ViewData["Title"] = "使用者管理";
 }
 
-<h2 style="font-style: italic;">使用者管理</h2>
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>使用者管理</h2>
+        <a href="/Admin/Home/Index" class="btn btn-main">返回首頁</a>
+    </div>
 
 <!-- 🔍 搜尋表單 -->
 <form id="searchForm" class="mb-3">
@@ -52,7 +75,7 @@
 
 		<button type="button" id="btnCreateUser" class="btn btn-warning" style="width: 150px">新增</button>
 		<button type="button" id="btnClear" class="btn btn-secondary" style="width: 150px">清除</button>
-		<button type="submit" class="btn btn-primary" style="width: 200px;background-color: #3CDDD2;">搜尋</button>
+		<button type="submit" class="btn btn-main" style="width: 200px">搜尋</button>
 	</div>
 
 </form>

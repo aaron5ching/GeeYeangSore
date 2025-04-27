@@ -4,14 +4,39 @@
     ViewBag.Title = "管理者權限";
 }
 
-<h2 style="font-style: italic;">管理者權限</h2>
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>管理者權限</h2>
+        <a href="/Admin/Home/Index" class="btn btn-main">返回首頁</a>
+    </div>
 
 <!-- 🔍 搜尋表單 -->
 <form method="get" asp-action="AdminManagement" asp-controller="AdminManagement">
     <div class="d-flex align-items-center mb-2" style="gap: 12px;">
         <input type="text" name="searchAccount" id="searchAccount" class="form-control" placeholder="請輸入管理員帳號" style="width: 300px;" />
         <button type="button" class="btn btn-secondary" onclick="clearSearch()">清除</button>
-        <button type="submit" class="btn btn-primary" style="width: 160px;background-color: #3CDDD2;">搜尋</button>
+        <button type="submit" class="btn btn-main" style="width: 160px">搜尋</button>
     </div>
 
     <!-- ✅ 新增管理員按鈕放搜尋列下方 -->
