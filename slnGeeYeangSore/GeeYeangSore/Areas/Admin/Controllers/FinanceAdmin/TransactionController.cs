@@ -109,7 +109,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.FinanceAdmin
         public async Task<IActionResult> UpdateStatus(int id, string status)
         {
             if (!HasAnyRole("超級管理員", "系統管理員", "財務管理員"))
-                return Json(new { success = false, message = "權限不足" });
+                return RedirectToAction("NoPermission", "Home", new { area = "Admin" });
 
             var transaction = await _context.HTransactions.FindAsync(id);
             if (transaction == null)

@@ -1,181 +1,115 @@
 ﻿@* 私人聊天記錄頁面 *@
-@model IEnumerable<dynamic>
+@model IEnumerable<GeeYeangSore.Models.HMessage>
 @{
-    ViewBag.Title = "詳細對話";
+    ViewData["Title"] = "詳細對話";
 }
+@functions {
+    string GetUserName(int? userId, string role)
+    {
+        if (userId == null || string.IsNullOrEmpty(role))
+            return "未知用戶";
 
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="card-title mb-0">詳細對話</h2>
-                <a href="@Url.Action("Index")" class="btn btn-secondary">返回列表</a>
-            </div>
-        </div>
-        <div class="card-body">
-            <div id="chat-container" style="max-width: 800px; margin: auto;">
-                @foreach (var item in Model)
-                {
-                    var isSender = item.Message.HSenderId == ViewBag.SenderId;
-                    <div style="text-align:@(isSender ? "right" : "left"); margin: 10px 0;">
-                        <div
-                            style="display:inline-block; background:@(isSender ? "#cce5ff" : "#d4edda"); padding:10px; border-radius:10px; max-width:70%;">
-                            <div style="font-size:smaller; color:#555;">
-                                @item.SenderName
-                            </div>
-                            <div>
-                                @item.Message.HContent
-                            </div>
-                            <div style="font-size:small; color:#999;">
-                                @item.Message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")
-                                @if (item.Message.HIsEdited == 1)
-                                {
-                                    <span>(已編輯)</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
+        int id = userId.Value;
+        role = role.Trim();
 
-    <!-- 檢舉列表部分 -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h2 class="card-title">檢舉列表</h2>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>檢舉ID</th>
-                            <th>被檢舉訊息</th>
-                            <th>檢舉原因</th>
-                            <th>檢舉者</th>
-                            <th>檢舉時間</th>
-                            <th>狀態</th>
-                            <th>處理者</th>
-                            <th>處理時間</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var report in ViewBag.Reports ?? new List<GeeYeangSore.Models.HReport>())
-                        {
-                            var messages = ViewBag.Messages as Dictionary<int, GeeYeangSore.Models.HMessage>;
-                            var message = report.HMessageId.HasValue && messages != null && report.HMessageId.Value > 0 &&
-                            messages.ContainsKey(report.HMessageId.Value)
-                            ? messages[report.HMessageId.Value]
-                            : null;
-                            <tr>
-                                <td>@report.HReportId</td>
-                                <td>
-                                    @if (message != null)
-                                    {
-                                        <button class="btn btn-link btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#messageModal-@report.HReportId">
-                                            查看訊息
-                                        </button>
-                                    }
-                                </td>
-                                <td>@report.HReason</td>
-                                <td>@report.HAuthorId (@report.HAuthorType)</td>
-                                <td>@report.HCreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td>
-                                    <span class="badge @(report.HStatus == "待處理" ? "bg-warning" : 
-                                            report.HStatus == "已核准" ? "bg-success" : "bg-danger")">
-                                    @report.HStatus
-                                </span>
-                            </td>
-                            <td>@(report.HAdminId?.ToString() ?? "-")</td>
-                            <td>@(report.HReviewedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                            <td>
-                                @if (report.HStatus == "待處理")
-                                    {
-                                        <div class="btn-group">
-                                            <form asp-action="ProcessReport" method="post" style="display:inline;">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="reportId" value="@report.HReportId" />
-                                                <input type="hidden" name="status" value="已核准" />
-                                                <button type="submit" class="btn btn-success btn-sm">通過</button>
-                                            </form>
-                                            <form asp-action="ProcessReport" method="post" style="display:inline;">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="reportId" value="@report.HReportId" />
-                                                <input type="hidden" name="status" value="已拒絕" />
-                                                <button type="submit" class="btn btn-danger btn-sm">拒絕</button>
-                                            </form>
-                                        </div>
-                                    }
-                                </td>
-                            </tr>
+        if (role.Equals("Tenant", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ViewBag.Tenants != null && ViewBag.Tenants.ContainsKey(id))
+                return ViewBag.Tenants[id] + " (房客)";
+            else
+                return "未知房客";
+        }
+        else if (role.Equals("Landlord", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ViewBag.Landlords != null && ViewBag.Landlords.ContainsKey(id))
+                return ViewBag.Landlords[id] + " (房東)";
+            else
+                return "未知房東";
+        }
 
-                            <!-- 訊息詳情 Modal -->
-                            @if (message != null)
-                            {
-                                <div class="modal fade" id="messageModal-@report.HReportId" tabindex="-1"
-                                    aria-labelledby="messageModalLabel-@report.HReportId" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="messageModalLabel-@report.HReportId">
-                                                    被檢舉訊息詳情
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p><strong>發送者：</strong>@message.HSenderId (@message.HSenderRole)</p>
-                                                <p><strong>接收者：</strong>@message.HReceiverId (@message.HReceiverRole)</p>
-                                                <p><strong>內容：</strong>@message.HContent</p>
-                                                <p><strong>時間：</strong>@message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+        return "未知用戶";
+    }
 
-    <!-- 編輯訊息的Modal -->
-    <div class="modal fade" id="editMessageModal" tabindex="-1" aria-labelledby="editMessageModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editMessageModalLabel">編輯訊息</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editMessageForm">
-                        <input type="hidden" id="editMessageId" name="messageId">
-                        <div class="mb-3">
-                            <label for="editMessageContent" class="form-label">訊息內容</label>
-                            <textarea class="form-control" id="editMessageContent" name="content" rows="3"
-                                required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="saveEditMessage">儲存</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    string GetMessageStatus(GeeYeangSore.Models.HMessage message)
+    {
+        var report = message.HReports?.FirstOrDefault();
+        var statusBadges = new List<string>();
 
+        if (message.HIsDeleted == 1)
+        {
+            statusBadges.Add("<span class='badge bg-danger'>已刪除</span>");
+        }
+        if (message.HIsEdited == 1)
+        {
+            statusBadges.Add("<span class='badge bg-info'>已編輯</span>");
+        }
+        if (report != null)
+        {
+            var reportBadge = report.HStatus switch
+            {
+                "待處理" => "<span class='badge bg-warning'>檢舉待處理</span>",
+                "已核准" => "<span class='badge bg-danger'>檢舉成立</span>",
+                "已拒絕" => "<span class='badge bg-secondary'>檢舉駁回</span>",
+                _ => "<span class='badge bg-warning'>檢舉待處理</span>"
+            };
+            statusBadges.Add(reportBadge);
+        }
+
+        return string.Join(" ", statusBadges);
+    }
+
+}
 <style>
     #chat-container {
         height: 600px;
         overflow-y: auto;
         padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .message-bubble {
+        max-width: 70%;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .message-sender {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .message-time {
+        font-size: 0.8em;
+        color: #999;
+        margin-top: 5px;
+    }
+
+    .message-status {
+        margin-top: 5px;
+    }
+
+    .sender-message {
+        background-color: #cce5ff;
+        margin-left: auto;
+    }
+
+    .receiver-message {
+        background-color: #d4edda;
+        margin-right: auto;
+    }
+
+    .deleted-message {
+        opacity: 0.7;
+        background-color: #f8d7da;
+    }
+
+    .badge {
+        margin-right: 5px;
     }
 
     #chat-container::-webkit-scrollbar {
@@ -196,76 +130,56 @@
     }
 </style>
 
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="@Url.Action("Index")" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="chat-container">
+                @foreach (var message in Model)
+                                {
+                                var isSender = message.HSenderId == ViewBag.SenderId;
+                    var messageClass = isSender ? "sender-message" : "receiver-message";
+                                if (message.HIsDeleted == 1)
+                                {
+                                messageClass += " deleted-message";
+                                }
+
+                <div class="message-bubble @messageClass">
+                    <div class="message-sender">
+                        @GetUserName(message.HSenderId, message.HSenderRole)
+                    </div>
+                    <div class="message-content">
+                        @if (message.HIsDeleted == 1)
+                        {
+                            <span class="text-muted"><i>此訊息已被刪除</i></span>
+                        }
+                        else
+                        {
+                            @message.HContent
+                        }
+                    </div>
+                    <div class="message-time">
+                        @message.HTimestamp?.ToString("yyyy-MM-dd HH:mm")
+                    </div>
+                    <div class="message-status">
+                        @Html.Raw(GetMessageStatus(message))
+                    </div>
+                </div>
+                                }
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            // 頁面載入完成後滾動到最底部
-            var chatContainer = $('#chat-container');
-            chatContainer.scrollTop(chatContainer[0].scrollHeight);
-
-            // 編輯訊息按鈕點擊事件
-            $('.edit-message').click(function () {
-                var messageId = $(this).data('message-id');
-                var messageContent = $(this).closest('.message').find('.message-text').text();
-
-                $('#editMessageId').val(messageId);
-                $('#editMessageContent').val(messageContent);
-                $('#editMessageModal').modal('show');
-            });
-
-            // 儲存編輯的訊息
-            $('#saveEditMessage').click(function () {
-                var messageId = $('#editMessageId').val();
-                var content = $('#editMessageContent').val();
-                var token = $('input[name="__RequestVerificationToken"]').val();
-
-                $.ajax({
-                    url: '/Admin/PrivateMessages/Edit',
-                    type: 'POST',
-                    data: {
-                        id: messageId,
-                        content: content,
-                        __RequestVerificationToken: token
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            // 更新訊息內容
-                            var messageElement = $('.message[data-message-id="' + messageId + '"]');
-                            messageElement.find('.message-text').text(content);
-
-                            // 檢查是否已有編輯標記
-                            if (!messageElement.find('.message-timestamp small.text-muted:contains("(已編輯)")').length) {
-                                messageElement.find('.message-timestamp').append('<small class="text-muted">(已編輯)</small>');
-                            }
-
-                            $('#editMessageModal').modal('hide');
-                            showToast('編輯成功', true);
-                        } else {
-                            showToast(response.message || '編輯失敗', false);
-                        }
-                    },
-                    error: function () {
-                        showToast('編輯失敗，請稍後再試', false);
-                    }
-                });
-            });
-
-            // Toast 提示訊息
-            function showToast(message, isSuccess) {
-                const toastId = 'toast-' + Date.now();
-                const toast = $(`<div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                                        <div class="toast-body bg-${isSuccess ? 'success' : 'danger'} text-white">
-                                            ${message}
-                                        </div>
-                                    </div>`);
-
-                $('.toast-container').append(toast);
-                toast.toast({ delay: 3000 }).toast('show');
-
-                toast.on('hidden.bs.toast', function () {
-                    $(this).remove();
-                });
-            }
+        document.addEventListener('DOMContentLoaded', function () {
+            var chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         });
     </script>
 }
