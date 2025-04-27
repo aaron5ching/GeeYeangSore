@@ -3,15 +3,15 @@ using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.News
 {
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
     public class ContactController : SuperController
     {
-        private readonly Models.GeeYeangSoreContext _db;
+        private readonly GeeYeangSoreContext _db;
 
-        public ContactController(Models.GeeYeangSoreContext db)
+        public ContactController(GeeYeangSoreContext db)
         {
             _db = db;
             //0

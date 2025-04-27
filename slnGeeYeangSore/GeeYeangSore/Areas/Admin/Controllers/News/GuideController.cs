@@ -3,7 +3,7 @@ using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace GeeYeangSore.Areas.Admin.Controllers
+namespace GeeYeangSore.Areas.Admin.Controllers.News
 {
 
     [Area("Admin")]
@@ -11,10 +11,10 @@ namespace GeeYeangSore.Areas.Admin.Controllers
     public class GuideController : SuperController
     {
 
-        private readonly Models.GeeYeangSoreContext _db;
+        private readonly GeeYeangSoreContext _db;
         private readonly IWebHostEnvironment _env;
 
-        public GuideController(Models.GeeYeangSoreContext db, IWebHostEnvironment env)
+        public GuideController(GeeYeangSoreContext db, IWebHostEnvironment env)
         {
             _db = db;
             _env = env;

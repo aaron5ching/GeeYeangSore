@@ -2,90 +2,150 @@
 @model IEnumerable<GeeYeangSore.Models.HGuide>
 
 <body>
-<!-- 顯示成功訊息 -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<h2>📢請上傳指南... </h2>
-<section id="announcement">
-    <div class="card mb-4">
-        <div class="card-body">
-            <form action="Guide" method="post" id="Reply" enctype="multipart/form-data">
-                標題：<p class="card-title"></p>
-                <input class="form-control" id="HTitle" name="HTitle">
-                內容：<p class="card-title"></p>
-                <textarea class="form-control" name="HContent" id="HContent"></textarea>
-                公告時間：<p class="card-title"></p>
-                <label for="Image">選擇圖片：</label>
-                <input type="file" class="form-control" name="Image">
-                <br/>
-                <button type="submit" id="submitGuide" class="btn btn-success">提交公告</button>
-            </form>
+    <!-- 顯示成功訊息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    </div>
-</section>
+    }
 
-<h2>📢已上傳指南： </h2>
-<section>
-    @* <div class="card mb-4"> *@
-        <div class="card-body">
-            @foreach (var item in Model)
-            {
-                <div class="border border-info border-2 p-3">
-                    <form action="UpdateGuide" method="post" enctype="multipart/form-data">
-
-                        更新標題：
-                        <input class="form-control" id="HTitle" placeholder="請輸入要更新的標題" name="HTitle"
-                               value="@item.HTitle">
-                        更新內容：
-                        <textarea class="form-control replyContent" id="HContent" name="HContent"
-                                  placeholder="請輸入要更新的內容">@item.HContent</textarea>
-                        <div style="position: relative; left: 300px;">
-                            <img src="@Url.Content(item.HImagePath)" asp-append-version="true" alt="查無圖片"/>
-                        </div>
-                        公告時間：
-                        <p class="card-body">@item.HCreatedAt</p>
-                        更新時間：
-                        <p class="card-body">@item.HUpdatedAt</p>
-                        <label for="Image">選擇圖片：</label>
-                        <input type="file" class="form-control" name="Image">
-                        <br/>
-                        <input type="hidden" name="HGuideId" value="@item.HGuideId"/>
-                        @{
-                            Console.WriteLine($"{item.HGuideId}");
-                        }
-                        <button type="submit" id="submitGuide" class="btn btn-success">修改公告</button>
-                    </form>
-
-                    <!-- 刪除公告的表單 -->
-                    <form action="DeleteGuide" method="post">
-                        <input type="hidden" name="HGuideId" value="@item.HGuideId"/>
-                        <button type="submit" id="submitGuide" class="btn btn-danger">刪除公告</button>
-                    </form>
+    <section id="announcement">
+        <!-- 新增指南 Modal -->
+        <div class="modal fade" id="addGuideModal" tabindex="-1" aria-labelledby="addGuideModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addGuideModalLabel">新增指南</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="Guide" method="post" id="addGuideForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="HTitle" class="form-label">標題</label>
+                                <input type="text" class="form-control" id="HTitle" name="HTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="HContent" class="form-label">內容</label>
+                                <textarea class="form-control" id="HContent" name="HContent" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="Image" class="form-label">選擇圖片</label>
+                                <input type="file" class="form-control" name="Image" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">提交公告</button>
+                        </form>
+                    </div>
                 </div>
-            }
+            </div>
         </div>
-    @* </div> *@
-</section>
 
-<script>
-    document.getElementById("submitGuide").addEventListener("click", function (event) {
-        let titleInput = document.getElementById("HTitle");
-        let contentInput = document.getElementById("HContent");
+        <!-- 顯示新增指南按鈕 -->
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addGuideModal">新增指南</button>
+    </section>
 
-        if (titleInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入標題！");
+    <div class="container my-4">
+        <div class="card shadow-lg rounded-4 p-4">
+            <div class="card-header bg-primary text-white fs-4 fw-semibold">
+                公告列表
+            </div>
+            <div class="card-body">
+                <!-- 搜尋框 -->
+                <div class="mb-3">
+                    <label for="searchTitle" class="form-label">搜尋標題</label>
+                    <input type="text" class="form-control" id="searchTitle" placeholder="搜尋指南標題" onkeyup="searchGuides()" />
+                </div>
+
+                <table class="table table-hover align-middle table-bordered table-striped table-lg">
+                    <thead class="table-primary text-center fs-5">
+                        <tr>
+                            <th>標題</th>
+                            <th>內容</th>
+                            <th>圖片</th>
+                            <th>公告時間</th>
+                            <th>修改時間</th>
+                            <th>修改</th>
+                            <th>刪除</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guideTableBody">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="guide-item" data-title="@item.HTitle">
+                                <td class="fs-5">@item.HTitle</td>
+                                <td class="fs-5">@item.HContent</td>
+                                <td>
+                                    <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
+                                         style="width: 150px; height: auto;" class="img-thumbnail" />
+                                </td>
+                                <td class="fs-5">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="fs-5">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">
+                                    <!-- 編輯按鈕，觸發編輯Modal -->
+                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editGuideModal_@item.HGuideId">
+                                        編輯
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <!-- 刪除按鈕 -->
+                                    <form action="DeleteGuide" method="post" style="display: inline;">
+                                        <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                        <button type="submit" class="btn btn-danger">刪除</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- 編輯指南 Modal -->
+                            <div class="modal fade" id="editGuideModal_@item.HGuideId" tabindex="-1" aria-labelledby="editGuideModalLabel_@item.HGuideId" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editGuideModalLabel_@item.HGuideId">編輯指南</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="UpdateGuide" method="post" enctype="multipart/form-data">
+                                                <div class="mb-3">
+                                                    <label for="HTitle" class="form-label">標題</label>
+                                                    <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="HContent" class="form-label">內容</label>
+                                                    <textarea class="form-control" id="HContent" name="HContent" required>@item.HContent</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="Image" class="form-label">選擇圖片</label>
+                                                    <input type="file" class="form-control" name="Image">
+                                                </div>
+                                                <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                                <button type="submit" class="btn btn-success">更新公告</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 搜尋指南
+        function searchGuides() {
+            let searchValue = document.getElementById("searchTitle").value.toLowerCase();
+            let guideItems = document.querySelectorAll(".guide-item");
+
+            guideItems.forEach(function(item) {
+                let title = item.getAttribute("data-title").toLowerCase();
+                if (title.includes(searchValue)) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            });
         }
-        if (contentInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入內容！");
-        }
-    });
-</script>
+    </script>
 </body>
