@@ -62,16 +62,16 @@
                     <div class="row g-3">
                         <div class="col-md-6 col-lg-3">
                             <div class="card card-custom p-3 text-center">
-                                <h2 class="mb-4"><i class="fa-solid fa-house"></i></h2>
+                            <h2 class="mb-4"><i class="fa-solid fa-house"></i></h2>
                                 <h6 class="fw-bold">房源數</h6>
-                                <h4>@(Model.CurrentMonthSharedProperties + Model.CurrentMonthNonSharedProperties)</h4>
+                            <h4>@Model.CurrentMonthProperties</h4>
                             </div>
                         </div>
                         <div class="col-md-6 col-lg-3">
                             <div class="card card-custom p-3 text-center">
                                 <h2 class="mb-4"><i class="fa-solid fa-people-roof"></i></h2>
-                                <h6 class="fw-bold">合租數</h6>
-                                <h4>@Model.CurrentMonthSharedProperties</h4>
+                                <h6 class="fw-bold">VIP廣告數</h6>
+                                <h4>@Model.CurrentMonthVipAds</h4>
                             </div>
                         </div>
                         <div class="col-md-6 col-lg-3">
@@ -118,8 +118,8 @@
                 </div>
                 <div class="col-md-3">
                     <div class="chart-wrapper">
-                        <h5 class="card-title fw-bold mb-5">租房類型比例</h5>
-                        <canvas id="rentalTypePieChart" class="chart-container"></canvas>
+                        <h5 class="card-title fw-bold mb-5">VIP廣告比例</h5>
+                        <canvas id="vipAdPieChart" class="chart-container"></canvas>
                     </div>
                 </div>
         </div>
@@ -179,29 +179,24 @@
             }
         });
 
-        // 合租分布圓餅圖
-        new Chart(document.getElementById('rentalTypePieChart'), {
+        // VIP廣告分布圓餅圖
+        const vipLabels = @Html.Raw(Json.Serialize(Model.VipCategoryDistribution.Keys));
+        const vipCounts = @Html.Raw(Json.Serialize(Model.VipCategoryDistribution.Values));
+
+        new Chart(document.getElementById('vipAdPieChart'), {
             type: 'pie',
             data: {
-                labels: ['合租', '一般租房'],
-                datasets: [{
-                    data: [@Model.SharedPropertiesCount, @Model.NonSharedPropertiesCount],
-                    backgroundColor: ['#3CDDD2', '#24B4A8']
+                labels: vipLabels,
+                datasets: [{    
+                    data: vipCounts,
+                    backgroundColor: ['#3CDDD2', '#24B4A8', '#1D91A3']
                 }]
             },
             options: {
                 responsive: true,
                 plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                const value = context.parsed;
-                                return `${value.toLocaleString()} 筆`;
-                            }
-                        }
-                    },
                     legend: {
-                        position: 'bottom',
+                        position: 'bottom'
                     }
                 }
             }
