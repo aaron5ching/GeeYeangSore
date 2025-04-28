@@ -32,7 +32,7 @@
     </div>
 
 <!-- 🔍 搜尋表單 -->
-<form method="get" asp-action="AdminManagement" asp-controller="AdminManagement">
+<form method="get" asp-action="AdminManagement" asp-controller="AdminManagement" class="search-section">
     <div class="d-flex align-items-center mb-2" style="gap: 12px;">
         <input type="text" name="searchAccount" id="searchAccount" class="form-control" placeholder="請輸入管理員帳號" style="width: 300px;" />
         <button type="button" class="btn btn-secondary" onclick="clearSearch()">清除</button>
@@ -46,9 +46,6 @@
             <button type="button" class="btn btn-warning" onclick="showCreateModal()">新增管理員</button>
         </div>
     }
-
-
-    <hr class="my-3" />
 
 </form>
 
