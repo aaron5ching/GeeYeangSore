@@ -298,8 +298,7 @@ public partial class GeeYeangSoreContext : DbContext
         modelBuilder.Entity<HAudit>(entity =>
         {
             entity
-                //.HasNoKey()你忘記刪除這個 我這個bug找了一個小時 笑死哈哈哈🤣🤣🤣
-                .ToTable("h_Audit");
+                //.HasNoKey();
                 .ToTable("h_Audit");
 
             entity.Property(e => e.HAuditId).HasColumnName("h_Audit_Id");
