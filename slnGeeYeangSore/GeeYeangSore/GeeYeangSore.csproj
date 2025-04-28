@@ -15,6 +15,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\uploads\news\4c37162c-bcdc-489c-887c-d3dc502e9bd0_身分證947.jpg" />
+    <Content Remove="wwwroot\uploads\news\530d1aed-b05c-4d17-bffb-32fd8b30cc71.jpg" />
+    <Content Remove="wwwroot\uploads\news\548323c8-dfef-4f19-aacb-1037256aa533_istockphoto-1435638046-612x612.jpg" />
+    <Content Remove="wwwroot\uploads\news\74fa576f-8e08-43ae-a240-a23a3d78e3ff_istockphoto-1435638046-612x612.jpg" />
+    <Content Remove="wwwroot\uploads\news\99e3162e-7325-4cf9-997a-ecac91ddb377_chiikawa.gif" />
+    <Content Remove="wwwroot\uploads\news\c137dc3a-31af-4977-a477-7d713e889c8b.jpg" />
+    <Content Remove="wwwroot\uploads\news\d48042e9-ac6c-494b-8b69-4b13a951edab_西瓜.jpg" />
+    <Content Remove="wwwroot\uploads\news\default.png" />
+    <Content Remove="wwwroot\uploads\news\e774453d-dbf1-4daa-a52b-1af236622cdf_草莓.jpg" />
+    <Content Remove="wwwroot\uploads\news\f6f87898-780f-4281-bd0a-f0a0c3fb72e7_istockphoto-1435638046-612x612.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.13" />
@@ -33,6 +46,7 @@
     <Folder Include="Areas\Admin\Models\" />
     <Folder Include="Areas\Admin\Views\PropertyCheck\" />
     <Folder Include="wwwroot\images\Property\" />
+    <Folder Include="wwwroot\uploads\news\" />
   </ItemGroup>
 
 </Project>
