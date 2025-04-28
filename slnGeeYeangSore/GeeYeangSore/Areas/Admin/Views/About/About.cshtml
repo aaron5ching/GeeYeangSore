@@ -80,7 +80,7 @@
                     <th style="width: 40%;">內容</th>
                     <th style="width: 15%;">上傳時間</th>
                     <th style="width: 15%;">修改時間</th>
-                    <th style="width: 10%;" colspan="2">操作</th>
+                    <th style="width: 10%;" class="text-center">操作</th>
                 </tr>
             </thead>
             <tbody id="aboutTableBody">
@@ -97,16 +97,14 @@
                         <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
                         <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
                         <td class="text-center">
-                            <!-- 編輯按鈕 -->
-                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
-                                編輯
+                            <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
+                                <i class="fa fa-edit"></i> 編輯
                             </button>
-                        </td>
-                        <td class="text-center">
-                            <!-- 刪除按鈕 -->
                             <form action="DeleteAbout" method="post" style="display: inline;" onsubmit="return confirm('確定要刪除此內容嗎？');">
                                 <input type="hidden" name="HAboutId" value="@item.HAboutId" />
-                                <button type="submit" class="btn btn-danger btn-sm w-100">刪除</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-trash"></i> 刪除
+                                </button>
                             </form>
                         </td>
                     </tr>
