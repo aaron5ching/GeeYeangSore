@@ -1,11 +1,10 @@
-@* 定義視圖模型為房源集合 *@
-@model IPagedList<GeeYeangSore.Models.HProperty>
+@model IPagedList<GeeYeangSore.Models.HAd>
 @using X.PagedList
 @using X.PagedList.Mvc.Core
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "房源管理";
+    ViewData["Title"] = "廣告管理";
 }
 
 <style>
@@ -81,12 +80,13 @@
         margin-bottom: 0;
     }
     
-    .table-fixed th,
-    .table-fixed td {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+        .table-fixed th,
+        .table-fixed td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+ 
 
     .pagination .page-item.active .page-link {
         background-color: #3CDDD2;
@@ -100,18 +100,20 @@
         .pagination .page-link:hover {
             color: #24B4A8;
         }
+    }
 </style>
+
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-12">
             
-                 <div class=" d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">已驗證房源列表</h3>
+                <div class=" d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">廣告管理</h3>
                 <a asp-action="Create" class="btn btn-warning">
-                        <i class="fas fa-plus"></i> 新增房源
+                        <i class="fas fa-plus"></i> 新增廣告
                     </a>
-                </div> 
+                </div>
                 <div class="card-body">
                     <form asp-action="Index" method="get" class="search-form">
                         <div class="row g-2 align-items-end">
@@ -120,14 +122,13 @@
                                     <label class="form-label">搜尋類型</label>
                                     <select name="searchType" class="form-control form-control-sm">
                                         <option value="all">全部</option>
-                                        <option value="id">房源ID</option>
-                                        <option value="title">標題</option>
-                                        <option value="address">地址</option>
-                                        <option value="city">城市</option>
-                                        <option value="district">區域</option>
+                                        <option value="id">廣告ID</option>
+                                        <option value="title">廣告標題</option>
                                         <option value="landlord">房東</option>
-                                        <option value="type">類型</option>
-                                        <option value="rent">租金</option>
+                                        <option value="property">房源標題</option>
+                                        <option value="category">廣告類別</option>
+                                        <option value="status">狀態</option>
+                                        <option value="region">目標區域</option>
                                     </select>
                                 </div>
                             </div>
@@ -139,7 +140,7 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
-                                    <button type="submit" class="btn search-btn w-100">
+                                <button type="submit" class="btn btn-main">
                                         <i class="fas fa-search"></i> 搜尋
                                     </button>
                                 </div>
@@ -147,12 +148,12 @@
                         </div>
                     </form>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive ">
                         <table class="table table-bordered table-striped table-fixed">
                             <thead>
                                 <tr>
                                     <th class="col-id">
-                                        @Html.ActionLink("房源ID", "Index", new { 
+                                        @Html.ActionLink("廣告編號", "Index", new { 
                                             sortOrder = ViewData["IdSort"], 
                                             searchString = ViewData["CurrentFilter"], 
                                             searchType = ViewData["SearchType"] ?? "all" 
@@ -167,7 +168,7 @@
                                         }
                                     </th>
                                     <th class="col-title">
-                                        @Html.ActionLink("標題", "Index", new { 
+                                        @Html.ActionLink("廣告標題", "Index", new { 
                                             sortOrder = ViewData["TitleSort"], 
                                             searchString = ViewData["CurrentFilter"], 
                                             searchType = ViewData["SearchType"] ?? "all" 
@@ -196,47 +197,62 @@
                                             <i class="fas fa-sort-up"></i>
                                         }
                                     </th>
-                                    <th class="col-address">
-                                        @Html.ActionLink("地址", "Index", new { 
-                                            sortOrder = ViewData["AddressSort"], 
+                                    <th class="col-property">
+                                        @Html.ActionLink("房源標題", "Index", new { 
+                                            sortOrder = ViewData["PropertySort"], 
                                             searchString = ViewData["CurrentFilter"], 
                                             searchType = ViewData["SearchType"] ?? "all" 
                                         }, new { @class = "text-dark" })
-                                        @if (ViewData["CurrentSort"]?.ToString() == "address_desc")
+                                        @if (ViewData["CurrentSort"]?.ToString() == "property_desc")
                                         {
                                             <i class="fas fa-sort-down"></i>
                                         }
-                                        else if (ViewData["CurrentSort"]?.ToString() == "address")
+                                        else if (ViewData["CurrentSort"]?.ToString() == "property")
                                         {
                                             <i class="fas fa-sort-up"></i>
                                         }
                                     </th>
-                                    <th class="col-price">
-                                        @Html.ActionLink("租金", "Index", new { 
-                                            sortOrder = ViewData["PriceSort"], 
+                                    <th class="col-status">
+                                        @Html.ActionLink("狀態", "Index", new { 
+                                            sortOrder = ViewData["StatusSort"], 
                                             searchString = ViewData["CurrentFilter"], 
                                             searchType = ViewData["SearchType"] ?? "all" 
                                         }, new { @class = "text-dark" })
-                                        @if (ViewData["CurrentSort"]?.ToString() == "price_desc")
+                                        @if (ViewData["CurrentSort"]?.ToString() == "status_desc")
                                         {
                                             <i class="fas fa-sort-down"></i>
                                         }
-                                        else if (ViewData["CurrentSort"]?.ToString() == "price")
+                                        else if (ViewData["CurrentSort"]?.ToString() == "status")
                                         {
                                             <i class="fas fa-sort-up"></i>
                                         }
                                     </th>
                                     <th class="col-date">
-                                        @Html.ActionLink("發布日期", "Index", new { 
-                                            sortOrder = ViewData["DateSort"], 
-                                            searchString = ViewData["CurrentFilter"], 
-                                            searchType = ViewData["SearchType"] ?? "all" 
+                                        @Html.ActionLink("開始日期", "Index", new {
+                                            sortOrder = ViewData["StartDateSort"],
+                                            searchString = ViewData["CurrentFilter"],
+                                            searchType = ViewData["SearchType"] ?? "all"
                                         }, new { @class = "text-dark" })
-                                        @if (ViewData["CurrentSort"]?.ToString() == "date_desc")
+                                        @if (ViewData["CurrentSort"]?.ToString() == "startdate_desc")
                                         {
                                             <i class="fas fa-sort-down"></i>
                                         }
-                                        else if (ViewData["CurrentSort"]?.ToString() == "date")
+                                        else if (ViewData["CurrentSort"]?.ToString() == "startdate")
+                                        {
+                                            <i class="fas fa-sort-up"></i>
+                                        }
+                                    </th>
+                                    <th class="col-date">
+                                        @Html.ActionLink("結束日期", "Index", new {
+                                            sortOrder = ViewData["EndDateSort"],
+                                            searchString = ViewData["CurrentFilter"],
+                                            searchType = ViewData["SearchType"] ?? "all"
+                                        }, new { @class = "text-dark" })
+                                        @if (ViewData["CurrentSort"]?.ToString() == "enddate_desc")
+                                        {
+                                            <i class="fas fa-sort-down"></i>
+                                        }
+                                        else if (ViewData["CurrentSort"]?.ToString() == "enddate")
                                         {
                                             <i class="fas fa-sort-up"></i>
                                         }
@@ -245,34 +261,37 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var property in Model)
+                                @foreach (var item in Model)
                                 {
                                     <tr>
-                                        <td>@property.HPropertyId</td>
-                                        <td>@property.HPropertyTitle</td>
-                                        <td>@property.HLandlord.HLandlordName</td>
-                                        <td>@property.HAddress</td>
-                                        <td>@property.HRentPrice</td>
-                                        <td>@property.HPublishedDate?.ToString("yyyy-MM-dd")</td>
+                                        <td>@item.HAdId</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HAdName)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HLandlord.HLandlordName)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HProperty.HPropertyTitle)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HStatus)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HStartDate)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.HEndDate)</td>
                                         <td>
-                                            <a asp-action="Details" asp-route-id="@property.HPropertyId" class="btn btn-outline-success btn-sm">
-                                                <i class="fas fa-eye"></i>查看
-                                            </a>
-                                            <a asp-action="Edit" asp-route-id="@property.HPropertyId" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-edit"></i> 編輯
-                                            </a>
-                                            <form asp-action="Delete" asp-route-id="@property.HPropertyId" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要刪除嗎？')">
-                                                    <i class="fas fa-trash"></i> 刪除
-                                                </button>
-                                            </form>
+                                            <div class="btn-group" role="group">    
+                                                <a asp-action="Details" asp-route-id="@item.HAdId" class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-eye"></i> 查看
+                                                </a>
+                                                <a asp-action="Edit" asp-route-id="@item.HAdId" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-edit"></i> 編輯
+                                                </a>
+                                                <form asp-action="Delete" asp-route-id="@item.HAdId" method="post" style="display:inline;">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要刪除嗎？');">
+                                                        <i class="fas fa-trash"></i> 刪除
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
+
                     <div class="d-flex justify-content-center mt-4">
                         @Html.PagedListPager(Model, page => Url.Action("Index", new { 
                             page = page, 
@@ -290,4 +309,4 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
