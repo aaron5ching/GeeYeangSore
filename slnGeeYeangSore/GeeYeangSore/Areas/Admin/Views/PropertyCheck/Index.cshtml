@@ -244,14 +244,14 @@
                                 <form asp-action="Approve" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@property.HPropertyId" />
-                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('確定要通過此房源嗎？')">
+                                    <button type="submit" class="btn btn-outline-success btn-sm" onclick="return confirm('確定要通過此房源嗎？')">
                                         <i class="fas fa-check"></i> 通過
                                     </button>
                                 </form>
                                 <form asp-action="Delete" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@property.HPropertyId" />
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('確定要刪除此房源嗎？')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要刪除此房源嗎？')">
                                         <i class="fas fa-trash"></i> 刪除
                                     </button>
                                 </form>
