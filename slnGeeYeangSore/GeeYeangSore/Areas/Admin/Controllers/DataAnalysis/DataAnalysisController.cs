@@ -70,7 +70,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.DataAnalysis
                 dataAnalysis.CurrentMonthProperties = _context.HProperties.Count(p =>
                     p.HPublishedDate.HasValue &&
                     p.HPublishedDate.Value.Year == year &&
-                    p.HPublishedDate.Value.Month == month);
+                    p.HPublishedDate.Value.Month == month &&
+                    p.HStatus == "已驗證");
 
                 dataAnalysis.CurrentMonthVipAds = _context.HAds
                     .Where(ad =>
