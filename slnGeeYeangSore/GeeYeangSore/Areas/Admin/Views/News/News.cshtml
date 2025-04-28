@@ -6,6 +6,12 @@
 }
 
 <style>
+    .property-title-tooltip {
+        font-size: 20px !important;
+        max-width: 500px !important;
+        white-space: normal !important;
+    }
+
     .btn-main {
         background-color: #3CDDD2;
         border-color: #3CDDD2;
@@ -63,62 +69,55 @@
 
     @if (Model.Any())
     {
-        <!-- 表格卡片 -->
-        <div class="card shadow-lg rounded-4 mb-4">
-            <div class="card-header bg-primary text-white py-3">
-                <h5 class="mb-0">公告列表</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle table-bordered table-striped mb-0">
-                        <thead class="table-primary text-center">
-                            <tr>
-                                <th style="width: 15%;">標題</th>
-                                <th style="width: 30%;">內容</th>
-                                <th style="width: 15%;">圖片</th>
-                                <th style="width: 12%;">公告時間</th>
-                                <th style="width: 12%;">修改時間</th>
-                                <th style="width: 16%;" colspan="2">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="newsTableBody">
-                            @foreach (var item in Model)
-                            {
-                                <tr class="news-item" data-title="@item.HTitle">
-                                    <td>@item.HTitle</td>
-                                    <td>
-                                        <div class="text-truncate-container" id="content-@item.HNewsId">
-                                            <p class="mb-0">@item.HContent</p>
-                                        </div>
-                                        <small class="text-truncate-toggle" data-id="@item.HNewsId">展開全文</small>
-                                    </td>
-                                    <td class="text-center">
-                                        <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
-                                             style="width: 120px; height: auto; max-height: 100px;" class="img-thumbnail" />
-                                    </td>
-                                    <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-center">
-                                        <button class="btn btn-warning btn-sm w-100 mb-1 btn-edit"
-                                                data-id="@item.HNewsId"
-                                                data-title="@item.HTitle"
-                                                data-content="@item.HContent">
-                                            編輯
-                                        </button>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-danger btn-sm w-100 mb-1 btn-disable" 
-                                                data-id="@item.HNewsId"
-                                                onclick="return confirm('確定要禁用此公告嗎？');">
-                                            禁用
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <!-- 表格區域 -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">標題</th>
+                        <th style="width: 30%;">內容</th>
+                        <th style="width: 15%;">圖片</th>
+                        <th style="width: 12%;">公告時間</th>
+                        <th style="width: 12%;">修改時間</th>
+                        <th style="width: 16%;" colspan="2">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="newsTableBody">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="news-item" data-title="@item.HTitle">
+                            <td>@item.HTitle</td>
+                            <td>
+                                <div class="text-truncate-container" id="content-@item.HNewsId">
+                                    <p class="mb-0">@item.HContent</p>
+                                </div>
+                                <small class="text-truncate-toggle" data-id="@item.HNewsId">展開全文</small>
+                            </td>
+                            <td class="text-center">
+                                <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
+                                     style="width: 120px; height: auto; max-height: 100px;" class="img-thumbnail" />
+                            </td>
+                            <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">
+                                <button class="btn btn-warning btn-sm w-100 mb-1 btn-edit"
+                                        data-id="@item.HNewsId"
+                                        data-title="@item.HTitle"
+                                        data-content="@item.HContent">
+                                    編輯
+                                </button>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-danger btn-sm w-100 mb-1 btn-disable" 
+                                        data-id="@item.HNewsId"
+                                        onclick="return confirm('確定要禁用此公告嗎？');">
+                                    禁用
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
     else
@@ -289,89 +288,91 @@
     // 編輯公告相關邏輯
     let editingId = null;
 
-    document.querySelectorAll('.btn-edit').forEach(button => {
-        button.addEventListener('click', function () {
+    // 打開編輯Modal
+    document.querySelectorAll('.btn-edit').forEach(function(button) {
+        button.addEventListener('click', function() {
             editingId = this.getAttribute('data-id');
-            const title = this.getAttribute('data-title');
-            const content = this.getAttribute('data-content');
             
-            // 取得圖片路徑
-            const imgElement = this.closest('tr').querySelector('img');
-            const imagePath = imgElement ? imgElement.getAttribute('src') : '';
-
-            document.getElementById('HTitle').value = title;
-            document.getElementById('HContent').value = content;
-            document.getElementById('HImagePath').value = ""; // 清空 file input
+            // 設定表單初始值
+            document.getElementById('HTitle').value = this.getAttribute('data-title');
+            document.getElementById('HContent').value = this.getAttribute('data-content');
             
             // 顯示當前圖片
-            if (imagePath) {
+            const imgCell = this.closest('tr').querySelector('img');
+            if (imgCell) {
                 document.getElementById('currentImage').innerHTML = `
-                    <small class="text-muted">當前圖片：</small>
-                    <img src="${imagePath}" class="img-fluid mt-2" style="max-height: 150px;" />
+                    <p>當前圖片：</p>
+                    <img src="${imgCell.src}" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">
                 `;
-            } else {
-                document.getElementById('currentImage').innerHTML = '';
             }
-
-            const modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
         });
     });
 
-    document.getElementById('saveChanges').addEventListener('click', function () {
+    // 儲存編輯
+    document.getElementById('saveChanges').addEventListener('click', function() {
         if (!editingId) return;
-
-        const updatedTitle = document.getElementById('HTitle').value;
-        const updatedContent = document.getElementById('HContent').value;
         
-        if (!updatedTitle.trim()) {
+        const title = document.getElementById('HTitle').value;
+        const content = document.getElementById('HContent').value;
+        const image = document.getElementById('HImagePath').files[0];
+        
+        if (!title.trim()) {
             alert('請輸入公告標題');
             return;
         }
-
-        if (!updatedContent.trim()) {
+        
+        if (!content.trim()) {
             alert('請輸入公告內容');
             return;
         }
         
-        const imageInput = document.getElementById('HImagePath');
-        const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
-
         const formData = new FormData();
-        formData.append('id', editingId);
-        formData.append('HTitle', updatedTitle);
-        formData.append('HContent', updatedContent);
-        if (imageFile) {
-            formData.append('HImagePath', imageFile);
+        formData.append('HNewsId', editingId);
+        formData.append('HTitle', title);
+        formData.append('HContent', content);
+        if (image) {
+            formData.append('HImagePath', image);
         }
-
-        fetch('/Admin/News/Update', {
+        
+        fetch('/Admin/News/Edit', {
             method: 'POST',
             body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('更新成功');
-                location.reload();
-            } else {
-                alert('更新失敗');
-            }
-        })
-        .catch(() => alert('更新失敗，請稍後再試'));
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) {
+                  alert('更新成功');
+                  location.reload();
+              } else {
+                  alert('更新失敗');
+              }
+          })
+          .catch(() => alert('更新失敗，請稍後再試'));
     });
-    
-    // 禁用公告按鈕處理
-    document.querySelectorAll('.btn-disable').forEach(button => {
+
+    // 禁用公告
+    document.querySelectorAll('.btn-disable').forEach(function(button) {
         button.addEventListener('click', function() {
-            const newsId = this.getAttribute('data-id');
+            const id = this.getAttribute('data-id');
             
-            // 這裡可以發送請求到後端進行禁用操作
-            // 目前只顯示一個確認對話框，實際功能需要根據後端API實現
-            if (confirm('確定要禁用此公告嗎？')) {
-                alert('禁用功能已觸發，ID: ' + newsId);
-                // 這裡可以添加實際的禁用邏輯
-            }
+            fetch('/Admin/News/Disable', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: id })
+            }).then(res => res.json())
+              .then(data => {
+                  if (data.success) {
+                      alert('禁用成功');
+                      location.reload();
+                  } else {
+                      alert('禁用失敗');
+                  }
+              })
+              .catch(() => alert('禁用失敗，請稍後再試'));
         });
     });
 </script>
