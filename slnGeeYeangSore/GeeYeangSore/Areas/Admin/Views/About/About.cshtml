@@ -6,6 +6,12 @@
 }
 
 <style>
+    .property-title-tooltip {
+        font-size: 20px !important;
+        max-width: 500px !important;
+        white-space: normal !important;
+    }
+
     .btn-main {
         background-color: #3CDDD2;
         border-color: #3CDDD2;
@@ -65,84 +71,77 @@
         </div>
     </div>
 
-    <!-- 表格卡片 -->
-    <div class="card shadow-lg rounded-4 mb-4">
-        <div class="card-header bg-primary text-white py-3">
-            <h5 class="mb-0">關於我們列表</h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle table-bordered table-striped mb-0">
-                    <thead class="table-primary text-center">
-                        <tr>
-                            <th style="width: 20%;">標題</th>
-                            <th style="width: 40%;">內容</th>
-                            <th style="width: 15%;">上傳時間</th>
-                            <th style="width: 15%;">修改時間</th>
-                            <th style="width: 10%;" colspan="2">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="aboutTableBody">
-                        @foreach (var item in Model)
-                        {
-                            <tr class="about-item" data-title="@item.HTitle">
-                                <td>@item.HTitle</td>
-                                <td>
-                                    <div class="text-truncate-container" id="content-@item.HAboutId">
-                                        <p class="mb-0">@item.HContent</p>
-                                    </div>
-                                    <small class="text-truncate-toggle" data-id="@item.HAboutId">展開全文</small>
-                                </td>
-                                <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
-                                <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
-                                <td class="text-center">
-                                    <!-- 編輯按鈕 -->
-                                    <button class="btn btn-warning btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
-                                        編輯
-                                    </button>
-                                </td>
-                                <td class="text-center">
-                                    <!-- 刪除按鈕 -->
-                                    <form action="DeleteAbout" method="post" style="display: inline;" onsubmit="return confirm('確定要刪除此內容嗎？');">
-                                        <input type="hidden" name="HAboutId" value="@item.HAboutId" />
-                                        <button type="submit" class="btn btn-danger btn-sm w-100">刪除</button>
-                                    </form>
-                                </td>
-                            </tr>
+    <!-- 表格區域 -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">標題</th>
+                    <th style="width: 40%;">內容</th>
+                    <th style="width: 15%;">上傳時間</th>
+                    <th style="width: 15%;">修改時間</th>
+                    <th style="width: 10%;" colspan="2">操作</th>
+                </tr>
+            </thead>
+            <tbody id="aboutTableBody">
+                @foreach (var item in Model)
+                {
+                    <tr class="about-item" data-title="@item.HTitle">
+                        <td>@item.HTitle</td>
+                        <td>
+                            <div class="text-truncate-container" id="content-@item.HAboutId">
+                                <p class="mb-0">@item.HContent</p>
+                            </div>
+                            <small class="text-truncate-toggle" data-id="@item.HAboutId">展開全文</small>
+                        </td>
+                        <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="text-center">
+                            <!-- 編輯按鈕 -->
+                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editAboutModal_@item.HAboutId">
+                                編輯
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <!-- 刪除按鈕 -->
+                            <form action="DeleteAbout" method="post" style="display: inline;" onsubmit="return confirm('確定要刪除此內容嗎？');">
+                                <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                                <button type="submit" class="btn btn-danger btn-sm w-100">刪除</button>
+                            </form>
+                        </td>
+                    </tr>
 
-                            <!-- 編輯關於我們 Modal -->
-                            <div class="modal fade" id="editAboutModal_@item.HAboutId" tabindex="-1" aria-labelledby="editAboutModalLabel_@item.HAboutId" aria-hidden="true">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="editAboutModalLabel_@item.HAboutId">編輯關於我們</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    <!-- 編輯關於我們 Modal -->
+                    <div class="modal fade" id="editAboutModal_@item.HAboutId" tabindex="-1" aria-labelledby="editAboutModalLabel_@item.HAboutId" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editAboutModalLabel_@item.HAboutId">編輯關於我們</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="UpdateAbout" method="post">
+                                        <div class="mb-3">
+                                            <label for="HTitle" class="form-label">標題</label>
+                                            <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
                                         </div>
-                                        <div class="modal-body">
-                                            <form action="UpdateAbout" method="post">
-                                                <div class="mb-3">
-                                                    <label for="HTitle" class="form-label">標題</label>
-                                                    <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="HContent" class="form-label">內容</label>
-                                                    <textarea class="form-control" id="HContent" name="HContent" rows="6" required>@item.HContent</textarea>
-                                                </div>
-                                                <input type="hidden" name="HAboutId" value="@item.HAboutId" />
-                                                <div class="d-flex justify-content-end mt-4">
-                                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
-                                                    <button type="submit" class="btn btn-success">更新</button>
-                                                </div>
-                                            </form>
+                                        <div class="mb-3">
+                                            <label for="HContent" class="form-label">內容</label>
+                                            <textarea class="form-control" id="HContent" name="HContent" rows="6" required>@item.HContent</textarea>
                                         </div>
-                                    </div>
+                                        <input type="hidden" name="HAboutId" value="@item.HAboutId" />
+                                        <div class="d-flex justify-content-end mt-4">
+                                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+                                            <button type="submit" class="btn btn-success">更新</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </div>
+                    </div>
+                }
+            </tbody>
+        </table>
     </div>
 
     <!-- 新增關於我們 Modal -->
