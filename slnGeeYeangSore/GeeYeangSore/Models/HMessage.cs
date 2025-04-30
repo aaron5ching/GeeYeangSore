@@ -41,6 +41,10 @@ public partial class HMessage
 
     public int? HIsEdited { get; set; }
 
+    public int? HReplyToMessageId { get; set; }
+
+    public int? HPropertyId { get; set; }
+
     public virtual HChat? HChat { get; set; }
 
     public virtual ICollection<HReport> HReports { get; set; } = new List<HReport>();

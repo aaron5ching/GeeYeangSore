@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="~/css/pageframework.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         /* 側邊欄樣式 */
         .sidebar {
@@ -87,13 +88,9 @@
             <div class="admin-info">
                 <i class="fa-solid fa-user"></i>
                 管理者：@loginUser (@loginRole)
-                <a class="btn btn-outline-light btn-sm ms-2" asp-controller="Login" asp-action="Logout" asp-area="">登出</a>
-            </div>
-        }
-        else
-        {
-            <div class="admin-info">
-                <a class="btn btn-outline-light btn-sm" asp-controller="Login" asp-action="Login">登入</a>
+                <a class="btn fw-bold ms-2" style="background-color: #3CDDD2; color: white; border-radius: 5px; padding: 6px 15px;" asp-controller="Login" asp-action="Logout" asp-area="">
+                    <i class="fa-solid fa-sign-out-alt me-1"></i> 登出
+                </a>
             </div>
         }
     </nav>
@@ -125,6 +122,7 @@
                     <li><a class="nav-link" asp-area="Admin" asp-controller="PropertyCheck" asp-action="Index">刊登審核</a>
                     </li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="Property" asp-action="Index">房源列表</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="PropertyAD" asp-action="Index">廣告列表</a></li>
                 </ul>
             </li>
             <li>
@@ -156,7 +154,7 @@
             <li>
                 <a class="nav-link" href="#"><i class="fa fa-cog"></i> <span>設定</span></a>
                 <ul class="nav flex-column ms-3">
-                    <li><a class="nav-link" asp-area="Admin" asp-controller="News" asp-action="News">快訊</a></li>
+                    <li><a class="nav-link" asp-area="Admin" asp-controller="News" asp-action="News">系統公告</a></li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="About" asp-action="About">關於我們</a></li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="Audit" asp-action="Audit">審核房東</a></li>
                     <li><a class="nav-link" asp-area="Admin" asp-controller="Contact" asp-action="Contact">聯絡我們</a></li>
@@ -178,8 +176,46 @@
         </div>
     </footer>
 
+    <!-- 登入彈窗 -->
+    @if (string.IsNullOrEmpty(loginUser))
+    {
+        <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background-color: #3CDDD2; color: white;">
+                        <h5 class="modal-title fw-bold" id="adminLoginModalLabel">
+                            <i class="fa-solid fa-user-shield me-2"></i>管理員登入
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="loginErrorAlert" class="alert alert-danger d-none" role="alert"></div>
+                        <form id="adminLoginForm">
+                            <div class="mb-4">
+                                <label for="txtAccount" class="form-label fw-bold"><i class="fa-solid fa-user me-2"></i>帳號</label>
+                                <input type="text" class="form-control form-control-lg" id="txtAccount" name="txtAccount" required placeholder="請輸入管理員帳號">
+                            </div>
+                            <div class="mb-4">
+                                <label for="txtPassword" class="form-label fw-bold"><i class="fa-solid fa-lock me-2"></i>密碼</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="password" class="form-control" id="txtPassword" name="txtPassword" required placeholder="請輸入密碼">
+                                    <span class="input-group-text" style="cursor: pointer;" onclick="togglePasswordVisibility()">
+                                        <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-lg" style="background-color: #3CDDD2; color: white; font-weight: bold;">
+                                    <i class="fa-solid fa-sign-in-alt me-2"></i>登入系統
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script>
         // 在頁面加載前檢查側邊欄狀態並應用
@@ -265,8 +301,42 @@
 
             // 移除頁面加載前的標記
             document.documentElement.classList.remove('sidebar-collapsed');
+            
+            // 註冊登入表單提交事件
+            $("#adminLoginForm").on("submit", function(e) {
+                e.preventDefault();
+                
+                // 隱藏之前的錯誤訊息
+                $("#loginErrorAlert").addClass("d-none");
+                
+                // 獲取表單數據
+                const adminData = {
+                    txtAccount: $("#txtAccount").val(),
+                    txtPassword: $("#txtPassword").val()
+                };
+                
+                // 發送 AJAX 請求到後端
+                $.ajax({
+                    url: "/Login/AdminLogin",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(adminData),
+                    success: function(response) {
+                        if (response.success) {
+                            // 登入成功，重新載入頁面
+                            window.location.reload();
+                        } else {
+                            // 顯示錯誤訊息
+                            $("#loginErrorAlert").removeClass("d-none").text(response.message || "登入失敗，請檢查您的帳號和密碼。");
+                        }
+                    },
+                    error: function() {
+                        $("#loginErrorAlert").removeClass("d-none").text("登入處理發生錯誤，請稍後再試。");
+                    }
+                });
+            });
         });
-
+        
         document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
 
         const mainLinks = document.querySelectorAll('#adminSidebar > ul > li > a');
@@ -275,7 +345,7 @@
                 const submenu = this.nextElementSibling;
                 if (submenu && submenu.tagName.toLowerCase() === 'ul') {
                     e.preventDefault();
-
+                    
                     // 如果側邊欄是收起狀態，先展開側邊欄
                     const sidebar = document.getElementById('adminSidebar');
                     const main = document.getElementById('adminMain');
@@ -300,6 +370,22 @@
                 }
             });
         });
+        
+        // 切換密碼顯示/隱藏
+        function togglePasswordVisibility() {
+            const passwordField = document.getElementById('txtPassword');
+            const icon = document.getElementById('password-toggle-icon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
     </script>
 
     @RenderSection("Scripts", required: false)

@@ -1,91 +1,231 @@
 ﻿@using System.Diagnostics
 @model IEnumerable<GeeYeangSore.Models.HGuide>
 
-<body>
-<!-- 顯示成功訊息 -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+@{
+    ViewData["Title"] = "指南管理";
 }
 
-<h2>📢請上傳指南... </h2>
-<section id="announcement">
-    <div class="card mb-4">
-        <div class="card-body">
-            <form action="Guide" method="post" id="Reply" enctype="multipart/form-data">
-                標題：<p class="card-title"></p>
-                <input class="form-control" id="HTitle" name="HTitle">
-                內容：<p class="card-title"></p>
-                <textarea class="form-control" name="HContent" id="HContent"></textarea>
-                公告時間：<p class="card-title"></p>
-                <label for="Image">選擇圖片：</label>
-                <input type="file" class="form-control" name="Image">
-                <br/>
-                <button type="submit" id="submitGuide" class="btn btn-success">提交公告</button>
-            </form>
+<style>
+    .btn-main {
+        background-color: #3CDDD2;
+        border-color: #3CDDD2;
+        color: white;
+    }
+
+    .btn-main:hover {
+        background-color: #24B4A8;
+        border-color: #24B4A8;
+        color: white;
+    }
+
+    .search-section {
+        background-color: #F0F9F8;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .text-truncate-container {
+        max-height: 80px;
+        overflow: hidden;
+    }
+    
+    .text-truncate-toggle {
+        cursor: pointer;
+        color: #3CDDD2;
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>指南手冊管理</h2>
+        <a href="/Admin/Home/Index" class="btn btn-main">返回首頁</a>
+    </div>
+
+    <!-- 顯示成功訊息 -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 搜尋區域 -->
+    <div class="search-section mb-4">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="searchTitle" class="form-label">搜尋標題</label>
+                <input type="text" class="form-control" id="searchTitle" placeholder="請輸入指南標題" onkeyup="searchGuides()" />
+            </div>
+            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button class="btn btn-warning me-2" style="width: 150px" data-bs-toggle="modal" data-bs-target="#addGuideModal">新增指南</button>
+                <button type="button" id="btnClear" class="btn btn-secondary" style="width: 150px">清除篩選</button>
+            </div>
         </div>
     </div>
-</section>
 
-<h2>📢已上傳指南： </h2>
-<section>
-    @* <div class="card mb-4"> *@
-        <div class="card-body">
-            @foreach (var item in Model)
-            {
-                <div class="border border-info border-2 p-3">
-                    <form action="UpdateGuide" method="post" enctype="multipart/form-data">
+    <!-- 表格卡片 -->
+    <div class="card shadow-lg rounded-4 mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered table-striped mb-0">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th style="width: 15%;">標題</th>
+                            <th style="width: 30%;">內容</th>
+                            <th style="width: 15%;">圖片</th>
+                            <th style="width: 10%;">公告時間</th>
+                            <th style="width: 10%;">修改時間</th>
+                            <th style="width: 10%;" colspan="2">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guideTableBody">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="guide-item" data-title="@item.HTitle">
+                                <td>@item.HTitle</td>
+                                <td>
+                                    <div class="text-truncate-container" id="content-@item.HGuideId">
+                                        <p class="mb-0">@item.HContent</p>
+                                    </div>
+                                    <small class="text-truncate-toggle" data-id="@item.HGuideId">展開全文</small>
+                                </td>
+                                <td class="text-center">
+                                    <img src="@Url.Content(item.HImagePath)" asp-append-version="true"
+                                         style="width: 120px; height: auto; max-height: 100px;" class="img-thumbnail" />
+                                </td>
+                                <td class="text-center">@item.HCreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">@item.HUpdatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">
+                                    <!-- 編輯按鈕，觸發編輯Modal -->
+                                    <button class="btn btn-warning btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editGuideModal_@item.HGuideId">
+                                        編輯
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <!-- 刪除按鈕 -->
+                                    <form action="DeleteGuide" method="post" style="display: inline;" onsubmit="return confirm('確定要刪除此指南嗎？');">
+                                        <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                        <button type="submit" class="btn btn-danger btn-sm w-100">刪除</button>
+                                    </form>
+                                </td>
+                            </tr>
 
-                        更新標題：
-                        <input class="form-control" id="HTitle" placeholder="請輸入要更新的標題" name="HTitle"
-                               value="@item.HTitle">
-                        更新內容：
-                        <textarea class="form-control replyContent" id="HContent" name="HContent"
-                                  placeholder="請輸入要更新的內容">@item.HContent</textarea>
-                        <div style="position: relative; left: 300px;">
-                            <img src="@Url.Content(item.HImagePath)" asp-append-version="true" alt="查無圖片"/>
-                        </div>
-                        公告時間：
-                        <p class="card-body">@item.HCreatedAt</p>
-                        更新時間：
-                        <p class="card-body">@item.HUpdatedAt</p>
-                        <label for="Image">選擇圖片：</label>
-                        <input type="file" class="form-control" name="Image">
-                        <br/>
-                        <input type="hidden" name="HGuideId" value="@item.HGuideId"/>
-                        @{
-                            Console.WriteLine($"{item.HGuideId}");
+                            <!-- 編輯指南 Modal -->
+                            <div class="modal fade" id="editGuideModal_@item.HGuideId" tabindex="-1" aria-labelledby="editGuideModalLabel_@item.HGuideId" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editGuideModalLabel_@item.HGuideId">編輯指南</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="UpdateGuide" method="post" enctype="multipart/form-data">
+                                                <div class="mb-3">
+                                                    <label for="HTitle" class="form-label">標題</label>
+                                                    <input type="text" class="form-control" id="HTitle" name="HTitle" value="@item.HTitle" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="HContent" class="form-label">內容</label>
+                                                    <textarea class="form-control" id="HContent" name="HContent" rows="5" required>@item.HContent</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="Image" class="form-label">選擇圖片</label>
+                                                    <input type="file" class="form-control" name="Image">
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">當前圖片：</small>
+                                                        <img src="@Url.Content(item.HImagePath)" class="img-fluid mt-2" style="max-height: 150px;" />
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" name="HGuideId" value="@item.HGuideId" />
+                                                <div class="d-flex justify-content-end mt-4">
+                                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+                                                    <button type="submit" class="btn btn-success">更新</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                        <button type="submit" id="submitGuide" class="btn btn-success">修改公告</button>
-                    </form>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-                    <!-- 刪除公告的表單 -->
-                    <form action="DeleteGuide" method="post">
-                        <input type="hidden" name="HGuideId" value="@item.HGuideId"/>
-                        <button type="submit" id="submitGuide" class="btn btn-danger">刪除公告</button>
+    <!-- 新增指南 Modal -->
+    <div class="modal fade" id="addGuideModal" tabindex="-1" aria-labelledby="addGuideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGuideModalLabel">新增指南</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="Guide" method="post" id="addGuideForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="HTitle" class="form-label">標題</label>
+                            <input type="text" class="form-control" id="HTitle" name="HTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="HContent" class="form-label">內容</label>
+                            <textarea class="form-control" id="HContent" name="HContent" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="Image" class="form-label">選擇圖片</label>
+                            <input type="file" class="form-control" name="Image" required>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-success">提交</button>
+                        </div>
                     </form>
                 </div>
-            }
+            </div>
         </div>
-    @* </div> *@
-</section>
+    </div>
+</div>
 
 <script>
-    document.getElementById("submitGuide").addEventListener("click", function (event) {
-        let titleInput = document.getElementById("HTitle");
-        let contentInput = document.getElementById("HContent");
+    // 搜尋指南
+    function searchGuides() {
+        let searchValue = document.getElementById("searchTitle").value.toLowerCase();
+        let guideItems = document.querySelectorAll(".guide-item");
 
-        if (titleInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入標題！");
-        }
-        if (contentInput.value.trim() === "") {
-            event.preventDefault(); // 阻止表單提交
-            alert("失敗！請輸入內容！");
-        }
+        guideItems.forEach(function(item) {
+            let title = item.getAttribute("data-title").toLowerCase();
+            if (title.includes(searchValue)) {
+                item.style.display = "";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    // 清除搜尋
+    document.getElementById('btnClear').addEventListener('click', function() {
+        document.getElementById('searchTitle').value = '';
+        searchGuides();
+    });
+
+    // 展開/收合內容
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggles = document.querySelectorAll('.text-truncate-toggle');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const contentDiv = document.getElementById('content-' + id);
+                
+                if (contentDiv.classList.contains('text-truncate-container')) {
+                    contentDiv.classList.remove('text-truncate-container');
+                    this.textContent = '收合';
+                } else {
+                    contentDiv.classList.add('text-truncate-container');
+                    this.textContent = '展開全文';
+                }
+            });
+        });
     });
 </script>
-</body>

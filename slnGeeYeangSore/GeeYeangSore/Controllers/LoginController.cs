@@ -15,49 +15,42 @@ namespace GeeYeangSore.Controllers
             _context = context;
         }
 
-        // 顯示登入頁面
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        // 登入
+        // AJAX 管理員登入處理
         [HttpPost]
-        public IActionResult Login(CLoginViewModel vm)
+        public IActionResult AdminLogin([FromBody] CLoginViewModel vm)
         {
             try
             {
-                // 先嘗試根據帳號查詢管理者
-                var adminByAccount = _context.HAdmins
+                // 根據帳號查詢管理者
+                var admin = _context.HAdmins
                     .FirstOrDefault(a => a.HAccount == vm.txtAccount);
 
-                if (adminByAccount != null)
+                if (admin != null)
                 {
                     bool isAuthenticated = false;
 
                     // 1. 檢查是否有鹽值，如果有則使用加鹽哈希驗證
-                    if (!string.IsNullOrEmpty(adminByAccount.HSalt))
+                    if (!string.IsNullOrEmpty(admin.HSalt))
                     {
                         isAuthenticated = PasswordHasher.VerifyPassword(
                             vm.txtPassword,
-                            adminByAccount.HSalt,
-                            adminByAccount.HPassword
+                            admin.HSalt,
+                            admin.HPassword
                         );
                     }
                     // 2. 否則使用直接比對（向後兼容）
-                    else if (adminByAccount.HPassword == vm.txtPassword)
+                    else if (admin.HPassword == vm.txtPassword)
                     {
                         isAuthenticated = true;
                     }
 
                     if (isAuthenticated)
                     {
-                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, adminByAccount.HAccount);
-                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, adminByAccount.HRoleLevel);
+                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_USER, admin.HAccount);
+                        HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, admin.HRoleLevel);
                         HttpContext.Session.SetString("UserType", "Admin");
 
-                        return RedirectToAction("Index", "Home", new { area = "Admin" });
+                        return Json(new { success = true });
                     }
                 }
 
@@ -71,18 +64,16 @@ namespace GeeYeangSore.Controllers
                     HttpContext.Session.SetString(CDictionary.SK_LOGINED_ROLE, "User");
                     HttpContext.Session.SetString("UserType", "Tenant");
 
-                    return RedirectToAction("Index", "Home"); // 前台頁面
+                    return Json(new { success = true });
                 }
 
-                ViewBag.LoginError = "帳號或密碼錯誤";
-                return View();
+                return Json(new { success = false, message = "帳號或密碼錯誤" });
             }
             catch (Exception ex)
             {
                 // 記錄錯誤
-                Console.WriteLine($"登入失敗: {ex.Message}");
-                ViewBag.LoginError = "登入處理發生錯誤，請稍後再試";
-                return View();
+                Console.WriteLine($"AJAX 登入失敗: {ex.Message}");
+                return Json(new { success = false, message = "登入處理發生錯誤，請稍後再試" });
             }
         }
 
@@ -90,7 +81,7 @@ namespace GeeYeangSore.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+            return RedirectToAction("Index", "Home", new { area = "Admin" });
         }
     }
 }

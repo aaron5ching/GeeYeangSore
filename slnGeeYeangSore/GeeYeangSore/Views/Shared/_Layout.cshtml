@@ -40,13 +40,17 @@
                                 <span class="nav-link text-dark">歡迎，@loginUser (@loginRole)</span>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Logout">登出</a>
+                                <a class="btn fw-bold" style="background-color: #3CDDD2; color: white; border-radius: 5px; padding: 6px 15px;" asp-area="" asp-controller="Login" asp-action="Logout">
+                                    <i class="fa-solid fa-sign-out-alt me-1"></i> 登出
+                                </a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">登入</a>
+                                <button type="button" class="btn fw-bold" style="background-color: #ffd166; color: white; border-radius: 5px; padding: 6px 15px;" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                                    <i class="fa-solid fa-sign-in-alt me-1"></i> 登入
+                                </button>
                             </li>
                         }
                     </ul>
@@ -65,9 +69,106 @@
             &copy; 2025 - GeeYeangSore - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
+    <!-- 登入彈窗 -->
+    @if (string.IsNullOrEmpty(loginUser))
+    {
+        <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background-color: #3CDDD2; color: white;">
+                        <h5 class="modal-title fw-bold" id="adminLoginModalLabel">
+                            <i class="fa-solid fa-user-shield me-2"></i>管理員登入
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="loginErrorAlert" class="alert alert-danger d-none" role="alert"></div>
+                        <form id="adminLoginForm">
+                            <div class="mb-4">
+                                <label for="txtAccount" class="form-label fw-bold"><i class="fa-solid fa-user me-2"></i>帳號</label>
+                                <input type="text" class="form-control form-control-lg" id="txtAccount" name="txtAccount" required placeholder="請輸入管理員帳號">
+                            </div>
+                            <div class="mb-4">
+                                <label for="txtPassword" class="form-label fw-bold"><i class="fa-solid fa-lock me-2"></i>密碼</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="password" class="form-control" id="txtPassword" name="txtPassword" required placeholder="請輸入密碼">
+                                    <span class="input-group-text" style="cursor: pointer;" onclick="togglePasswordVisibility()">
+                                        <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-lg" style="background-color: #3CDDD2; color: white; font-weight: bold;">
+                                    <i class="fa-solid fa-sign-in-alt me-2"></i>登入系統
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        // 切換密碼顯示/隱藏
+        function togglePasswordVisibility() {
+            const passwordField = document.getElementById('txtPassword');
+            const icon = document.getElementById('password-toggle-icon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // 當頁面加載完成
+        $(document).ready(function() {
+            // 註冊登入表單提交事件
+            $("#adminLoginForm").on("submit", function(e) {
+                e.preventDefault();
+                
+                // 隱藏之前的錯誤訊息
+                $("#loginErrorAlert").addClass("d-none");
+                
+                // 獲取表單數據
+                const adminData = {
+                    txtAccount: $("#txtAccount").val(),
+                    txtPassword: $("#txtPassword").val()
+                };
+                
+                // 發送 AJAX 請求到後端
+                $.ajax({
+                    url: "/Login/AdminLogin",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(adminData),
+                    success: function(response) {
+                        if (response.success) {
+                            // 登入成功，重新載入頁面
+                            window.location.reload();
+                        } else {
+                            // 顯示錯誤訊息
+                            $("#loginErrorAlert").removeClass("d-none").text(response.message || "登入失敗，請檢查您的帳號和密碼。");
+                        }
+                    },
+                    error: function() {
+                        $("#loginErrorAlert").removeClass("d-none").text("登入處理發生錯誤，請稍後再試。");
+                    }
+                });
+            });
+        });
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

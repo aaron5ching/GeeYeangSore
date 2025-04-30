@@ -11,7 +11,7 @@ public partial class HAdmin
 
     public string HPassword { get; set; } = null!;
 
-    public string? HSalt { get; set; }
+    public string HSalt { get; set; } = null!;
 
     public string HRoleLevel { get; set; } = null!;
 

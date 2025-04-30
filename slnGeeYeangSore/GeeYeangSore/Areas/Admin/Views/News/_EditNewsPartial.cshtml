@@ -1,0 +1,16 @@
+﻿@model GeeYeangSore.ViewModels.NewsViewModel
+
+<form id="editForm">
+    <div class="mb-3">
+        <label for="HTitle" class="form-label">公告標題</label>
+        <input type="text" class="form-control" id="HTitle" name="HTitle" value="@Model.HTitle" required>
+    </div>
+    <div class="mb-3">
+        <label for="HContent" class="form-label">公告內容</label>
+        <textarea class="form-control" id="HContent" name="HContent" rows="4" required>@Model.HContent</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="HImagePath" class="form-label">圖片</label>
+        <input type="file" class="form-control" id="HImagePath" name="HImagePath">
+    </div>
+</form>

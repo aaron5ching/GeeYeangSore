@@ -297,7 +297,9 @@ public partial class GeeYeangSoreContext : DbContext
 
         modelBuilder.Entity<HAudit>(entity =>
         {
-            entity.ToTable("h_Audit");
+            entity
+                //.HasNoKey();
+                .ToTable("h_Audit");
 
             entity.Property(e => e.HAuditId).HasColumnName("h_Audit_Id");
             entity.Property(e => e.HBankAccount)
@@ -607,10 +609,12 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HMessageType)
                 .HasMaxLength(50)
                 .HasColumnName("h_MessageType");
+            entity.Property(e => e.HPropertyId).HasColumnName("h_PropertyId");
             entity.Property(e => e.HReceiverId).HasColumnName("h_Receiver_Id");
             entity.Property(e => e.HReceiverRole)
                 .HasMaxLength(50)
                 .HasColumnName("h_ReceiverRole");
+            entity.Property(e => e.HReplyToMessageId).HasColumnName("h_ReplyToMessage_Id");
             entity.Property(e => e.HReportCount).HasColumnName("h_ReportCount");
             entity.Property(e => e.HSenderId).HasColumnName("h_Sender_Id");
             entity.Property(e => e.HSenderRole)
@@ -812,10 +816,10 @@ public partial class GeeYeangSoreContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("h_Last_Updated");
             entity.Property(e => e.HLatitude)
-                .HasColumnType("decimal(10, 8)")
+                .HasMaxLength(50)
                 .HasColumnName("h_Latitude");
             entity.Property(e => e.HLongitude)
-                .HasColumnType("decimal(10, 8)")
+                .HasMaxLength(50)
                 .HasColumnName("h_Longitude");
             entity.Property(e => e.HPropertyTitle)
                 .HasMaxLength(50)
@@ -958,7 +962,6 @@ public partial class GeeYeangSoreContext : DbContext
             entity.ToTable("h_Reactions");
 
             entity.Property(e => e.HReactionId).HasColumnName("h_Reaction_Id");
-            entity.Property(e => e.HAuthorId).HasColumnName("h_Author_Id");
             entity.Property(e => e.HAuthorType)
                 .HasMaxLength(50)
                 .HasColumnName("h_AuthorType");
@@ -975,6 +978,7 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HTargetType)
                 .HasMaxLength(50)
                 .HasColumnName("h_TargetType");
+            entity.Property(e => e.HTenantId).HasColumnName("h_Tenant_Id");
         });
 
         modelBuilder.Entity<HReply>(entity =>
@@ -1011,6 +1015,9 @@ public partial class GeeYeangSoreContext : DbContext
 
             entity.Property(e => e.HReportId).HasColumnName("h_ReportId");
             entity.Property(e => e.HAdminId).HasColumnName("h_Admin_Id");
+            entity.Property(e => e.HAdminNote)
+                .HasMaxLength(255)
+                .HasColumnName("h_AdminNote");
             entity.Property(e => e.HAuthorId).HasColumnName("h_Author_Id");
             entity.Property(e => e.HAuthorType)
                 .HasMaxLength(50)
@@ -1026,6 +1033,7 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HReportType)
                 .HasMaxLength(50)
                 .HasColumnName("h_Report_Type");
+            entity.Property(e => e.HReportedUserId).HasColumnName("h_ReportedUser_Id");
             entity.Property(e => e.HReviewedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("h_ReviewedAt");
