@@ -29,8 +29,27 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "GeeYeangSore", Version = "v1" });
+    c.DocInclusionPredicate((docName, apiDesc) =>
+        apiDesc.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor descriptor &&
+        descriptor.ControllerTypeInfo.Namespace != null &&
+        descriptor.ControllerTypeInfo.Namespace.StartsWith("GeeYeangSore.APIControllers"));
+});
 builder.Services.AddRazorPages();
-
+// 新增 CORS 政策
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueDevServer", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Vue dev server 埠號，根據實際情況調整
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // 前端要使用 session
+    });
+});
 // 添加 Session 服務
 builder.Services.AddSession(options =>
 {
@@ -45,6 +64,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
 }
 else
 {
@@ -53,10 +75,13 @@ else
 }
 
 app.UseHttpsRedirection();
+// 啟用靜態檔案服務
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+// 啟用 CORS 中介軟體
+app.UseCors("AllowVueDevServer");
 // 啟用 Session 中間件
 app.UseSession();
 
@@ -78,7 +103,7 @@ app.MapControllerRoute(
     name: "nonarea",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
-
+app.MapControllers();
 app.MapRazorPages();
 
 app.Run();

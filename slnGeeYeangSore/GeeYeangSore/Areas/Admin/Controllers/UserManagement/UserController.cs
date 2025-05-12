@@ -375,8 +375,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     HSalt = salt,
                     HAddress = newUser.HAddress ?? "未填寫",
                     HStatus = newUser.HStatus ?? "未驗證",
-                    HAuthProvider = "local",                            // 🔥 最常忽略的欄位
-                    HProviderId = null,
+                    
                     HImages = newUser.HImages,
                     HCreatedAt = DateTime.Now,
                     HUpdateAt = DateTime.Now,
