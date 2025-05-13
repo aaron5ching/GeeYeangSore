@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using GeeYeangSore.Data;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Http;
-
+using GeeYeangSore.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -57,7 +57,8 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-
+// 添加 SignalR
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -103,6 +104,8 @@ app.MapControllerRoute(
     name: "nonarea",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+// 加上 SignalR Hub 路由
+app.MapHub<ChatHub>("/hub");
 app.MapControllers();
 app.MapRazorPages();
 

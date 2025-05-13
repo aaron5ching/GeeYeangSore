@@ -77,7 +77,11 @@ namespace GeeYeangSore.Hubs
         /// <param name="fromId">發送者ID</param>
         /// <param name="toId">接收者ID</param>
         /// <param name="text">訊息內容</param>
-        public async Task SendMessage(string fromId, string toId, string text)
+        /// <param name="senderRole">發送者角色</param>
+        /// <param name="receiverRole">接收者角色</param>
+        /// <param name="messageType">訊息型別</param>
+        /// <param name="source">來源</param>
+        public async Task SendMessage(string fromId, string toId, string text, string senderRole = null, string receiverRole = null, string messageType = null, string source = null)
         {
             try
             {
@@ -88,12 +92,22 @@ namespace GeeYeangSore.Hubs
                     // 未登入，不處理
                     return;
                 }
+                if (string.IsNullOrWhiteSpace(senderRole) || string.IsNullOrWhiteSpace(receiverRole))
+                {
+                    await Clients.Caller.SendAsync("ReceiveError", "發送者角色與接收者角色不得為空");
+                    return;
+                }
                 // 1. 寫入資料庫
                 var msg = new HMessage
                 {
                     HSenderId = int.TryParse(fromId, out var f) ? f : (int?)null,
+                    HSenderRole = senderRole,
                     HReceiverId = int.TryParse(toId, out var t) ? t : (int?)null,
+                    HReceiverRole = receiverRole,
+                    HMessageType = messageType ?? "文字", // 預設文字
                     HContent = text,
+                    HIsRead = 0, // 預設未讀
+                    HSource = source ?? "私人", // 預設私人
                     HTimestamp = DateTime.Now
                 };
                 _db.HMessages.Add(msg);
@@ -106,6 +120,11 @@ namespace GeeYeangSore.Hubs
                     from = fromId,
                     to = toId,
                     text = text,
+                    senderRole = msg.HSenderRole,
+                    receiverRole = msg.HReceiverRole,
+                    messageType = msg.HMessageType,
+                    isRead = msg.HIsRead,
+                    source = msg.HSource,
                     time = msg.HTimestamp?.ToString("HH:mm") ?? ""
                 };
                 if (!string.IsNullOrEmpty(toId))
