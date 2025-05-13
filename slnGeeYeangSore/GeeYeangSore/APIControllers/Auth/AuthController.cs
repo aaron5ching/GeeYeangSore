@@ -90,25 +90,35 @@ namespace GeeYeangSore.APIControllers.Auth
         [HttpGet("me")]
         public IActionResult GetCurrentUser()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
+            try
             {
-                return Ok(new { success = false, message = "未登入" });
+                var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+                if (string.IsNullOrEmpty(email))
+                {
+                    return Unauthorized(new { success = false, message = "未登入" });
+                }
+
+                var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
+                if (tenant == null)
+                {
+                    return NotFound(new { success = false, message = "找不到該使用者" });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    user = tenant.HEmail,
+                    role = "User",
+                    tenantId = tenant.HTenantId,
+                    userName = tenant.HUserName,
+                    email = tenant.HEmail
+                });
             }
-            var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
+            catch (Exception ex)
             {
-                return Ok(new { success = false, message = "用戶不存在" });
+                return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
             }
-            return Ok(new
-            {
-                success = true,
-                user = tenant.HEmail,
-                role = "User",
-                tenantId = tenant.HTenantId,
-                userName = tenant.HUserName,
-                email = tenant.HEmail
-            });
         }
+
     }
 }
