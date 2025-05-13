@@ -2,11 +2,18 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using System;
+using GeeYeangSore.Models;
 
 namespace GeeYeangSore.Hubs
 {
     public class ChatHub : Hub
     {
+        private readonly GeeYeangSoreContext _db;
+        public ChatHub(GeeYeangSoreContext db)
+        {
+            _db = db;
+        }
+
         // 用戶連線 ID 列表
         public static List<string> ConnIDList = new List<string>();
 
@@ -65,7 +72,7 @@ namespace GeeYeangSore.Hubs
         }
 
         /// <summary>
-        /// 發送訊息（僅支援一對一），未登入不處理
+        /// 發送訊息（僅支援一對一），未登入不處理，並寫入資料庫
         /// </summary>
         /// <param name="fromId">發送者ID</param>
         /// <param name="toId">接收者ID</param>
@@ -81,13 +88,25 @@ namespace GeeYeangSore.Hubs
                     // 未登入，不處理
                     return;
                 }
+                // 1. 寫入資料庫
+                var msg = new HMessage
+                {
+                    HSenderId = int.TryParse(fromId, out var f) ? f : (int?)null,
+                    HReceiverId = int.TryParse(toId, out var t) ? t : (int?)null,
+                    HContent = text,
+                    HTimestamp = DateTime.Now
+                };
+                _db.HMessages.Add(msg);
+                await _db.SaveChangesAsync();
+
+                // 2. 推播訊息
                 var msgObj = new
                 {
-                    id = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), // 前端用 id
+                    id = msg.HMessageId,
                     from = fromId,
                     to = toId,
                     text = text,
-                    time = System.DateTime.Now.ToString("HH:mm")
+                    time = msg.HTimestamp?.ToString("HH:mm") ?? ""
                 };
                 if (!string.IsNullOrEmpty(toId))
                 {
