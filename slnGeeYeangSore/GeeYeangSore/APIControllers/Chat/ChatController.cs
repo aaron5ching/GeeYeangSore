@@ -22,17 +22,50 @@ namespace GeeYeangSore.APIControllers.Chat
             if (access != null) return access;
 
             var tenant = GetCurrentTenant();
+            if (tenant == null)
+                return Unauthorized(new { success = false, message = "未登入" });
             var userId = tenant.HTenantId;
 
-            // 查詢所有接收者是自己(userId)的訊息，依發送者分組，取每組最新一則
-            var latestMessages = await _db.HMessages
+            // 方法1：先查詢所有訊息再分組，適合少量資料
+            var allMessages = await _db.HMessages
                 .Where(m => m.HReceiverId == userId)
-                .GroupBy(m => m.HSenderId)
-                .Select(g => g.OrderByDescending(m => m.HTimestamp).FirstOrDefault())
                 .OrderByDescending(m => m.HTimestamp)
                 .ToListAsync();
 
-            return Ok(new { success = true, data = latestMessages });
+            var latestMessages = allMessages
+                .GroupBy(m => m.HSenderId)
+                .Select(g => g.First())
+                .OrderByDescending(m => m.HTimestamp)
+                .ToList();
+
+            //方法二（用匿名型別包裹），適合大量資料
+            // var latestMessages = await _db.HMessages
+            //     .Where(m => m.HReceiverId == userId)
+            //     .GroupBy(m => m.HSenderId)
+            //     .Select(g => new
+            //     {
+            //         Message = g.OrderByDescending(m => m.HTimestamp).FirstOrDefault()
+            //     })
+            //     .ToListAsync();
+
+            // 依據HSenderId join HTenant取得名稱
+            var contactIds = latestMessages.Select(m => m.HSenderId).Distinct().ToList();
+            var contactNames = _db.HTenants
+                .Where(t => contactIds.Contains(t.HTenantId))
+                .ToDictionary(t => t.HTenantId, t => t.HUserName);
+
+            var result = latestMessages.Select(m => new
+            {
+                m.HMessageId,
+                m.HSenderId,
+                //將id改成username
+                SenderName = contactNames.ContainsKey(m.HSenderId ?? 0) ? contactNames[m.HSenderId ?? 0] : $"聯絡人{m.HSenderId}",
+                m.HContent,
+                m.HTimestamp,
+                m.HReceiverId
+            }).ToList();
+
+            return Ok(new { success = true, data = result });
         }
 
         // 取得與指定對象的聊天紀錄
