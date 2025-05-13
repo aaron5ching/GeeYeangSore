@@ -8,25 +8,20 @@ namespace GeeYeangSore.APIControllers.Chat
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatController : ControllerBase
+    public class ChatController : BaseController
     {
-        private readonly GeeYeangSoreContext _db;
+        public ChatController(GeeYeangSoreContext db) : base(db) { }
 
-        public ChatController(GeeYeangSoreContext db)
-        {
-            _db = db;
-        }
 
-        // 取得目前登入者的聊天室列表（只用HMessage，依發送者分組）
+        // 取得目前登入者的聊天室列表
         [HttpGet("chatlist")]
         public async Task<IActionResult> GetChatList()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized(new { success = false, message = "未登入" });
-            var tenant = await _db.HTenants.FirstOrDefaultAsync(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
-                return Unauthorized(new { success = false, message = "帳號不存在" });
+            //自動檢查登入、黑名單、房東身分
+            var access = CheckAccess();
+            if (access != null) return access;
+
+            var tenant = GetCurrentTenant();
             var userId = tenant.HTenantId;
 
             // 查詢所有接收者是自己(userId)的訊息，依發送者分組，取每組最新一則
@@ -44,12 +39,11 @@ namespace GeeYeangSore.APIControllers.Chat
         [HttpGet("history/{otherId}")]
         public async Task<IActionResult> GetChatHistory(int otherId)
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized(new { success = false, message = "未登入" });
-            var tenant = await _db.HTenants.FirstOrDefaultAsync(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
-                return Unauthorized(new { success = false, message = "帳號不存在" });
+            //自動檢查登入、黑名單、房東身分
+            var access = CheckAccess();
+            if (access != null) return access;
+
+            var tenant = GetCurrentTenant();
             var userId = tenant.HTenantId;
 
             // 查詢與指定對象的所有訊息（雙向）
