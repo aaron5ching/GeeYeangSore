@@ -3,62 +3,110 @@ using GeeYeangSore.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace GeeYeangSore.APIControllers.Chat
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatController : ControllerBase
+    public class ChatController : BaseController
     {
-        private readonly GeeYeangSoreContext _db;
+        public ChatController(GeeYeangSoreContext db) : base(db) { }
 
-        public ChatController(GeeYeangSoreContext db)
-        {
-            _db = db;
-        }
-
-        // 取得目前登入者的聊天室列表（只用HMessage，依發送者分組）
+        // 取得目前登入者的聊天室列表
         [HttpGet("chatlist")]
         public async Task<IActionResult> GetChatList()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized(new { success = false, message = "未登入" });
-            var tenant = await _db.HTenants.FirstOrDefaultAsync(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
-                return Unauthorized(new { success = false, message = "帳號不存在" });
-            var userId = tenant.HTenantId;
+            try
+            {
+                //自動檢查登入、黑名單、房東身分
+                var access = CheckAccess();
+                if (access != null) return access;
 
-            // 查詢所有接收者是自己(userId)的訊息，依發送者分組，取每組最新一則
-            var latestMessages = await _db.HMessages
-                .Where(m => m.HReceiverId == userId)
-                .GroupBy(m => m.HSenderId)
-                .Select(g => g.OrderByDescending(m => m.HTimestamp).FirstOrDefault())
-                .OrderByDescending(m => m.HTimestamp)
-                .ToListAsync();
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+                var userId = tenant.HTenantId;
 
-            return Ok(new { success = true, data = latestMessages });
+                // 方法1：先查詢所有訊息再分組，適合少量資料
+                var allMessages = await _db.HMessages
+                    .Where(m => m.HReceiverId == userId)
+                    .OrderByDescending(m => m.HTimestamp)
+                    .ToListAsync();
+
+                var latestMessages = allMessages
+                    .GroupBy(m => m.HSenderId)
+                    .Select(g => g.First())
+                    .OrderByDescending(m => m.HTimestamp)
+                    .ToList();
+
+                //方法二（用匿名型別包裹），適合大量資料
+                // var latestMessages = await _db.HMessages
+                //     .Where(m => m.HReceiverId == userId)
+                //     .GroupBy(m => m.HSenderId)
+                //     .Select(g => new
+                //     {
+                //         Message = g.OrderByDescending(m => m.HTimestamp).FirstOrDefault()
+                //     })
+                //     .ToListAsync();
+
+                // var result = latestMessages
+                //     .Select(x => x.Message)
+                //     .OrderByDescending(m => m.HTimestamp)
+                //     .ToList();
+
+                // 依據HSenderId join HTenant取得名稱
+                var contactIds = latestMessages.Select(m => m.HSenderId).Distinct().ToList();
+                var contactNames = _db.HTenants
+                    .Where(t => contactIds.Contains(t.HTenantId))
+                    .ToDictionary(t => t.HTenantId, t => t.HUserName);
+
+                var result = latestMessages.Select(m => new
+                {
+                    m.HMessageId,
+                    m.HSenderId,
+                    //將id改成username
+                    SenderName = contactNames.ContainsKey(m.HSenderId ?? 0) ? contactNames[m.HSenderId ?? 0] : $"聯絡人{m.HSenderId}",
+                    m.HContent,
+                    m.HTimestamp,
+                    m.HReceiverId
+                }).ToList();
+
+                return Ok(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "伺服器發生錯誤", error = ex.Message });
+            }
         }
 
         // 取得與指定對象的聊天紀錄
         [HttpGet("history/{otherId}")]
         public async Task<IActionResult> GetChatHistory(int otherId)
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized(new { success = false, message = "未登入" });
-            var tenant = await _db.HTenants.FirstOrDefaultAsync(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
-                return Unauthorized(new { success = false, message = "帳號不存在" });
-            var userId = tenant.HTenantId;
+            try
+            {
+                //自動檢查登入、黑名單、房東身分
+                var access = CheckAccess();
+                if (access != null) return access;
 
-            // 查詢與指定對象的所有訊息（雙向）
-            var messages = await _db.HMessages
-                .Where(m => (m.HSenderId == userId && m.HReceiverId == otherId) || (m.HSenderId == otherId && m.HReceiverId == userId))
-                .OrderBy(m => m.HTimestamp)
-                .ToListAsync();
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+                var userId = tenant.HTenantId;
 
-            return Ok(new { success = true, data = messages });
+                // 查詢與指定對象的所有訊息（雙向）
+                var messages = await _db.HMessages
+                    .Where(m => (m.HSenderId == userId && m.HReceiverId == otherId) || (m.HSenderId == otherId && m.HReceiverId == userId))
+                    .OrderBy(m => m.HTimestamp)
+                    .ToListAsync();
+
+                return Ok(new { success = true, data = messages });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "伺服器發生錯誤", error = ex.Message });
+            }
         }
     }
 }
