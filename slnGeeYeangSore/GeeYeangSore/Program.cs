@@ -44,10 +44,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueDevServer", policy =>
     {
+        //http://localhost:5174/
         policy.WithOrigins("http://localhost:5174") // Vue dev server 埠號，根據實際情況調整
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // 前端要使用 session
+              .AllowCredentials();
     });
 });
 // 添加 Session 服務

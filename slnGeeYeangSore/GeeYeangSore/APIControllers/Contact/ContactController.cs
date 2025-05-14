@@ -16,12 +16,17 @@ public class ContactController : ControllerBase
     }
 
     [HttpPost("contact")]
-    public IActionResult GetNews(object data)
+    public IActionResult GetContact([FromBody] HContact data)
     {
+        Console.WriteLine("666");
+        data.HCreatedAt=DateTime.UtcNow;
+        Console.WriteLine($"Email: {data.HEmail}, Phone: {data.HPhoneNumber}, Title: {data.HTitle}, Message: {data.HReplyContent}");
+        
+        _db.HContacts.Add(data);
 
-        Console.WriteLine(data);
-        return Ok(new { response = data});
+        _db.SaveChangesAsync();
+        
+        return Ok(new { response = "資料庫寫入完成", data });
     }
-    
     
 }

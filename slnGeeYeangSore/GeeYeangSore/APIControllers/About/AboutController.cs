@@ -19,7 +19,7 @@ public class AboutController: ControllerBase
     public IActionResult GetNews()
     {
         var news = _db.HAbouts.ToList();
-        
+        Console.WriteLine(news);
         return Ok(new { response = news});
     }
     
