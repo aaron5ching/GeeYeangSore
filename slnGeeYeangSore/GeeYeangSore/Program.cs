@@ -54,7 +54,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
-});
+});     
 // 添加 Session 服務
 builder.Services.AddSession(options =>
 {
