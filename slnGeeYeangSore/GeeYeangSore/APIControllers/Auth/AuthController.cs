@@ -46,7 +46,7 @@ namespace GeeYeangSore.APIControllers.Auth
             // 寫入 Session
             HttpContext.Session.SetString("SK_LOGINED_USER", tenant.HEmail);
 
-            // 回傳
+            // 回傳登入成功資料
             return Ok(new
             {
                 success = true,
@@ -81,47 +81,40 @@ namespace GeeYeangSore.APIControllers.Auth
         {
             try
             {
+                // 從 Session 取得登入的 Email
                 var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
                 if (string.IsNullOrEmpty(email))
                 {
                     return Unauthorized(new { success = false, message = "未登入" });
                 }
 
+                // 查找租客資料
                 var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
                 if (tenant == null)
                 {
                     return NotFound(new { success = false, message = "找不到該使用者" });
                 }
 
+                // 判斷是否為房東
+                bool isLandlord = _db.HLandlords.Any(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
+                string role = isLandlord && tenant.HIsTenant ? "both"
+                            : isLandlord ? "landlord"
+                            : "tenant";
+
+                // 回傳使用者資訊
                 return Ok(new
                 {
                     success = true,
                     user = tenant.HEmail,
-                    role = "User",
-                    tenantId = tenant.HTenantId,
                     userName = tenant.HUserName,
-                    email = tenant.HEmail
+                    tenantId = tenant.HTenantId,
+                    role = role
                 });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
             }
-
-            // 先判斷是否為房東
-            bool isLandlord = _db.HLandlords.Any(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
-            string role = isLandlord ? "landlord" : "tenant";
-            if (isLandlord && tenant.HIsTenant)
-                role = "both";
-            return Ok(new
-            {
-                success = true,
-                user = tenant.HEmail,
-                userName = tenant.HUserName,
-                tenantId = tenant.HTenantId,
-                role = role
-            });
         }
-
     }
 }
