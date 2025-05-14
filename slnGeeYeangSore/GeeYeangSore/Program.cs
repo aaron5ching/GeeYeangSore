@@ -4,7 +4,12 @@ using GeeYeangSore.Data;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Http;
 using GeeYeangSore.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var backendName = Environment.GetEnvironmentVariable("BACKEND_NAME");
+var port = Environment.GetEnvironmentVariable("CUSTOM_PORT") ?? "7022";
+var vueOrigin = Environment.GetEnvironmentVariable("VUE_ORIGIN") ?? "http://localhost:5173";
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -44,10 +49,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueDevServer", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Vue dev server 埠號，根據實際情況調整
+        policy.WithOrigins(vueOrigin)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // 前端要使用 session
+              .AllowCredentials();
     });
 });
 // 添加 Session 服務
@@ -60,6 +65,7 @@ builder.Services.AddSession(options =>
 // 添加 SignalR
 builder.Services.AddSignalR();
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
