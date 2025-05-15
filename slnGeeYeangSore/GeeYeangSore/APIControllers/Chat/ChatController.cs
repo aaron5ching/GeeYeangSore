@@ -30,15 +30,15 @@ namespace GeeYeangSore.APIControllers.Chat
 
                 // 方法1：先查詢所有訊息再分組，適合少量資料
                 var allMessages = await _db.HMessages
-                    .Where(m => m.HReceiverId == userId)
-                    .OrderByDescending(m => m.HTimestamp)
-                    .ToListAsync();
+    .Where(m => m.HReceiverId == userId || m.HSenderId == userId)
+    .OrderByDescending(m => m.HTimestamp)
+    .ToListAsync();
 
                 var latestMessages = allMessages
-                    .GroupBy(m => m.HSenderId)
-                    .Select(g => g.First())
-                    .OrderByDescending(m => m.HTimestamp)
-                    .ToList();
+     .GroupBy(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+     .Select(g => g.OrderByDescending(m => m.HTimestamp).First())
+     .OrderByDescending(m => m.HTimestamp)
+     .ToList();
 
                 //方法二（用匿名型別包裹），適合大量資料
                 // var latestMessages = await _db.HMessages
@@ -56,23 +56,30 @@ namespace GeeYeangSore.APIControllers.Chat
                 //     .ToList();
 
                 // 依據HSenderId join HTenant取得名稱
-                var contactIds = latestMessages.Select(m => m.HSenderId).Distinct().ToList();
+                var contactIds = latestMessages
+    .Select(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+    .Distinct()
+    .ToList();
+
                 var contactNames = _db.HTenants
                     .Where(t => contactIds.Contains(t.HTenantId))
                     .ToDictionary(t => t.HTenantId, t => t.HUserName);
 
-                var result = latestMessages.Select(m => new
+                var result = latestMessages.Select(m =>
                 {
-                    m.HMessageId,
-                    m.HSenderId,
-                    //將id改成username
-                    SenderName = contactNames.ContainsKey(m.HSenderId ?? 0) ? contactNames[m.HSenderId ?? 0] : $"聯絡人{m.HSenderId}",
-                    m.HContent,
-                    m.HTimestamp,
-                    m.HReceiverId
+                    var targetId = m.HSenderId == userId ? m.HReceiverId : m.HSenderId;
+                    return new
+                    {
+                        m.HMessageId,
+                        HSenderId = targetId,
+                        SenderName = contactNames.ContainsKey(targetId ?? 0) ? contactNames[targetId ?? 0] : $"聯絡人{targetId}",
+                        m.HContent,
+                        m.HTimestamp,
+                        m.HReceiverId
+                    };
                 }).ToList();
 
-                return Ok(new { success = true, data = result });
+                return Ok(new { success = true, data = result, selfId = userId });
             }
             catch (Exception ex)
             {

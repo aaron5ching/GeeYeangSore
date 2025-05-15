@@ -118,18 +118,29 @@ namespace GeeYeangSore.Hubs
                     HTimestamp = DateTime.Now
                 };
 
+                // 新增訊息
                 _db.HMessages.Add(msg);
                 await _db.SaveChangesAsync();
+                await _db.Entry(msg).ReloadAsync(); // 確保讀取自動產生的 ID
 
+                // 建立完整訊息物件
                 var msgObj = new
                 {
-                    from = fromId,
-                    to = toId,
-                    text = text,
-                    time = DateTime.Now.ToString("HH:mm")
+                    id = msg.HMessageId,
+                    from = msg.HSenderId,
+                    to = msg.HReceiverId,
+                    text = msg.HContent,
+                    senderRole = msg.HSenderRole,
+                    receiverRole = msg.HReceiverRole,
+                    messageType = msg.HMessageType,
+                    isRead = msg.HIsRead,
+                    source = msg.HSource,
+                    time = msg.HTimestamp != null ? msg.HTimestamp.Value.ToString("HH:mm") : ""
                 };
 
                 await Clients.Caller.SendAsync("ReceiveMessage", msgObj);
+                await Clients.Client(ChatHub.UserConnMap.GetValueOrDefault(msg.HReceiverId ?? 0))
+                              .SendAsync("ReceiveMessage", msgObj);
             }
             catch (Exception ex)
             {
