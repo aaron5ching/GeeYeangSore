@@ -40,7 +40,6 @@
   <ItemGroup>
     <Folder Include="Areas\Admin\Data\" />
     <Folder Include="Areas\Admin\Models\" />
-    <Folder Include="DTO\User\" />
     <Folder Include="wwwroot\images\Property\" />
   </ItemGroup>
 

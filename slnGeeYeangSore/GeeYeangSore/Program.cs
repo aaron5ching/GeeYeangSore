@@ -4,6 +4,7 @@ using GeeYeangSore.Data;
 using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Http;
 using GeeYeangSore.Hubs;
+using GeeYeangSore.Settings; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +67,14 @@ builder.Services.AddSession(options =>
 });
 // 添加 SignalR
 builder.Services.AddSignalR();
+
+//添加SMTP
+builder.Services.Configure<SmtpSettings>(
+builder.Configuration.GetSection("SmtpSettings"));
+
 var app = builder.Build();
+
+
 
 
 // Configure the HTTP request pipeline.
