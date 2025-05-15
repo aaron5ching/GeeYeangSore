@@ -32,19 +32,23 @@ namespace GeeYeangSore.APIControllers.Auth
                 return Unauthorized(new { success = false, message = "查無此帳號" });
 
             // 驗證密碼
-            if (!PasswordHasher.VerifyPassword(vm.txtPassword, tenant.HSalt, tenant.HPassword))
+            if (!VerifyTenantPassword(tenant, vm.txtPassword))
                 return Unauthorized(new { success = false, message = "密碼錯誤" });
 
-            // 判斷是否為房東
-            bool isLandlord = _db.HLandlords.Any(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
+            // 判斷是房東還是房客
+            bool isLandlord = tenant.HIsLandlord;
+            string role;
+            if (isLandlord)
+            {
+                role = "landlord";
+            }
+            else
+            {
+                role = "tenant";
+            }
 
-            // 判斷角色
-            string role = isLandlord && tenant.HIsTenant ? "both"
-                        : isLandlord ? "landlord"
-                        : "tenant";
-
-            // 寫入 Session
-            HttpContext.Session.SetString("SK_LOGINED_USER", tenant.HEmail);
+            // 登入成功時寫入 Session
+            SessionManager.SetLogin(HttpContext, tenant);
 
             // 回傳登入成功資料
             return Ok(new
@@ -82,12 +86,11 @@ namespace GeeYeangSore.APIControllers.Auth
         {
             try
             {
+                if (!SessionManager.IsLoggedIn(HttpContext))
+                    return Unauthorized(new { success = false, message = "未登入" });
                 // 從 Session 取得登入的 Email
                 var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-                if (string.IsNullOrEmpty(email))
-                {
-                    return Unauthorized(new { success = false, message = "未登入" });
-                }
+
 
                 // 查找租客資料
                 var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
@@ -96,11 +99,17 @@ namespace GeeYeangSore.APIControllers.Auth
                     return NotFound(new { success = false, message = "找不到該使用者" });
                 }
 
-                // 判斷是否為房東
-                bool isLandlord = _db.HLandlords.Any(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
-                string role = isLandlord && tenant.HIsTenant ? "both"
-                            : isLandlord ? "landlord"
-                            : "tenant";
+                // 判斷是房東還是房客
+                bool isLandlord = tenant.HIsLandlord;
+                string role;
+                if (isLandlord)
+                {
+                    role = "landlord";
+                }
+                else
+                {
+                    role = "tenant";
+                }
 
                 // 回傳使用者資訊
                 return Ok(new
@@ -109,7 +118,8 @@ namespace GeeYeangSore.APIControllers.Auth
                     user = tenant.HEmail,
                     userName = tenant.HUserName,
                     tenantId = tenant.HTenantId,
-                    role = role
+                    role = role,
+                    isLandlord = tenant.HIsLandlord
                 });
             }
             catch (Exception ex)
