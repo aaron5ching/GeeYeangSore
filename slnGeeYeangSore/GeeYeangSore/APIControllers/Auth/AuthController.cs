@@ -53,7 +53,8 @@ namespace GeeYeangSore.APIControllers.Auth
                 user = tenant.HEmail,
                 userName = tenant.HUserName,
                 tenantId = tenant.HTenantId,
-                role = role
+                role = role,
+                isLandlord = tenant.HIsLandlord
             });
         }
 
