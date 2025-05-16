@@ -16,28 +16,49 @@ public class GuideController : ControllerBase
         _webHostEnvironment = webHostEnvironment;
     }
 
+    // [HttpGet("guide")]
+    // public IActionResult GetGuideData()
+    // {
+    //     var data = _db.HGuides.ToList();
+    //
+    //
+    //     for (int i = 0; i < data.Count; i++)
+    //     {
+    //         var filePath = Path.Combine(_webHostEnvironment.WebRootPath, data[i].HImagePath.TrimStart('/'));
+    //         var imageBytes = System.IO.File.ReadAllBytes(filePath);
+    //         data[i].HImagePath = System.Convert.ToBase64String(imageBytes);
+    //     }
+    //
+    //     Console.WriteLine(data);
+    //
+    //     return Ok(new { response = data });
+    // }
+    //
+    //
+    // [HttpGet("guide")]
+    // public IActionResult GetGuideImage()
+    // {
+    //     var data = _db.HGuides.ToList();
+    //
+    //     return Ok(new { response = data });
+    // }
+    
     [HttpGet("guide")]
-    public IActionResult GetGuideData()
+    public IActionResult GetGuideData([FromQuery] bool includeImage = false)
     {
         var data = _db.HGuides.ToList();
 
-
-        for (int i = 0; i < data.Count; i++)
+        if (includeImage)
         {
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, data[i].HImagePath.TrimStart('/'));
-            var imageBytes = System.IO.File.ReadAllBytes(filePath);
-            data[i].HImagePath = System.Convert.ToBase64String(imageBytes);
+            for (int i = 0; i < data.Count; i++)
+            {
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, data[i].HImagePath.TrimStart('/'));
+                var imageBytes = System.IO.File.ReadAllBytes(filePath);
+                data[i].HImagePath = System.Convert.ToBase64String(imageBytes);
+            }
         }
 
-        Console.WriteLine(data);
-
         return Ok(new { response = data });
     }
 
-    public IActionResult GetGuideImage()
-    {
-        var data = _db.HGuides.ToList();
-
-        return Ok(new { response = data });
-    }
 }
