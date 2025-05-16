@@ -8,6 +8,7 @@ using GeeYeangSore.DTO.User;
 using GeeYeangSore.Settings; //加入SMTP設定
 using Microsoft.Extensions.Options; //載入appsettings.json
 
+namespace GeeYeangSore.APIControllers;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -7,5 +7,5 @@ public class SendTokenDto
     [EmailAddress]
     public string UserEmail { get; set; }
 
-    public string Device { get; set; } //未來擴充（裝置辨識、記錄來源）預留空間
+    //public string Device { get; set; } //未來擴充（裝置辨識、記錄來源）預留空間
 }
