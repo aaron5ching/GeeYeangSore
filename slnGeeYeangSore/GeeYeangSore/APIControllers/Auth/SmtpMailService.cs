@@ -55,6 +55,7 @@ public class EmailTokenController : ControllerBase
                 existingToken.HResetExpiresAt = DateTime.UtcNow.AddMinutes(10);
                 existingToken.HCreatedAt = DateTime.UtcNow;
                 existingToken.HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+                existingToken.HTokenType = "Register"; // ✅ 註冊用途
             }
             else
             {
@@ -67,7 +68,8 @@ public class EmailTokenController : ControllerBase
                     HResetExpiresAt = DateTime.UtcNow.AddMinutes(10),
                     HIsUsed = false,
                     HCreatedAt = DateTime.UtcNow,
-                    HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString()
+                    HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    HTokenType = "Register"
                 };
                 _context.HEmailTokens.Add(token);
             }
@@ -79,32 +81,41 @@ public class EmailTokenController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"錯誤：{ex.Message}");
+            Console.WriteLine("發送註冊驗證信錯誤：" + ex.ToString()); // ✅ 印出 inner exception
+            return StatusCode(500, new { success = false, message = "寄送失敗", error = ex.ToString() });
         }
+
     }
 
     // ✅ 比對驗證碼
     [HttpPost("verify-token")]
     public IActionResult VerifyToken([FromBody] VerifyTokenDto dto)
     {
+        // 🐥 僅查詢註冊用途的驗證碼，避免混用
         var record = _context.HEmailTokens
-            .Where(x => x.HUserEmail == dto.UserEmail && !x.HIsUsed && x.HResetExpiresAt > DateTime.UtcNow)
+            .Where(x => x.HUserEmail == dto.UserEmail &&
+                        !x.HIsUsed &&
+                        x.HResetExpiresAt > DateTime.UtcNow &&
+                        x.HTokenType == "Register") // ✅ 加入用途條件
             .OrderByDescending(x => x.HCreatedAt)
             .FirstOrDefault();
 
         if (record == null)
             return BadRequest("查無驗證資料或已過期");
 
+        // 🐥 比對驗證碼是否正確（含 salt 雜湊）
         string hashedInput = HashToken(dto.InputToken + record.HEmailSalt);
         if (hashedInput != record.HEmailToken1)
             return BadRequest("驗證碼錯誤");
 
+        // 🐥 記錄驗證成功時間與狀態
         record.HIsUsed = true;
         record.HUsedAt = DateTime.UtcNow;
         _context.SaveChanges();
 
         return Ok("驗證成功");
     }
+
 
     // 隨機6位驗證碼
     private string GenerateRandomToken()
