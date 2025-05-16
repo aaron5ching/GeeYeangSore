@@ -42,19 +42,38 @@ public class EmailTokenController : ControllerBase
             await SendEmailAsync(dto.UserEmail, rawToken);
 
             // 3. 儲存驗證碼至資料庫
-            var token = new HEmailToken
-            {
-                HUserEmail = userEmail,
-                HEmailToken1 = hashedToken, // 注意這是 HEmailToken1，不是 HEmailToken
-                HEmailSalt = salt,
-                HResetExpiresAt = DateTime.UtcNow.AddMinutes(10),
-                HIsUsed = false,
-                HCreatedAt = DateTime.UtcNow,
-                HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString()
-            };
+            var existingToken = _context.HEmailTokens
+                .Where(x => x.HUserEmail == userEmail && !x.HIsUsed)
+                .OrderByDescending(x => x.HCreatedAt)
+                .FirstOrDefault();
 
-            _context.HEmailTokens.Add(token);
+            if (existingToken != null)
+            {
+                // ✅ 更新原有資料
+                existingToken.HEmailToken1 = hashedToken;
+                existingToken.HEmailSalt = salt;
+                existingToken.HResetExpiresAt = DateTime.UtcNow.AddMinutes(10);
+                existingToken.HCreatedAt = DateTime.UtcNow;
+                existingToken.HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            }
+            else
+            {
+                // ✅ 沒有就新增一筆
+                var token = new HEmailToken
+                {
+                    HUserEmail = userEmail,
+                    HEmailToken1 = hashedToken,
+                    HEmailSalt = salt,
+                    HResetExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                    HIsUsed = false,
+                    HCreatedAt = DateTime.UtcNow,
+                    HRequestIp = HttpContext.Connection.RemoteIpAddress?.ToString()
+                };
+                _context.HEmailTokens.Add(token);
+            }
+
             await _context.SaveChangesAsync();
+
 
             return Ok("驗證信已寄出");
         }
