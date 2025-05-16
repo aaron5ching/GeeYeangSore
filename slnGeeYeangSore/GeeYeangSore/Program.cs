@@ -49,7 +49,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueDevServer", policy =>
     {
-        policy.WithOrigins(vueOrigin)
+        policy.WithOrigins(vueOrigin,"http://localhost:5176")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

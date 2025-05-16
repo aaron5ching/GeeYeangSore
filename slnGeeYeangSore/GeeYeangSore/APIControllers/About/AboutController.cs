@@ -18,9 +18,10 @@ public class AboutController: ControllerBase
     [HttpGet("about")]
     public IActionResult GetNews()
     {
-        var news = _db.HAbouts.ToList();
-        Console.WriteLine(news);
-        return Ok(new { response = news});
+        var about = _db.HAbouts.ToList();
+        
+        
+        return Ok(new { response = about});
     }
     
 }

@@ -1,8 +1,6 @@
 ﻿using GeeYeangSore.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GeeYeangSore.APIControllers.Guide;
-
 [ApiController]
 [Route("api/[controller]")]
 public class GuideController : ControllerBase
@@ -16,49 +14,24 @@ public class GuideController : ControllerBase
         _webHostEnvironment = webHostEnvironment;
     }
 
-    // [HttpGet("guide")]
-    // public IActionResult GetGuideData()
-    // {
-    //     var data = _db.HGuides.ToList();
-    //
-    //
-    //     for (int i = 0; i < data.Count; i++)
-    //     {
-    //         var filePath = Path.Combine(_webHostEnvironment.WebRootPath, data[i].HImagePath.TrimStart('/'));
-    //         var imageBytes = System.IO.File.ReadAllBytes(filePath);
-    //         data[i].HImagePath = System.Convert.ToBase64String(imageBytes);
-    //     }
-    //
-    //     Console.WriteLine(data);
-    //
-    //     return Ok(new { response = data });
-    // }
-    //
-    //
-    // [HttpGet("guide")]
-    // public IActionResult GetGuideImage()
-    // {
-    //     var data = _db.HGuides.ToList();
-    //
-    //     return Ok(new { response = data });
-    // }
-    
     [HttpGet("guide")]
-    public IActionResult GetGuideData([FromQuery] bool includeImage = false)
+    public IActionResult GetGuideData()
     {
         var data = _db.HGuides.ToList();
 
-        if (includeImage)
+        foreach (var item in data)
         {
-            for (int i = 0; i < data.Count; i++)
+            if (!string.IsNullOrEmpty(item.HImagePath))
             {
-                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, data[i].HImagePath.TrimStart('/'));
-                var imageBytes = System.IO.File.ReadAllBytes(filePath);
-                data[i].HImagePath = System.Convert.ToBase64String(imageBytes);
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, item.HImagePath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    var imageBytes = System.IO.File.ReadAllBytes(filePath);
+                    item.HImagePath = Convert.ToBase64String(imageBytes);
+                }
             }
         }
 
         return Ok(new { response = data });
     }
-
 }
