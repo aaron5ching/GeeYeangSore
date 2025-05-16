@@ -38,15 +38,34 @@ public class ForgotPasswordController : ControllerBase
 
             string code = new Random().Next(100000, 999999).ToString();
 
-            _context.HEmailTokens.Add(new HEmailToken
+            // ✅ 查詢是否有尚未使用的驗證碼
+            var existingToken = _context.HEmailTokens
+                .Where(x => x.HUserEmail == dto.Email &&
+                            x.HTokenType == "ResetPassword" &&
+                            !x.HIsUsed)
+                .OrderByDescending(x => x.HCreatedAt)
+                .FirstOrDefault();
+
+            if (existingToken != null)
             {
-                HUserEmail = dto.Email,
-                HEmailToken1 = code,
-                HResetExpiresAt = DateTime.Now.AddMinutes(10),
-                HCreatedAt = DateTime.Now,
-                HIsUsed = false,
-                HTokenType = "ResetPassword"
-            });
+                // ✅ 覆蓋資料
+                existingToken.HEmailToken1 = code;
+                existingToken.HResetExpiresAt = DateTime.Now.AddMinutes(10);
+                existingToken.HCreatedAt = DateTime.Now;
+            }
+            else
+            {
+                // ✅ 新增一筆資料
+                _context.HEmailTokens.Add(new HEmailToken
+                {
+                    HUserEmail = dto.Email,
+                    HEmailToken1 = code,
+                    HResetExpiresAt = DateTime.Now.AddMinutes(10),
+                    HCreatedAt = DateTime.Now,
+                    HIsUsed = false,
+                    HTokenType = "ResetPassword"
+                });
+            }
 
             await _context.SaveChangesAsync();
 
