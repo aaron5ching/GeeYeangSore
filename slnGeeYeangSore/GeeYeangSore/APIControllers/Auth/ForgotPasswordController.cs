@@ -162,8 +162,9 @@ public class ForgotPasswordController : ControllerBase
         }
 
         // ✅ 執行密碼重設
-        string newSalt = GenerateSalt();
-        string hashedPassword = HashPassword(dto.NewPassword, newSalt);
+        string newSalt = PasswordHasher.GenerateSalt();
+        string hashedPassword = PasswordHasher.HashPassword(dto.NewPassword, newSalt);
+
 
         user.HPassword = hashedPassword;
         user.HSalt = newSalt;
