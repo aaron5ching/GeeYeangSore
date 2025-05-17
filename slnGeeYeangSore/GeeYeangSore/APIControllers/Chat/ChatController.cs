@@ -12,59 +12,48 @@ namespace GeeYeangSore.APIControllers.Chat
     public class ChatController : BaseController
     {
         public ChatController(GeeYeangSoreContext db) : base(db) { }
-
-        // 取得目前登入者的聊天室列表
         [HttpGet("chatlist")]
         public async Task<IActionResult> GetChatList()
         {
             try
             {
-                //自動檢查登入、黑名單、房東身分
+                // 驗證登入與權限
                 var access = CheckAccess();
                 if (access != null) return access;
 
                 var tenant = GetCurrentTenant();
                 if (tenant == null)
                     return Unauthorized(new { success = false, message = "未登入" });
+
                 var userId = tenant.HTenantId;
 
-                // 方法1：先查詢所有訊息再分組，適合少量資料
+                // Step 1：先把所有與我有關的訊息撈出來（由於 GroupBy 無法轉換，先撈成記憶體）
                 var allMessages = await _db.HMessages
-    .Where(m => m.HReceiverId == userId || m.HSenderId == userId)
-    .OrderByDescending(m => m.HTimestamp)
-    .ToListAsync();
+                    .Where(m => m.HSenderId == userId || m.HReceiverId == userId)
+                    .OrderByDescending(m => m.HTimestamp)
+                    .ToListAsync();
 
+                // Step 2：記憶體中分組，並取出每組的最新一筆訊息
                 var latestMessages = allMessages
-     .GroupBy(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
-     .Select(g => g.OrderByDescending(m => m.HTimestamp).First())
-     .OrderByDescending(m => m.HTimestamp)
-     .ToList();
+                    .GroupBy(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+                    .Select(g => g.OrderByDescending(m => m.HTimestamp).First())
+                    .OrderByDescending(m => m.HTimestamp)
+                    .ToList();
 
-                //方法二（用匿名型別包裹），適合大量資料
-                // var latestMessages = await _db.HMessages
-                //     .Where(m => m.HReceiverId == userId)
-                //     .GroupBy(m => m.HSenderId)
-                //     .Select(g => new
-                //     {
-                //         Message = g.OrderByDescending(m => m.HTimestamp).FirstOrDefault()
-                //     })
-                //     .ToListAsync();
-
-                // var result = latestMessages
-                //     .Select(x => x.Message)
-                //     .OrderByDescending(m => m.HTimestamp)
-                //     .ToList();
-
-                // 依據HSenderId join HTenant取得名稱
+                // Step 3：抓出聯絡人 ID
                 var contactIds = latestMessages
-    .Select(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
-    .Distinct()
-    .ToList();
+                    .Select(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+                    .Where(id => id.HasValue)
+                    .Select(id => id.Value)
+                    .Distinct()
+                    .ToList();
 
-                var contactNames = _db.HTenants
+                // Step 4：查聯絡人名稱
+                var contactNames = await _db.HTenants
                     .Where(t => contactIds.Contains(t.HTenantId))
-                    .ToDictionary(t => t.HTenantId, t => t.HUserName);
+                    .ToDictionaryAsync(t => t.HTenantId, t => t.HUserName);
 
+                // Step 5：組合回傳資料
                 var result = latestMessages.Select(m =>
                 {
                     var targetId = m.HSenderId == userId ? m.HReceiverId : m.HSenderId;
@@ -72,10 +61,11 @@ namespace GeeYeangSore.APIControllers.Chat
                     {
                         m.HMessageId,
                         HSenderId = targetId,
-                        SenderName = contactNames.ContainsKey(targetId ?? 0) ? contactNames[targetId ?? 0] : $"聯絡人{targetId}",
+                        SenderName = contactNames.ContainsKey(targetId ?? 0)
+                            ? contactNames[targetId ?? 0]
+                            : $"聯絡人{targetId}",
                         m.HContent,
-                        m.HTimestamp,
-                        m.HReceiverId
+                        m.HTimestamp
                     };
                 }).ToList();
 
@@ -87,28 +77,115 @@ namespace GeeYeangSore.APIControllers.Chat
             }
         }
 
-        // 取得與指定對象的聊天紀錄
         [HttpGet("history/{otherId}")]
-        public async Task<IActionResult> GetChatHistory(int otherId)
+        public async Task<IActionResult> GetChatHistory(int otherId, int? skip = 0, int? take = 20)
         {
             try
             {
-                //自動檢查登入、黑名單、房東身分
                 var access = CheckAccess();
                 if (access != null) return access;
 
                 var tenant = GetCurrentTenant();
                 if (tenant == null)
                     return Unauthorized(new { success = false, message = "未登入" });
-                var userId = tenant.HTenantId;
 
-                // 查詢與指定對象的所有訊息（雙向）
+                var userId = tenant.HTenantId;
+                var skipCount = Math.Max(skip ?? 0, 0);
+                var takeCount = Math.Clamp(take ?? 20, 10, 100); // 限制最大查詢筆數
+
+                // 查詢雙向訊息（先抓最新 N 筆，前端再排序成舊到新）
                 var messages = await _db.HMessages
-                    .Where(m => (m.HSenderId == userId && m.HReceiverId == otherId) || (m.HSenderId == otherId && m.HReceiverId == userId))
-                    .OrderBy(m => m.HTimestamp)
+                    .Where(m =>
+                        (m.HSenderId == userId && m.HReceiverId == otherId) ||
+                        (m.HSenderId == otherId && m.HReceiverId == userId))
+                    .OrderByDescending(m => m.HTimestamp) // 最新在前
+                    .Skip(skipCount)
+                    .Take(takeCount)
+                    .Select(m => new
+                    {
+                        m.HMessageId,
+                        m.HSenderId,
+                        m.HReceiverId,
+                        m.HMessageType,
+                        m.HContent,
+                        m.HAttachmentUrl,
+                        m.HTimestamp,
+                        m.HIsRead,
+                        m.HReplyToMessageId,
+                        m.HIsEdited
+                    })
                     .ToListAsync();
 
-                return Ok(new { success = true, data = messages });
+                // 前端顯示順序：從舊到新（所以這裡要 reverse）
+                var orderedMessages = messages.OrderBy(m => m.HTimestamp).ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    data = orderedMessages,
+                    hasMore = messages.Count == takeCount
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "伺服器發生錯誤", error = ex.Message });
+            }
+        }
+
+        [HttpGet("unread-count")]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            try
+            {
+                var access = CheckAccess();
+                if (access != null) return access;
+
+                var user = GetCurrentTenant();
+                if (user == null) return Unauthorized(new { success = false, message = "未登入" });
+
+                var userId = user.HTenantId;
+
+                var unreadCounts = await _db.HMessages
+                    .Where(m => m.HReceiverId == userId && m.HIsRead == 0)
+                    .GroupBy(m => m.HSenderId)
+                    .Select(g => new
+                    {
+                        SenderId = g.Key,
+                        Count = g.Count()
+                    })
+                    .ToListAsync();
+
+                return Ok(new { success = true, data = unreadCounts });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "伺服器發生錯誤", error = ex.Message });
+            }
+        }
+
+        [HttpPost("mark-as-read")]
+        public async Task<IActionResult> MarkAsRead([FromBody] int senderId)
+        {
+            try
+            {
+                var access = CheckAccess();
+                if (access != null) return access;
+
+                var user = GetCurrentTenant();
+                if (user == null) return Unauthorized(new { success = false, message = "未登入" });
+
+                var userId = user.HTenantId;
+
+                var unreadMessages = await _db.HMessages
+                    .Where(m => m.HSenderId == senderId && m.HReceiverId == userId && m.HIsRead == 0)
+                    .ToListAsync();
+
+                foreach (var msg in unreadMessages)
+                    msg.HIsRead = 1;
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new { success = true, updated = unreadMessages.Count });
             }
             catch (Exception ex)
             {
