@@ -118,13 +118,13 @@ namespace GeeYeangSore.Hubs
                 _db.HMessages.Add(msg);
                 await _db.SaveChangesAsync();
                 await _db.Entry(msg).ReloadAsync(); // 確保讀取自動產生的 ID
-                // 建立完整訊息物件
+                                                    // 建立完整訊息物件
                 var msgObj = new
                 {
                     id = msg.HMessageId,
                     from = msg.HSenderId,
                     to = msg.HReceiverId,
-                    text = msg.HContent,
+                    content = msg.HContent,
                     senderRole = msg.HSenderRole,
                     receiverRole = msg.HReceiverRole,
                     messageType = msg.HMessageType,
@@ -133,8 +133,11 @@ namespace GeeYeangSore.Hubs
                     time = msg.HTimestamp != null ? msg.HTimestamp.Value.ToString("HH:mm") : ""
                 };
                 await Clients.Caller.SendAsync("ReceiveMessage", msgObj);
-                await Clients.Client(ChatHub.UserConnMap.GetValueOrDefault(msg.HReceiverId ?? 0))
-                              .SendAsync("ReceiveMessage", msgObj);
+                var receiverConnId = ChatHub.UserConnMap.GetValueOrDefault(msg.HReceiverId ?? 0);
+                if (!string.IsNullOrEmpty(receiverConnId))
+                {
+                    await Clients.Client(receiverConnId).SendAsync("ReceiveMessage", msgObj);
+                }
             }
             catch (Exception ex)
             {
