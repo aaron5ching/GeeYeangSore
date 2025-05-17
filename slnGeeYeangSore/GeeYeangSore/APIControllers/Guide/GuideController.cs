@@ -60,5 +60,11 @@ public class GuideController : ControllerBase
 
         return Ok(new { response = data });
     }
+    [HttpGet]
+    public IActionResult GetGuideImage()
+    {
+        var data = _db.HGuides.ToList();
 
+        return Ok(new { response = data });
+    }
 }
