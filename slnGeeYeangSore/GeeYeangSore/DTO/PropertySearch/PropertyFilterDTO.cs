@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace GeeYeangSore.APIControllers.PropertySearch.DTO
+namespace GeeYeangSore.DTO.PropertySearch
 {
     public class PropertyFilterDTO
     {

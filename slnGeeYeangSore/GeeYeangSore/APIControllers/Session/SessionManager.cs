@@ -12,6 +12,7 @@ namespace GeeYeangSore.APIControllers.Session
             context.Session.SetString(CDictionary.SK_LOGINED_ROLE, "User");
             context.Session.SetString(CDictionary.SK_LOGINED_TYPE, "Tenant");
             context.Session.SetString("LoginTime", DateTimeOffset.UtcNow.ToString("o"));
+            context.Session.SetInt32("TenantId", tenant.HTenantId);
         }
 
         public static bool IsLoggedIn(HttpContext context)

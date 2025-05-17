@@ -2,7 +2,7 @@
 using GeeYeangSore.APIControllers;
 using GeeYeangSore.Models;
 using Microsoft.EntityFrameworkCore;
-using GeeYeangSore.APIControllers.PropertySearch.DTO;
+using GeeYeangSore.DTO.PropertySearch;
 
 namespace GeeYeangSore.APIControllers.PropertySearch
 {
@@ -133,14 +133,16 @@ namespace GeeYeangSore.APIControllers.PropertySearch
             var query = _db.HProperties
                 .Include(p => p.HPropertyImages)
                 .Include(p => p.HPropertyFeatures)
-                .Where(p => p.HAvailabilityStatus == "未出租" && p.HStatus == "已驗證");
+                .Where(p => p.HAvailabilityStatus == "未出租" && p.HStatus == "已驗證" && p.HIsDelete == false);
 
             // 關鍵字
             if (!string.IsNullOrWhiteSpace(filter.Keyword))
             {
                 query = query.Where(p =>
                     p.HPropertyTitle.Contains(filter.Keyword) ||
-                    p.HAddress.Contains(filter.Keyword));
+                    p.HCity.Contains(filter.Keyword) ||
+                    p.HDistrict.Contains(filter.Keyword) ||
+                    p.HAddress.Contains(filter.Keyword)) ;
             }
 
             // 城市 / 區域
