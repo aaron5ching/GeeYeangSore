@@ -20,51 +20,45 @@ namespace GeeYeangSore.APIControllers.Auth
         [HttpPost("login")]
         public IActionResult Login([FromBody] CLoginViewModel vm)
         {
-            if (string.IsNullOrWhiteSpace(vm.txtAccount))
-                return BadRequest(new { success = false, message = "請輸入帳號（Email）" });
-            if (string.IsNullOrWhiteSpace(vm.txtPassword))
-                return BadRequest(new { success = false, message = "請輸入密碼" });
+            // 驗證輸入
+            if (string.IsNullOrEmpty(vm.txtAccount) || string.IsNullOrEmpty(vm.txtPassword))
+            {
+                return BadRequest(new { success = false, message = "帳號或密碼為空" });
+            }
 
+            // 找出帳號
             var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == vm.txtAccount && !t.HIsDeleted);
             if (tenant == null)
-                return Unauthorized(new { success = false, message = "查無此帳號（Email）" });
+                return Unauthorized(new { success = false, message = "查無此帳號" });
 
-            // 檢查黑名單
-            if (IsBlacklisted())
-            {
-                return new JsonResult(new { success = false, message = "此帳號已被停權" }) { StatusCode = StatusCodes.Status403Forbidden };
-            }
-
-            // 登入失敗次數鎖定
-            if (tenant.HLoginFailCount >= 5 && tenant.HLastLoginAt.HasValue && tenant.HLastLoginAt.Value.AddMinutes(15) > DateTime.UtcNow)
-            {
-                return new JsonResult(new { success = false, message = "錯誤次數過多，請稍後再試" }) { StatusCode = StatusCodes.Status403Forbidden };
-            }
-
+            // 驗證密碼
             if (!VerifyTenantPassword(tenant, vm.txtPassword))
-            {
-                tenant.HLoginFailCount++;
-                tenant.HLastLoginAt = DateTime.UtcNow;
-                _db.SaveChanges();
                 return Unauthorized(new { success = false, message = "密碼錯誤" });
+
+            // 判斷是房東還是房客
+            bool isLandlord = tenant.HIsLandlord;
+            string role;
+            if (isLandlord)
+            {
+                role = "landlord";
+            }
+            else
+            {
+                role = "tenant";
             }
 
-            // 驗證成功，重設失敗次數
-            tenant.HLoginFailCount = 0;
-            tenant.HLastLoginAt = DateTime.UtcNow;
-            _db.SaveChanges();
-
-            // 寫入Session（用SessionHelper）
+            // 登入成功時寫入 Session
             SessionManager.SetLogin(HttpContext, tenant);
 
+            // 回傳登入成功資料
             return Ok(new
             {
                 success = true,
                 user = tenant.HEmail,
-                role = "User",
-                tenantId = tenant.HTenantId,
                 userName = tenant.HUserName,
-                email = tenant.HEmail
+                tenantId = tenant.HTenantId,
+                role = role,
+                isLandlord = tenant.HIsLandlord
             });
         }
 
@@ -90,25 +84,48 @@ namespace GeeYeangSore.APIControllers.Auth
         [HttpGet("me")]
         public IActionResult GetCurrentUser()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-            if (string.IsNullOrEmpty(email))
+            try
             {
-                return Ok(new { success = false, message = "未登入" });
+                if (!SessionManager.IsLoggedIn(HttpContext))
+                    return Unauthorized(new { success = false, message = "未登入" });
+                // 從 Session 取得登入的 Email
+                var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+
+
+                // 查找租客資料
+                var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
+                if (tenant == null)
+                {
+                    return NotFound(new { success = false, message = "找不到該使用者" });
+                }
+
+                // 判斷是房東還是房客
+                bool isLandlord = tenant.HIsLandlord;
+                string role;
+                if (isLandlord)
+                {
+                    role = "landlord";
+                }
+                else
+                {
+                    role = "tenant";
+                }
+
+                // 回傳使用者資訊
+                return Ok(new
+                {
+                    success = true,
+                    user = tenant.HEmail,
+                    userName = tenant.HUserName,
+                    tenantId = tenant.HTenantId,
+                    role = role,
+                    isLandlord = tenant.HIsLandlord
+                });
             }
-            var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
-            if (tenant == null)
+            catch (Exception ex)
             {
-                return Ok(new { success = false, message = "用戶不存在" });
+                return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
             }
-            return Ok(new
-            {
-                success = true,
-                user = tenant.HEmail,
-                role = "User",
-                tenantId = tenant.HTenantId,
-                userName = tenant.HUserName,
-                email = tenant.HEmail
-            });
         }
     }
 }

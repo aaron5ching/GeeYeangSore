@@ -93,7 +93,7 @@ public partial class GeeYeangSoreContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=26.135.207.98;Initial Catalog=GeeYeangSore;Persist Security Info=True;User ID=admin01;Password=admin01;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=26.135.207.98;Initial Catalog=GeeYeangSore;User ID=admin01;Password=admin01;Encrypt=False;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -417,6 +417,9 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HResetExpiresAt)
                 .HasColumnType("datetime")
                 .HasColumnName("h_ResetExpiresAt");
+            entity.Property(e => e.HTokenType)
+                .HasMaxLength(50)
+                .HasColumnName("h_TokenType");
             entity.Property(e => e.HUsedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("h_UsedAt");

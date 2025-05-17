@@ -19,6 +19,14 @@ namespace GeeYeangSore.Hubs
             _db = db;
         }
 
+        private HTenant? GetSessionUser()
+        {
+            var http = Context.GetHttpContext();
+            var email = http?.Session.GetString("SK_LOGINED_USER");
+            if (string.IsNullOrEmpty(email)) return null;
+            return _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
+        }
+
         /// <summary>
         /// 連線事件，驗證 Session 是否已登入
         /// </summary>
@@ -27,25 +35,14 @@ namespace GeeYeangSore.Hubs
         {
             try
             {
-                var http = Context.GetHttpContext();
-                var email = http?.Session.GetString("SK_LOGINED_USER");
-
-                if (string.IsNullOrEmpty(email))
-                {
-                    Context.Abort();
-                    return;
-                }
-
-                var user = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
+                var user = GetSessionUser();
                 if (user == null)
                 {
                     Context.Abort();
                     return;
                 }
-
                 // 單一裝置登入：重複登入自動覆蓋舊的 ConnectionId
                 UserConnMap[user.HTenantId] = Context.ConnectionId;
-
                 await base.OnConnectedAsync();
             }
             catch (Exception ex)
@@ -72,7 +69,7 @@ namespace GeeYeangSore.Hubs
             }
             catch (Exception ex2)
             {
-                // 不記錄 log
+                // 記錄 log
             }
         }
 
@@ -90,46 +87,54 @@ namespace GeeYeangSore.Hubs
         {
             try
             {
-                var http = Context.GetHttpContext();
-                var email = http?.Session.GetString("SK_LOGINED_USER");
-
-                if (string.IsNullOrEmpty(email))
+                var user = GetSessionUser();
+                if (user == null)
                 {
                     await Clients.Caller.SendAsync("ReceiveError", "尚未登入");
                     return;
                 }
-
                 if (!int.TryParse(fromId, out var f) || !int.TryParse(toId, out var t))
                 {
                     await Clients.Caller.SendAsync("ReceiveError", "ID 格式錯誤");
                     return;
                 }
-
+                // 取得發送者身分訊息只會在房東與房客之間傳遞
+                var sender = user;
+                string senderRole = sender.HIsLandlord ? "landlord" : "tenant";
+                string receiverRole = senderRole == "landlord" ? "tenant" : "landlord";
                 var msg = new HMessage
                 {
                     HSenderId = f,
-                    HSenderRole = "Tenant",
+                    HSenderRole = senderRole,
                     HReceiverId = t,
-                    HReceiverRole = "Landlord",
+                    HReceiverRole = receiverRole,
                     HMessageType = "文字",
                     HContent = text,
                     HIsRead = 0,
                     HSource = "私人",
                     HTimestamp = DateTime.Now
                 };
-
+                // 新增訊息
                 _db.HMessages.Add(msg);
                 await _db.SaveChangesAsync();
-
+                await _db.Entry(msg).ReloadAsync(); // 確保讀取自動產生的 ID
+                // 建立完整訊息物件
                 var msgObj = new
                 {
-                    from = fromId,
-                    to = toId,
-                    text = text,
-                    time = DateTime.Now.ToString("HH:mm")
+                    id = msg.HMessageId,
+                    from = msg.HSenderId,
+                    to = msg.HReceiverId,
+                    text = msg.HContent,
+                    senderRole = msg.HSenderRole,
+                    receiverRole = msg.HReceiverRole,
+                    messageType = msg.HMessageType,
+                    isRead = msg.HIsRead,
+                    source = msg.HSource,
+                    time = msg.HTimestamp != null ? msg.HTimestamp.Value.ToString("HH:mm") : ""
                 };
-
                 await Clients.Caller.SendAsync("ReceiveMessage", msgObj);
+                await Clients.Client(ChatHub.UserConnMap.GetValueOrDefault(msg.HReceiverId ?? 0))
+                              .SendAsync("ReceiveMessage", msgObj);
             }
             catch (Exception ex)
             {

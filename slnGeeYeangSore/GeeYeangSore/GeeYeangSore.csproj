@@ -8,12 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="APIControllers\User\**" />
     <Compile Remove="wwwroot\News\**" />
     <Compile Remove="wwwroot\uploads\**" />
+    <Content Remove="APIControllers\User\**" />
     <Content Remove="wwwroot\News\**" />
     <Content Remove="wwwroot\uploads\**" />
+    <EmbeddedResource Remove="APIControllers\User\**" />
     <EmbeddedResource Remove="wwwroot\News\**" />
     <EmbeddedResource Remove="wwwroot\uploads\**" />
+    <None Remove="APIControllers\User\**" />
     <None Remove="wwwroot\News\**" />
     <None Remove="wwwroot\uploads\**" />
   </ItemGroup>
@@ -34,10 +38,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="APIControllers\User\" />
     <Folder Include="Areas\Admin\Data\" />
     <Folder Include="Areas\Admin\Models\" />
-    <Folder Include="DTO\User\" />
     <Folder Include="wwwroot\images\Property\" />
   </ItemGroup>
 
