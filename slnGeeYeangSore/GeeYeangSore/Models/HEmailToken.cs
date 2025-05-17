@@ -22,4 +22,6 @@ public partial class HEmailToken
     public DateTime? HUsedAt { get; set; }
 
     public string? HRequestIp { get; set; }
+
+    public string HTokenType { get; set; } = null!;
 }
