@@ -6,15 +6,15 @@ namespace GeeYeangSore.APIControllers.Contact;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ContactController : ControllerBase
+public class ContactController : BaseController
 {
     private readonly GeeYeangSoreContext _db;
 
-    public ContactController(GeeYeangSoreContext db)
+    public ContactController(GeeYeangSoreContext db) : base(db)
     {
-        _db = db;
+        
     }
-
+    
     [HttpPost("contact")]
     public IActionResult GetContact([FromBody] HContact data)
     {
