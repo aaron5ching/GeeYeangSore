@@ -73,22 +73,40 @@ namespace GeeYeangSore.APIControllers.Chat
                     HReceiverRole = receiver != null && receiver.HIsLandlord ? "landlord" : "tenant",
                     HContent = imageUrl,
                     HMessageType = "image",
+                    HIsRead = 0,
+                    HSource = "私人",
                     HTimestamp = DateTime.Now,
 
                 };
                 _db.HMessages.Add(msg);
                 await _db.SaveChangesAsync();
 
-                //  廣播訊息
-                await _hubContext.Clients.User(receiverId.ToString()).SendAsync("ReceiveMessage", new
+                // 廣播訊息給 receiver
+                if (ChatHub.UserConnMap.TryGetValue(receiverId, out var connId) && !string.IsNullOrEmpty(connId))
                 {
-                    id = msg.HMessageId,
-                    from = msg.HSenderId,
-                    to = msg.HReceiverId,
-                    content = msg.HContent,
-                    type = msg.HMessageType,
-                    timestamp = msg.HTimestamp
-                });
+                    await _hubContext.Clients.Client(connId).SendAsync("ReceiveMessage", new
+                    {
+                        id = msg.HMessageId,
+                        from = msg.HSenderId,
+                        to = msg.HReceiverId,
+                        type = msg.HMessageType,
+                        content = msg.HContent,
+                        time = msg.HTimestamp?.ToString("HH:mm:ss")
+                    });
+                }
+                // 廣播訊息給 sender（自己）
+                if (ChatHub.UserConnMap.TryGetValue(sender.HTenantId, out var selfConnId) && !string.IsNullOrEmpty(selfConnId))
+                {
+                    await _hubContext.Clients.Client(selfConnId).SendAsync("ReceiveMessage", new
+                    {
+                        id = msg.HMessageId,
+                        from = msg.HSenderId,
+                        to = msg.HReceiverId,
+                        type = msg.HMessageType,
+                        content = msg.HContent,
+                        time = msg.HTimestamp?.ToString("HH:mm:ss")
+                    });
+                }
 
                 return Ok(new { success = true, message = "上傳成功", imageUrl, messageId = msg.HMessageId });
             }
