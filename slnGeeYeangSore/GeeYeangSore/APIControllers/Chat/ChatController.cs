@@ -27,40 +27,46 @@ namespace GeeYeangSore.APIControllers.Chat
 
                 var userId = tenant.HTenantId;
 
-                // 查詢：與我有關的訊息 → 分組每個對話對象 → 各取最新一筆
-                var latestMessages = await _db.HMessages
+                // Step 1：先把所有與我有關的訊息撈出來（由於 GroupBy 無法轉換，先撈成記憶體）
+                var allMessages = await _db.HMessages
                     .Where(m => m.HSenderId == userId || m.HReceiverId == userId)
-                    .GroupBy(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
-                    .Select(g => g.OrderByDescending(m => m.HTimestamp).Select(m => new
-                    {
-                        m.HMessageId,
-                        ContactId = m.HSenderId == userId ? m.HReceiverId : m.HSenderId,
-                        m.HContent,
-                        m.HTimestamp
-                    }).FirstOrDefault())
                     .OrderByDescending(m => m.HTimestamp)
                     .ToListAsync();
 
-                // 擷取所有聯絡人 ID，查詢對應名稱
+                // Step 2：記憶體中分組，並取出每組的最新一筆訊息
+                var latestMessages = allMessages
+                    .GroupBy(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+                    .Select(g => g.OrderByDescending(m => m.HTimestamp).First())
+                    .OrderByDescending(m => m.HTimestamp)
+                    .ToList();
+
+                // Step 3：抓出聯絡人 ID
                 var contactIds = latestMessages
-                    .Select(m => m.ContactId ?? 0)
+                    .Select(m => m.HSenderId == userId ? m.HReceiverId : m.HSenderId)
+                    .Where(id => id.HasValue)
+                    .Select(id => id.Value)
                     .Distinct()
                     .ToList();
 
+                // Step 4：查聯絡人名稱
                 var contactNames = await _db.HTenants
                     .Where(t => contactIds.Contains(t.HTenantId))
                     .ToDictionaryAsync(t => t.HTenantId, t => t.HUserName);
 
-                // 組合回傳結果
-                var result = latestMessages.Select(m => new
+                // Step 5：組合回傳資料
+                var result = latestMessages.Select(m =>
                 {
-                    m.HMessageId,
-                    HSenderId = m.ContactId,
-                    SenderName = contactNames.ContainsKey(m.ContactId ?? 0)
-                        ? contactNames[m.ContactId ?? 0]
-                        : $"聯絡人{m.ContactId}",
-                    m.HContent,
-                    m.HTimestamp
+                    var targetId = m.HSenderId == userId ? m.HReceiverId : m.HSenderId;
+                    return new
+                    {
+                        m.HMessageId,
+                        HSenderId = targetId,
+                        SenderName = contactNames.ContainsKey(targetId ?? 0)
+                            ? contactNames[targetId ?? 0]
+                            : $"聯絡人{targetId}",
+                        m.HContent,
+                        m.HTimestamp
+                    };
                 }).ToList();
 
                 return Ok(new { success = true, data = result, selfId = userId });
