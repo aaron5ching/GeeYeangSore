@@ -7,6 +7,8 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using GeeYeangSore.ViewModels;
 using GeeYeangSore.APIControllers.Session;
+using GeeYeangSore.DTO.User;
+
 
 namespace GeeYeangSore.APIControllers.Auth
 {
@@ -18,39 +20,42 @@ namespace GeeYeangSore.APIControllers.Auth
 
         // 登入
         [HttpPost("login")]
-        public IActionResult Login([FromBody] CLoginViewModel vm)
+        public async Task<IActionResult> Login([FromBody] CLoginViewModel vm)
         {
-            // 驗證輸入
+            // Step 0：驗證欄位是否為空
             if (string.IsNullOrEmpty(vm.txtAccount) || string.IsNullOrEmpty(vm.txtPassword))
             {
                 return BadRequest(new { success = false, message = "帳號或密碼為空" });
             }
 
-            // 找出帳號
+            if (string.IsNullOrEmpty(vm.RecaptchaToken))
+            {
+                return BadRequest(new { success = false, message = "reCAPTCHA token 缺失" });
+            }
+
+            // 🛡️ Step 1：驗證 reCAPTCHA Token
+            if (!await VerifyRecaptchaAsync(vm.RecaptchaToken))
+            {
+                return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
+            }
+
+            // Step 2：查詢帳號
             var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == vm.txtAccount && !t.HIsDeleted);
             if (tenant == null)
                 return Unauthorized(new { success = false, message = "查無此帳號" });
 
-            // 驗證密碼
+            // Step 3：密碼驗證
             if (!VerifyTenantPassword(tenant, vm.txtPassword))
                 return Unauthorized(new { success = false, message = "密碼錯誤" });
 
-            // 判斷是房東還是房客
+            // Step 4：判斷角色
             bool isLandlord = tenant.HIsLandlord;
-            string role;
-            if (isLandlord)
-            {
-                role = "landlord";
-            }
-            else
-            {
-                role = "tenant";
-            }
+            string role = isLandlord ? "landlord" : "tenant";
 
-            // 登入成功時寫入 Session
+            // Step 5：寫入 Session
             SessionManager.SetLogin(HttpContext, tenant);
 
-            // 回傳登入成功資料
+            // Step 6：回傳成功資訊
             return Ok(new
             {
                 success = true,
@@ -61,6 +66,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 isLandlord = tenant.HIsLandlord
             });
         }
+
 
         // 登出
         [HttpPost("logout")]
@@ -127,5 +133,30 @@ namespace GeeYeangSore.APIControllers.Auth
                 return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
             }
         }
+
+        //reCAPTCHA 驗證方法
+        private async Task<bool> VerifyRecaptchaAsync(string token)
+        {
+            var secretKey = "6Ldt9T4rAAAAAFGgF9KDgBXyz46god-1q6VVxKtN"; 
+            using var client = new HttpClient();
+
+            var parameters = new Dictionary<string, string>
+    {
+        { "secret", secretKey },
+        { "response", token }
+    };
+
+            var response = await client.PostAsync("https://www.google.com/recaptcha/api/siteverify", new FormUrlEncodedContent(parameters));
+            var json = await response.Content.ReadAsStringAsync();
+
+            var result = System.Text.Json.JsonSerializer.Deserialize<RecaptchaResult>(json, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result != null && result.Success && result.Score >= 0.5 && result.Action == "login";
+        }
+
+
     }
 }
