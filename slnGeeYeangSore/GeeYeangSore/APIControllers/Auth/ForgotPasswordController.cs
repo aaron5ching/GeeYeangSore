@@ -81,8 +81,8 @@ public class ForgotPasswordController : ControllerBase
 
             var mail = new MailMessage
             {
-                From = new MailAddress(_smtp.FromEmail, "租屋平台"),
-                Subject = "重設密碼驗證碼",
+                From = new MailAddress(_smtp.FromEmail, "居研所租屋平台"),
+                Subject = "居研所租屋平台｜重設密碼驗證碼",
                 Body = $@"
 <div style='font-family:Arial,sans-serif; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:10px;'>
     <h2 style='color:#2c3e50;'>居研所租屋平台</h2>
