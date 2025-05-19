@@ -36,7 +36,7 @@
                     <label class="form-label">生日</label>
                     <input type="date" class="form-control" name="HBirthday"
                         value="@(Model.HBirthday.HasValue? Model.HBirthday.Value.ToString("yyyy-MM-dd") : "")"
-                        max="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        max="@DateTime.Now.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">性別</label>
@@ -71,7 +71,7 @@
 
                 <div class="col-md-12">
                     <label class="form-label">居住地</label>
-                    <input class="form-control" name="HAddress" value="@Model.HAddress" required />
+                    <input class="form-control" name="HAddress" value="@Model.HAddress" />
                 </div>
 
                 <div class="col-md-6 d-flex flex-column">

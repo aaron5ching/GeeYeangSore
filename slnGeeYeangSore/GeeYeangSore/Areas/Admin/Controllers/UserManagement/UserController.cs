@@ -106,35 +106,24 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
             return PartialView("~/Areas/Admin/Partials/UserManagement/_EditUserPartial.cshtml", tenant);
         }
 
-        [HttpPost]
-        public IActionResult Edit([FromBody] CEditUserViewModel updated)
+        [HttpPut]
+        public IActionResult Update([FromBody] CEditUserViewModel updated)
         {
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("模型驗證失敗！");
-                foreach (var kvp in ModelState)
-                {
-                    foreach (var err in kvp.Value.Errors)
-                    {
-                        Console.WriteLine($"[欄位 {kvp.Key}]：{err.ErrorMessage}");
-                    }
-                }
-                return BadRequest("模型驗證失敗");
-            }
+            if (updated == null)
+                return BadRequest("未填寫資料");
 
             try
             {
-                Console.WriteLine("收到前端傳入的 updated ViewModel：");
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(updated));
-
-                var existing = _context.HTenants
-                    .Include(t => t.HLandlords)
-                    .FirstOrDefault(t => t.HTenantId == updated.HTenantId);
-
+                var existing = _context.HTenants.FirstOrDefault(t => t.HTenantId == updated.HTenantId && !t.HIsDeleted);
                 if (existing == null)
+                    return NotFound("找不到此使用者");
+
+                // 檢查必填欄位
+                if (string.IsNullOrEmpty(updated.HUserName) || 
+                    string.IsNullOrEmpty(updated.HPhoneNumber) || 
+                    string.IsNullOrEmpty(updated.HEmail))
                 {
-                    Console.WriteLine("查無對應的 HTenantId：" + updated.HTenantId);
-                    return NotFound();
+                    return BadRequest("姓名、電話和電子信箱為必填欄位");
                 }
 
                 // 檢查電話是否被其他使用者使用
@@ -153,38 +142,20 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     return BadRequest("電子郵件已被其他使用者使用，請使用其他電子郵件");
                 }
 
-                existing.HUserName = updated.HUserName ?? existing.HUserName;
+                existing.HUserName = updated.HUserName;
                 existing.HStatus = updated.HStatus ?? existing.HStatus;
                 existing.HBirthday = updated.HBirthday;  // 可選欄位，直接賦值
                 existing.HGender = updated.HGender;      // 可選欄位，直接賦值
                 existing.HAddress = updated.HAddress;    // 可選欄位，直接賦值
-                existing.HPhoneNumber = updated.HPhoneNumber ?? existing.HPhoneNumber;
-                existing.HEmail = updated.HEmail ?? existing.HEmail;
+                existing.HPhoneNumber = updated.HPhoneNumber;
+                existing.HEmail = updated.HEmail;
                 existing.HUpdateAt = DateTime.Now;       // 更新修改時間
 
-                // 處理密碼更新，檢查是否需要更新密碼
-                if (!string.IsNullOrWhiteSpace(updated.HPassword))
+                // 如果密碼有更新，則重新生成鹽值與哈希密碼
+                if (!string.IsNullOrEmpty(updated.HPassword))
                 {
-                    // 檢查密碼是否與資料庫中的雜湊密碼不同
-                    bool needsUpdate = true;
-                    if (!string.IsNullOrEmpty(existing.HSalt))
-                    {
-                        // 如果已有鹽值，檢查提交的密碼是否與雜湊後的密碼相同
-                        needsUpdate = !PasswordHasher.VerifyPassword(updated.HPassword, existing.HSalt, existing.HPassword);
-                    }
-                    else
-                    {
-                        // 如果沒有鹽值（舊帳號），檢查密碼是否與明文密碼相同
-                        needsUpdate = updated.HPassword != existing.HPassword;
-                    }
-
-                    // 需要更新密碼
-                    if (needsUpdate)
-                    {
-                        string salt = PasswordHasher.GenerateSalt();
-                        existing.HPassword = PasswordHasher.HashPassword(updated.HPassword, salt);
-                        existing.HSalt = salt;
-                    }
+                    string salt = PasswordHasher.GenerateSalt();
+                    existing.HPassword = PasswordHasher.HashPassword(updated.HPassword, salt);
                 }
 
                 existing.HImages = updated.HImages;  // 可選欄位，直接賦值
@@ -347,6 +318,15 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             try
             {
+                // 檢查必填欄位
+                if (string.IsNullOrEmpty(newUser.HUserName) || 
+                    string.IsNullOrEmpty(newUser.HPhoneNumber) || 
+                    string.IsNullOrEmpty(newUser.HEmail) || 
+                    string.IsNullOrEmpty(newUser.HPassword))
+                {
+                    return BadRequest("姓名、電話、電子信箱和密碼為必填欄位");
+                }
+
                 // 檢查電話是否重複
                 if (!string.IsNullOrEmpty(newUser.HPhoneNumber) && 
                     _context.HTenants.Any(t => t.HPhoneNumber == newUser.HPhoneNumber && !t.HIsDeleted))
@@ -363,26 +343,26 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 // 生成鹽值與哈希密碼
                 string salt = PasswordHasher.GenerateSalt();
-                string hashedPassword = PasswordHasher.HashPassword(newUser.HPassword ?? "000000", salt);
+                string hashedPassword = PasswordHasher.HashPassword(newUser.HPassword, salt);
 
                 var tenant = new HTenant
                 {
-                    HUserName = newUser.HUserName ?? "未命名",          // 必填
-                    HBirthday = newUser.HBirthday,                     // 可選
-                    HGender = newUser.HGender,                         // 可選
-                    HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",    // 必填
-                    HEmail = newUser.HEmail ?? "未填寫",               // 必填
-                    HPassword = hashedPassword,                        // 可選
-                    HSalt = salt,                                      // 可選
-                    HAddress = newUser.HAddress,                       // 可選
-                    HStatus = newUser.HStatus ?? "未驗證",             // 必填
-                    HImages = newUser.HImages,                         // 可選
-                    HCreatedAt = DateTime.Now,                         // 必填
-                    HUpdateAt = DateTime.Now,                          // 必填
-                    HIsTenant = true,                                  // 必填
-                    HIsLandlord = false,                               // 必填
-                    HIsDeleted = false,                                // 必填
-                    HLoginFailCount = 0                                // 必填
+                    HUserName = newUser.HUserName,
+                    HBirthday = newUser.HBirthday,
+                    HGender = newUser.HGender,
+                    HPhoneNumber = newUser.HPhoneNumber,
+                    HEmail = newUser.HEmail,
+                    HPassword = hashedPassword,
+                    HSalt = salt,
+                    HAddress = newUser.HAddress,
+                    HStatus = newUser.HStatus ?? "未驗證",
+                    HImages = newUser.HImages,
+                    HCreatedAt = DateTime.Now,
+                    HUpdateAt = DateTime.Now,
+                    HIsTenant = true,
+                    HIsLandlord = false,
+                    HIsDeleted = false,
+                    HLoginFailCount = 0
                 };
 
                 _context.HTenants.Add(tenant);
