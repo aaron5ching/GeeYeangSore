@@ -386,23 +386,15 @@
 
 				// 檢查必填欄位
 				const userName = $('input[name="HUserName"]', '#editForm').val().trim();
-				const birthday = $('input[name="HBirthday"]', '#editForm').val();
 				const phoneNumber = $('input[name="HPhoneNumber"]', '#editForm').val().trim();
 				const email = $('input[name="HEmail"]', '#editForm').val().trim();
-				const address = $('input[name="HAddress"]', '#editForm').val().trim();
 
-				if (!userName || !birthday || !phoneNumber || !email || !address) {
+				if (!userName || !phoneNumber || !email) {
 					// 對每個空欄位添加無效提示
 					if (!userName) {
 						$('input[name="HUserName"]', '#editForm').addClass('is-invalid');
 						if (!$('input[name="HUserName"]', '#editForm').next('.invalid-feedback').length) {
 							$('input[name="HUserName"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
-						}
-					}
-					if (!birthday) {
-						$('input[name="HBirthday"]', '#editForm').addClass('is-invalid');
-						if (!$('input[name="HBirthday"]', '#editForm').next('.invalid-feedback').length) {
-							$('input[name="HBirthday"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
 						}
 					}
 					if (!phoneNumber) {
@@ -416,13 +408,6 @@
 						if (!$('input[name="HEmail"]', '#editForm').next('.invalid-feedback').length) {
 							$('input[name="HEmail"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
 						}
-					}
-					if (!address) {
-						$('input[name="HAddress"]', '#editForm').addClass('is-invalid');
-						if (!$('input[name="HAddress"]', '#editForm').next('.invalid-feedback').length) {
-							$('input[name="HAddress"]', '#editForm').after('<div class="invalid-feedback">請填寫此欄位</div>');
-						}
-
 					}
 					
 					// 聚焦第一個無效欄位
@@ -439,12 +424,12 @@
 				const formData = {
 					HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
 					HUserName: userName,
-					HBirthday: birthday,
+					HBirthday: $('#editForm').find('input[name="HBirthday"]').val(),
 					HGender: $('#editForm').find('select[name="HGender"]').val() === "true",
 					HPhoneNumber: phoneNumber,
 					HEmail: email,
 					HPassword: $('#editForm').find('input[name="HPassword"]').val().trim(),
-					HAddress: address,
+					HAddress: $('#editForm').find('input[name="HAddress"]').val().trim(),
 					HStatus: $('#editForm').find('select[name="HStatus"]').val(),
 					HImages: normalizeImagePath($('#edit-HImages').val())
 				};
@@ -577,24 +562,16 @@
 
 				// 檢查必填欄位
 				const userName = $('input[name="HUserName"]').val().trim();
-				const birthday = $('input[name="HBirthday"]').val();
 				const phoneNumber = $('input[name="HPhoneNumber"]').val().trim();
 				const email = $('input[name="HEmail"]').val().trim();
 				const password = $('input[name="HPassword"]').val().trim();
-				const address = $('input[name="HAddress"]').val().trim();
 
-				if (!userName || !birthday || !phoneNumber || !email || !password || !address) {
+				if (!userName || !phoneNumber || !email || !password) {
 					// 對每個空欄位添加無效提示
 					if (!userName) {
 						$('input[name="HUserName"]').addClass('is-invalid');
 						if (!$('input[name="HUserName"]').next('.invalid-feedback').length) {
 							$('input[name="HUserName"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
-						}
-					}
-					if (!birthday) {
-						$('input[name="HBirthday"]').addClass('is-invalid');
-						if (!$('input[name="HBirthday"]').next('.invalid-feedback').length) {
-							$('input[name="HBirthday"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
 						}
 					}
 					if (!phoneNumber) {
@@ -615,12 +592,6 @@
 							$('input[name="HPassword"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
 						}
 					}
-					if (!address) {
-						$('input[name="HAddress"]').addClass('is-invalid');
-						if (!$('input[name="HAddress"]').next('.invalid-feedback').length) {
-							$('input[name="HAddress"]').after('<div class="invalid-feedback">請填寫此欄位</div>');
-						}
-					}
 					
 					// 聚焦第一個無效欄位
 					$('.is-invalid').first().focus();
@@ -635,14 +606,14 @@
 
 				const formData = {
 					HUserName: userName,
-					HBirthday: birthday,
+					HBirthday: $('input[name="HBirthday"]').val() || null,
 					HGender: $('select[name="HGender"]').val() === "true",
 					HPhoneNumber: phoneNumber,
 					HEmail: email,
 					HPassword: password,
-					HAddress: address,
-					HStatus: $('select[name="HStatus"]').val(),
-					HImages: normalizeImagePath($('#HImages').val()),
+					HAddress: $('input[name="HAddress"]').val().trim() || null,
+					HStatus: $('select[name="HStatus"]').val() || "未驗證",
+					HImages: normalizeImagePath($('#HImages').val()) || null,
 					HLandlords: [] // 🐥暫不建立房東資料
 				};
 
