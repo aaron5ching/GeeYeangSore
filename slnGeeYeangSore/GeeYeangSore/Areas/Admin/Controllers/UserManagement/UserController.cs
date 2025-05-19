@@ -155,11 +155,12 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 existing.HUserName = updated.HUserName ?? existing.HUserName;
                 existing.HStatus = updated.HStatus ?? existing.HStatus;
-                existing.HBirthday = updated.HBirthday ?? existing.HBirthday; // 若為 null 則保留原值 // 取出 DateTime? 的實際值
-                existing.HGender = updated.HGender ?? existing.HGender;     // 取出 bool? 的實際值
-                existing.HAddress = updated.HAddress ?? existing.HAddress;
+                existing.HBirthday = updated.HBirthday;  // 可選欄位，直接賦值
+                existing.HGender = updated.HGender;      // 可選欄位，直接賦值
+                existing.HAddress = updated.HAddress;    // 可選欄位，直接賦值
                 existing.HPhoneNumber = updated.HPhoneNumber ?? existing.HPhoneNumber;
                 existing.HEmail = updated.HEmail ?? existing.HEmail;
+                existing.HUpdateAt = DateTime.Now;       // 更新修改時間
 
                 // 處理密碼更新，檢查是否需要更新密碼
                 if (!string.IsNullOrWhiteSpace(updated.HPassword))
@@ -186,7 +187,7 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     }
                 }
 
-                existing.HImages = string.IsNullOrWhiteSpace(updated.HImages) ? existing.HImages : updated.HImages;
+                existing.HImages = updated.HImages;  // 可選欄位，直接賦值
 
                 var updatedLandlord = updated.HLandlords.FirstOrDefault();
                 var existingLandlord = existing.HLandlords.FirstOrDefault();
@@ -341,8 +342,8 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
         [HttpPost]
         public IActionResult Create([FromBody] CEditUserViewModel newUser)
         {
-            if (!ModelState.IsValid)
-                return BadRequest("未完成檔案填寫");
+            if (newUser == null)
+                return BadRequest("未填寫資料");
 
             try
             {
@@ -366,22 +367,22 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
                 var tenant = new HTenant
                 {
-                    HUserName = newUser.HUserName ?? "未命名",          // 若為 null 則提供預設值
-                    HBirthday = newUser.HBirthday ?? DateTime.Today,    // 避免 null
-                    HGender = newUser.HGender ?? true,                  // 預設為男性或女性
-                    HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",
-                    HEmail = newUser.HEmail ?? "未填寫",
-                    HPassword = hashedPassword,
-                    HSalt = salt,
-                    HAddress = newUser.HAddress ?? "未填寫",
-                    HStatus = newUser.HStatus ?? "未驗證",
-                    
-                    HImages = newUser.HImages,
-                    HCreatedAt = DateTime.Now,
-                    HUpdateAt = DateTime.Now,
-                    HIsTenant = true,
-                    HIsLandlord = false,
-                    HIsDeleted = false
+                    HUserName = newUser.HUserName ?? "未命名",          // 必填
+                    HBirthday = newUser.HBirthday,                     // 可選
+                    HGender = newUser.HGender,                         // 可選
+                    HPhoneNumber = newUser.HPhoneNumber ?? "未填寫",    // 必填
+                    HEmail = newUser.HEmail ?? "未填寫",               // 必填
+                    HPassword = hashedPassword,                        // 可選
+                    HSalt = salt,                                      // 可選
+                    HAddress = newUser.HAddress,                       // 可選
+                    HStatus = newUser.HStatus ?? "未驗證",             // 必填
+                    HImages = newUser.HImages,                         // 可選
+                    HCreatedAt = DateTime.Now,                         // 必填
+                    HUpdateAt = DateTime.Now,                          // 必填
+                    HIsTenant = true,                                  // 必填
+                    HIsLandlord = false,                               // 必填
+                    HIsDeleted = false,                                // 必填
+                    HLoginFailCount = 0                                // 必填
                 };
 
                 _context.HTenants.Add(tenant);
