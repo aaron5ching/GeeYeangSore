@@ -322,28 +322,9 @@
 			$(document).on('change', '#uploadTenantPhotoInput', function () {
 				const file = this.files[0];
 				if (!file) return;
-
 				const previewUrl = URL.createObjectURL(file);
 				$('#tenantPhotoPreview').attr('src', previewUrl);
-
-				const formData = new FormData();
-				formData.append('photo', file);
-
-				$.ajax({
-					url: '/Admin/User/UploadTenantPhoto',
-					type: 'POST',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function (url) {
-						const fileName = url.split('/').pop();
-						$('#HImages').val(fileName);
-					},
-					error: function () {
-						showToast('❌ 照片上傳失敗', false);
-						$('#tenantPhotoPreview').attr('src', '/images/User/default-user.png');
-					}
-				});
+				// 不上傳，只預覽
 			});
 
 			// 綁定編輯表單送出事件
@@ -385,35 +366,59 @@
 					return;
 				}
 
-				const formData = {
-					HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
-					HUserName: userName,
-					HBirthday: $('#editForm').find('input[name="HBirthday"]').val() || null,
-					HGender: $('#editForm').find('select[name="HGender"]').val() === "true",
-					HPhoneNumber: phoneNumber,
-					HEmail: email,
-					HPassword: $('#editForm').find('input[name="HPassword"]').val().trim() || null,
-					HAddress: $('#editForm').find('input[name="HAddress"]').val().trim() || null,
-					HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
-					HImages: normalizeImagePath($('#HImages').val()) || null
-				};
-
-				$.ajax({
-					type: 'PUT',
-					url: '/Admin/User/Update',
-					contentType: 'application/json',
-					data: JSON.stringify(formData),
-					success: function () {
-						showToast('✅ 更新成功', true);
-						const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
-						modal.hide();
-						$('#searchForm').submit(); // 重新載入搜尋結果
-					},
-					error: function (xhr) {
-						console.error('更新失敗：', xhr.responseText);
-						showToast('❌ 更新失敗：' + (xhr.responseText || '請稍後再試'), false);
-					}
-				});
+				const photoInput = document.getElementById('uploadTenantPhotoInput');
+				const photoFile = photoInput && photoInput.files[0];
+				function submitEdit(photoFileName) {
+					const formData = {
+						HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
+						HUserName: userName,
+						HBirthday: $('#editForm').find('input[name="HBirthday"]').val() || null,
+						HGender: $('#editForm').find('select[name="HGender"]').val() === "true",
+						HPhoneNumber: phoneNumber,
+						HEmail: email,
+						HPassword: $('#editForm').find('input[name="HPassword"]').val().trim() || null,
+						HAddress: $('#editForm').find('input[name="HAddress"]').val().trim() || null,
+						HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
+						HImages: photoFileName || $('#HImages').val() || null
+					};
+					$.ajax({
+						type: 'PUT',
+						url: '/Admin/User/Update',
+						contentType: 'application/json',
+						data: JSON.stringify(formData),
+						success: function () {
+							showToast('✅ 更新成功', true);
+							const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+							modal.hide();
+							$('#searchForm').submit();
+						},
+						error: function (xhr) {
+							console.error('更新失敗：', xhr.responseText);
+							showToast('❌ 更新失敗：' + (xhr.responseText || '請稍後再試'), false);
+						}
+					});
+				}
+				if (photoFile) {
+					const uploadData = new FormData();
+					uploadData.append('photo', photoFile);
+					$.ajax({
+						url: '/Admin/User/UploadTenantPhoto',
+						type: 'POST',
+						data: uploadData,
+						processData: false,
+						contentType: false,
+						success: function (url) {
+							const fileName = url.split('/').pop();
+							submitEdit(fileName);
+						},
+						error: function () {
+							showToast('❌ 照片上傳失敗', false);
+							submitEdit(null);
+						}
+					});
+				} else {
+					submitEdit($('#HImages').val() || null);
+				}
 			});
 		}
 
@@ -501,24 +506,9 @@
 			$(document).on('change', '#uploadTenantPhotoInput', function () {
 				const file = this.files[0];
 				if (!file) return;
-
 				const previewUrl = URL.createObjectURL(file);
 				$('#tenantPhotoPreview').attr('src', previewUrl);
-
-				const formData = new FormData();
-				formData.append('photo', file);
-
-				$.ajax({
-					url: '/Admin/User/UploadTenantPhoto',
-					type: 'POST',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function (url) {
-						const fileName = url.split('/').pop();
-						$('#HImages').val(fileName);
-					}
-				});
+				// 不上傳，只預覽
 			});
 
 			// ✅ 綁定新增表單送出事件
@@ -569,34 +559,58 @@
                     return;
                 }
 
-				const formData = {
-					HUserName: userName,
-					HBirthday: $('input[name="HBirthday"]').val() || null,
-					HGender: $('select[name="HGender"]').val() === "true",
-					HPhoneNumber: phoneNumber,
-					HEmail: email,
-					HPassword: password,
-					HAddress: $('input[name="HAddress"]').val().trim() || null,
-					HStatus: $('select[name="HStatus"]').val() || "未驗證",
-					HImages: normalizeImagePath($('#HImages').val()) || null,
-					HLandlords: [] // 🐥暫不建立房東資料
-				};
-
-				$.ajax({
-					type: 'POST',
-					url: '/Admin/User/Create',
-					contentType: 'application/json',
-					data: JSON.stringify(formData),
-					success: function () {
-						showToast('✅ 新增成功', true);
-						const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
-						modal.hide();
-						$('#searchForm').submit(); // 重新載入搜尋結果
-					},
-					error: function (xhr) {
-						showToast('❌ 新增失敗：' + xhr.responseText, false);
-					}
-				});
+				const photoInput = document.getElementById('uploadTenantPhotoInput');
+				const photoFile = photoInput && photoInput.files[0];
+				function submitUser(photoFileName) {
+					const formData = {
+						HUserName: userName,
+						HBirthday: $('input[name="HBirthday"]').val() || null,
+						HGender: $('select[name="HGender"]').val() === "true",
+						HPhoneNumber: phoneNumber,
+						HEmail: email,
+						HPassword: password,
+						HAddress: $('input[name="HAddress"]').val().trim() || null,
+						HStatus: $('select[name="HStatus"]').val() || "未驗證",
+						HImages: photoFileName || null,
+						HLandlords: []
+					};
+					$.ajax({
+						type: 'POST',
+						url: '/Admin/User/Create',
+						contentType: 'application/json',
+						data: JSON.stringify(formData),
+						success: function () {
+							showToast('✅ 新增成功', true);
+							const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+							modal.hide();
+							$('#searchForm').submit();
+						},
+						error: function (xhr) {
+							showToast('❌ 新增失敗：' + xhr.responseText, false);
+						}
+					});
+				}
+				if (photoFile) {
+					const uploadData = new FormData();
+					uploadData.append('photo', photoFile);
+					$.ajax({
+						url: '/Admin/User/UploadTenantPhoto',
+						type: 'POST',
+						data: uploadData,
+						processData: false,
+						contentType: false,
+						success: function (url) {
+							const fileName = url.split('/').pop();
+							submitUser(fileName);
+						},
+						error: function () {
+							showToast('❌ 照片上傳失敗', false);
+							submitUser(null);
+						}
+					});
+				} else {
+					submitUser(null);
+				}
 			});
 		}
 
