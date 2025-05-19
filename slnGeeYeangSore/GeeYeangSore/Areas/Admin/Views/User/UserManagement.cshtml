@@ -338,7 +338,6 @@
 					success: function (url) {
 						const fileName = url.split('/').pop();
 						$('#HImages').val(fileName);
-						showToast('✅ 照片上傳成功', true);
 					},
 					error: function () {
 						showToast('❌ 照片上傳失敗', false);
