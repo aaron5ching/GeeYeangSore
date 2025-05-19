@@ -245,6 +245,7 @@
 			$(document).on('click', '.btn-edit', function () {
 				const id = $(this).data('id');
 				$('#editModalBody').html('<div class="text-center text-muted">載入中...</div>');
+				$('#editModalLabel').text('編輯使用者');
 				const modal = new bootstrap.Modal(document.getElementById('editModal'));
 				modal.show();
 
