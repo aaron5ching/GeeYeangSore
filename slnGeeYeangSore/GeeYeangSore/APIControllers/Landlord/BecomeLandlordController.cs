@@ -7,14 +7,12 @@ namespace GeeYeangSore.APIControllers.Landlord
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BecomeLandlordController : ControllerBase
+    public class BecomeLandlordController : BaseController
     {
-        private readonly GeeYeangSoreContext _context;
         private readonly IWebHostEnvironment _environment;
 
-        public BecomeLandlordController(GeeYeangSoreContext context, IWebHostEnvironment environment)
+        public BecomeLandlordController(GeeYeangSoreContext context, IWebHostEnvironment environment) : base(context)
         {
-            _context = context;
             _environment = environment;
         }
 
@@ -23,17 +21,23 @@ namespace GeeYeangSore.APIControllers.Landlord
         {
             try
             {
-                // 從 Session 取得登入的 Email
-                var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-                if (string.IsNullOrEmpty(email))
-                {
-                    return Unauthorized(new { message = "未登入，請先登入後再申請成為房東。" });
-                }
-                var tenant = await _context.HTenants.FirstOrDefaultAsync(t => t.HEmail == email && !t.HIsDeleted);
+                // 使用 BaseController 的 CheckAccess 方法進行權限檢查
+                var accessCheck = CheckAccess();
+                if (accessCheck != null)
+                    return accessCheck;
+
+                var tenant = GetCurrentTenant();
                 if (tenant == null)
                 {
-                    return Unauthorized(new { message = "找不到對應的租客帳號，請重新登入。" });
+                    return Unauthorized(new { message = "未登入或找不到對應的租客帳號，請重新登入。" });
                 }
+
+                // 檢查是否已經是房東
+                if (tenant.HIsLandlord)
+                {
+                    return BadRequest(new { message = "您已經是房東身份" });
+                }
+
                 var tenantId = tenant.HTenantId;
 
                 // 處理圖片上傳
@@ -60,8 +64,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                     HIsDeleted = false
                 };
 
-                _context.HLandlords.Add(landlord);
-                await _context.SaveChangesAsync();
+                _db.HLandlords.Add(landlord);
+                await _db.SaveChangesAsync();
 
                 return Ok(new { message = "註冊成功，等待審核" });
             }

@@ -21,8 +21,16 @@ namespace GeeYeangSore.APIControllers.Chat
             _hubContext = hubContext;
         }
 
+        public class UploadChatImageRequest
+        {
+            public IFormFile Image { get; set; }
+            public int ReceiverId { get; set; }
+            public string ReceiverRole { get; set; }
+            public int? ChatId { get; set; }
+        }
+
         [HttpPost("upload-image")]
-        public async Task<IActionResult> UploadChatImage([FromForm] IFormFile image, [FromForm] int receiverId, [FromForm] string receiverRole, [FromForm] int? chatId)
+        public async Task<IActionResult> UploadChatImage([FromForm] UploadChatImageRequest request)
         {
             try
             {
@@ -30,6 +38,11 @@ namespace GeeYeangSore.APIControllers.Chat
                 var access = CheckAccess();
                 if (access != null) return access;
                 var sender = GetCurrentTenant();
+
+                var image = request.Image;
+                var receiverId = request.ReceiverId;
+                var receiverRole = request.ReceiverRole;
+                var chatId = request.ChatId;
 
                 // 檢查是否選擇檔案
                 if (image == null || image.Length == 0)
@@ -76,7 +89,6 @@ namespace GeeYeangSore.APIControllers.Chat
                     HIsRead = 0,
                     HSource = "私人",
                     HTimestamp = DateTime.Now,
-
                 };
                 _db.HMessages.Add(msg);
                 await _db.SaveChangesAsync();
@@ -114,7 +126,6 @@ namespace GeeYeangSore.APIControllers.Chat
             {
                 return StatusCode(500, new { success = false, message = "圖片上傳失敗", error = ex.Message });
             }
-
         }
     }
 }

@@ -31,6 +31,8 @@ public partial class GeeYeangSoreContext : DbContext
 
     public virtual DbSet<HAd> HAds { get; set; }
 
+    public virtual DbSet<HAdPlan> HAdPlans { get; set; }
+
     public virtual DbSet<HAdmin> HAdmins { get; set; }
 
     public virtual DbSet<HAdminLog> HAdminLogs { get; set; }
@@ -93,7 +95,7 @@ public partial class GeeYeangSoreContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=26.135.207.98;Initial Catalog=GeeYeangSore;User ID=admin01;Password=admin01;Encrypt=False;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=26.135.207.98;Initial Catalog=GeeYeangSore;Persist Security Info=True;User ID=admin01;Password=admin01;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -219,6 +221,7 @@ public partial class GeeYeangSoreContext : DbContext
             entity.Property(e => e.HLinkUrl)
                 .HasMaxLength(250)
                 .HasColumnName("h_LinkURL");
+            entity.Property(e => e.HPlanId).HasColumnName("h_PlanId");
             entity.Property(e => e.HPriority).HasColumnName("h_Priority");
             entity.Property(e => e.HPropertyId).HasColumnName("h_Property_Id");
             entity.Property(e => e.HStartDate)
@@ -236,10 +239,31 @@ public partial class GeeYeangSoreContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_h_Ad_Landlord");
 
+            entity.HasOne(d => d.HPlan).WithMany(p => p.HAds)
+                .HasForeignKey(d => d.HPlanId)
+                .HasConstraintName("FK_h_Ad_h_AdPlan");
+
             entity.HasOne(d => d.HProperty).WithMany(p => p.HAds)
                 .HasForeignKey(d => d.HPropertyId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_h_Ad_Property");
+        });
+
+        modelBuilder.Entity<HAdPlan>(entity =>
+        {
+            entity.HasKey(e => e.HPlanId);
+
+            entity.ToTable("h_AdPlan");
+
+            entity.Property(e => e.HPlanId).HasColumnName("h_PlanId");
+            entity.Property(e => e.HAdPrice).HasColumnName("h_AdPrice");
+            entity.Property(e => e.HCategory)
+                .HasMaxLength(50)
+                .HasColumnName("h_Category");
+            entity.Property(e => e.HDays).HasColumnName("h_Days");
+            entity.Property(e => e.HName)
+                .HasMaxLength(50)
+                .HasColumnName("h_Name");
         });
 
         modelBuilder.Entity<HAdmin>(entity =>
