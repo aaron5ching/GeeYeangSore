@@ -1,4 +1,5 @@
-﻿namespace GeeYeangSore.DTO.User  //第三方Google登入
+﻿using System.ComponentModel.DataAnnotations;
+namespace GeeYeangSore.DTO.User  //第三方Google登入
 {
     public class GoogleLoginRequest
     {
