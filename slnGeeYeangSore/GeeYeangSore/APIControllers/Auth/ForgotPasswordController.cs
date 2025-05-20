@@ -27,35 +27,37 @@ public class ForgotPasswordController : ControllerBase
     }
 
     // ① 發送驗證碼
+    // ① 發送驗證碼
     [HttpPost("send-code")]
     public async Task<IActionResult> SendCode([FromBody] SendResetCodeDto dto)
     {
         try
         {
+            // ✅ 檢查是否為註冊使用者
             var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
             if (user == null)
                 return NotFound(new { success = false, message = "信箱不存在" });
 
+            // ✅ 產生 6 位數驗證碼
             string code = new Random().Next(100000, 999999).ToString();
 
-            // ✅ 查詢是否有尚未使用的驗證碼
+            // ✅ 查詢是否已有該 email 的 ResetPassword 類型資料
             var existingToken = _context.HEmailTokens
-                .Where(x => x.HUserEmail == dto.Email &&
-                            x.HTokenType == "ResetPassword" &&
-                            !x.HIsUsed)
+                .Where(x => x.HUserEmail == dto.Email && x.HTokenType == "ResetPassword")
                 .OrderByDescending(x => x.HCreatedAt)
                 .FirstOrDefault();
 
             if (existingToken != null)
             {
-                // ✅ 覆蓋資料
+                // ✅ 若存在，更新原有資料
                 existingToken.HEmailToken1 = code;
                 existingToken.HResetExpiresAt = DateTime.Now.AddMinutes(10);
                 existingToken.HCreatedAt = DateTime.Now;
+                existingToken.HIsUsed = false; // 重設為未使用
             }
             else
             {
-                // ✅ 新增一筆資料
+                // ✅ 若不存在，新增一筆新資料
                 _context.HEmailTokens.Add(new HEmailToken
                 {
                     HUserEmail = dto.Email,
@@ -67,30 +69,32 @@ public class ForgotPasswordController : ControllerBase
                 });
             }
 
+            // ✅ 儲存資料庫變更
             await _context.SaveChangesAsync();
 
-            // 🐥 寄送信件（與註冊相同邏輯）
+            // ✅ 寄送驗證信
             using var smtpClient = new SmtpClient(_smtp.Host, _smtp.Port)
             {
                 Credentials = new NetworkCredential(_smtp.FromEmail, _smtp.AppPassword),
-                EnableSsl = true // ✅ 與註冊一致，寫死 true
+                EnableSsl = true
             };
+
             var mail = new MailMessage
             {
-                From = new MailAddress(_smtp.FromEmail, "租屋平台"),
-                Subject = "重設密碼驗證碼",
+                From = new MailAddress(_smtp.FromEmail, "居研所租屋平台"),
+                Subject = "居研所租屋平台｜重設密碼驗證碼",
                 Body = $@"
-    <div style='font-family:Arial,sans-serif; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:10px;'>
-        <h2 style='color:#2c3e50;'>居研所租屋平台</h2>
-        <p>親愛的使用者您好，</p>
-        <p>您申請了密碼重設，請使用以下驗證碼完成身分確認：</p>
-        <div style='font-size:32px; font-weight:bold; color:#e74c3c; margin:20px 0;'>{code}</div>
-        <p>請於 <strong>10 分鐘內</strong> 完成輸入驗證。</p>
-        <p style='font-size:14px; color:#888;'>※ 此為系統自動發送信件，請勿直接回覆。</p>
-        <hr/>
-        <p style='font-size:12px; color:#aaa;'>居研所租屋平台 © {DateTime.Now.Year}</p>
-    </div>",
-                IsBodyHtml = true // ✅ 啟用 HTML
+<div style='font-family:Arial,sans-serif; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:10px;'>
+    <h2 style='color:#2c3e50;'>居研所租屋平台</h2>
+    <p>親愛的使用者您好，</p>
+    <p>您申請了密碼重設，請使用以下驗證碼完成身分確認：</p>
+    <div style='font-size:32px; font-weight:bold; color:#e74c3c; margin:20px 0;'>{code}</div>
+    <p>請於 <strong>10 分鐘內</strong> 完成輸入驗證。</p>
+    <p style='font-size:14px; color:#888;'>※ 此為系統自動發送信件，請勿直接回覆。</p>
+    <hr/>
+    <p style='font-size:12px; color:#aaa;'>居研所租屋平台 © {DateTime.Now.Year}</p>
+</div>",
+                IsBodyHtml = true
             };
 
             mail.To.Add(dto.Email);
@@ -103,6 +107,7 @@ public class ForgotPasswordController : ControllerBase
             return StatusCode(500, new { success = false, message = "寄送失敗", error = ex.Message });
         }
     }
+
 
     // ② 驗證驗證碼
     [HttpPost("verify-code")]

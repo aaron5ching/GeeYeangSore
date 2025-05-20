@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using GeeYeangSore.Models;
+using Microsoft.EntityFrameworkCore; // ✅ 若有使用 .Include()
 using GeeYeangSore.Data;
 using System.Linq;
 using System;
 using Microsoft.AspNetCore.Authorization;
 using GeeYeangSore.ViewModels;
 using GeeYeangSore.APIControllers.Session;
+using GeeYeangSore.DTO.User;
+using Google.Apis.Auth; //第三方登入
+
+
 
 namespace GeeYeangSore.APIControllers.Auth
 {
@@ -18,39 +23,42 @@ namespace GeeYeangSore.APIControllers.Auth
 
         // 登入
         [HttpPost("login")]
-        public IActionResult Login([FromBody] CLoginViewModel vm)
+        public async Task<IActionResult> Login([FromBody] CLoginViewModel vm)
         {
-            // 驗證輸入
+            // Step 0：驗證欄位是否為空
             if (string.IsNullOrEmpty(vm.txtAccount) || string.IsNullOrEmpty(vm.txtPassword))
             {
                 return BadRequest(new { success = false, message = "帳號或密碼為空" });
             }
 
-            // 找出帳號
+            if (string.IsNullOrEmpty(vm.RecaptchaToken))
+            {
+                return BadRequest(new { success = false, message = "reCAPTCHA token 缺失" });
+            }
+
+            // 🛡️ Step 1：驗證 reCAPTCHA Token
+            if (!await VerifyRecaptchaAsync(vm.RecaptchaToken))
+            {
+                return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
+            }
+
+            // Step 2：查詢帳號
             var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == vm.txtAccount && !t.HIsDeleted);
             if (tenant == null)
                 return Unauthorized(new { success = false, message = "查無此帳號" });
 
-            // 驗證密碼
+            // Step 3：密碼驗證
             if (!VerifyTenantPassword(tenant, vm.txtPassword))
                 return Unauthorized(new { success = false, message = "密碼錯誤" });
 
-            // 判斷是房東還是房客
+            // Step 4：判斷角色
             bool isLandlord = tenant.HIsLandlord;
-            string role;
-            if (isLandlord)
-            {
-                role = "landlord";
-            }
-            else
-            {
-                role = "tenant";
-            }
+            string role = isLandlord ? "landlord" : "tenant";
 
-            // 登入成功時寫入 Session
+            // Step 5：寫入 Session
             SessionManager.SetLogin(HttpContext, tenant);
 
-            // 回傳登入成功資料
+            // Step 6：回傳成功資訊
             return Ok(new
             {
                 success = true,
@@ -61,6 +69,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 isLandlord = tenant.HIsLandlord
             });
         }
+
 
         // 登出
         [HttpPost("logout")]
@@ -90,7 +99,6 @@ namespace GeeYeangSore.APIControllers.Auth
                     return Unauthorized(new { success = false, message = "未登入" });
                 // 從 Session 取得登入的 Email
                 var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-
 
                 // 查找租客資料
                 var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
@@ -127,5 +135,123 @@ namespace GeeYeangSore.APIControllers.Auth
                 return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
             }
         }
+
+
+        [HttpPost("google-login")]
+        public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest request)
+        {
+            try
+            {
+                // Step 1️⃣ 驗證 id_token 的有效性
+                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
+
+                // Step 2️⃣ 檢查 email 是否已驗證
+                if (!payload.EmailVerified)
+                    return Unauthorized(new { success = false, message = "Google 帳號尚未完成 Email 驗證" });
+
+                // Step 3️⃣ 查詢是否已存在對應的 HSso 紀錄
+                var sso = _db.HSsos 
+                    .Include(s => s.HTenant)
+                    .FirstOrDefault(s => s.HSub == payload.Subject && s.HAud == payload.Audience);
+
+                HTenant tenant;
+
+                if (sso != null)
+                {
+                    // 已存在帳號
+                    tenant = sso.HTenant;
+                }
+                else
+                {
+                    // Step 4️⃣ 建立新 HTenant（主會員資料）
+                    tenant = new HTenant
+                    {
+                        HUserName = payload.Name ?? payload.Email.Split('@')[0],
+                        HEmail = payload.Email,
+                        HPhoneNumber = "未取得", //✅ 改為給預設值而不是空字串，避免格式錯誤或長度不足
+                        HIsTenant = true,
+                        HIsLandlord = false,
+                        HStatus = "已驗證",
+                        HCreatedAt = DateTime.Now,
+                        HUpdateAt = DateTime.Now,
+                        HIsDeleted = false,
+                        HLoginFailCount = 0 // ✅ 明確給初始值
+                    };
+
+                    _db.HTenants.Add(tenant);
+                    await _db.SaveChangesAsync();
+
+                    // Step 5️⃣ 建立對應的 HSso 紀錄
+                    sso = new HSso
+                    {
+                        HTenantId = tenant.HTenantId,
+                        HSub = payload.Subject,
+                        HAud = payload.Audience?.ToString(), // ✅ 強制轉型，避免 NULL 或 object 錯誤
+                        HUserEmail = payload.Email,
+                        HEmailverified = payload.EmailVerified,
+                        HIat = DateTimeOffset.FromUnixTimeSeconds(payload.IssuedAtTimeSeconds ?? 0).DateTime,
+                        HExp = DateTimeOffset.FromUnixTimeSeconds(payload.ExpirationTimeSeconds ?? 0).DateTime
+                    };
+
+                    _db.HSsos.Add(sso);
+                    await _db.SaveChangesAsync();
+                }
+
+                // Step 6️⃣ 寫入登入 Session
+                SessionManager.SetLogin(HttpContext, tenant);
+
+                // Step 7️⃣ 回傳登入資訊
+                return Ok(new
+                {
+                    success = true,
+                    message = "Google 登入成功",
+                    user = tenant.HEmail,
+                    userName = tenant.HUserName,
+                    tenantId = tenant.HTenantId,
+                    isLandlord = tenant.HIsLandlord,
+                    role = tenant.HIsLandlord ? "landlord" : "tenant"
+                });
+            }
+            catch (InvalidJwtException ex)
+            {
+                return Unauthorized(new { success = false, message = "Token 驗證失敗", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "登入失敗",
+                    error = ex.ToString() // 🟡 而不是只印 InnerException
+                });
+            }
+        }
+
+        //reCAPTCHA 驗證方法
+        private async Task<bool> VerifyRecaptchaAsync(string token)
+        {
+            var secretKey = "6Ldt9T4rAAAAAFGgF9KDgBXyz46god-1q6VVxKtN"; 
+            using var client = new HttpClient();
+
+            var parameters = new Dictionary<string, string>
+    {
+        { "secret", secretKey },
+        { "response", token }
+    };
+
+            var response = await client.PostAsync("https://www.google.com/recaptcha/api/siteverify", new FormUrlEncodedContent(parameters));
+            var json = await response.Content.ReadAsStringAsync();
+
+            var result = System.Text.Json.JsonSerializer.Deserialize<RecaptchaResult>(json, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result != null && result.Success && result.Score >= 0.5 && result.Action == "login";
+        }
+
+
+
+
     }
 }
