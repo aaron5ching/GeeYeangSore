@@ -1,0 +1,341 @@
+﻿using GeeYeangSore.Models;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web;
+
+namespace GeeYeangSore.APIControllers.Commerce
+{
+    [Route("api/commerce")]
+    [ApiController]
+    public class CommerceController : BaseController
+    {
+        public CommerceController(GeeYeangSoreContext db) : base(db) { }
+
+        [HttpPost("create-ad")]
+        public IActionResult CreateAd([FromBody] GeeYeangSore.DTO.Commerce.CreateAdRequest vm)
+        {
+            // 步驟0：權限檢查（必須為已驗證房東）
+            var access = CheckAccess(requireLandlord: true); // 含登入 + 黑名單 + 房東身份
+            if (access != null) return access;
+
+            // 步驟1：取得目前登入的租客（房東）
+            var tenant = GetCurrentTenant();
+            if (tenant == null)
+                return Unauthorized(new { success = false, message = "未登入" });
+
+            // 步驟2：確認租客是否已通過房東驗證
+            if (tenant.HIsLandlord != true)
+                return Unauthorized(new { success = false, message = "尚未通過房東驗證" });
+
+            // 步驟3：取得房東資料（抓 landlordId）
+            var landlord = _db.HLandlords.FirstOrDefault(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
+            if (landlord == null)
+                return Unauthorized(new { success = false, message = "房東身份不存在" });
+
+            // 步驟4：撈出廣告方案資料
+            var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == vm.PlanId);
+            if (plan == null)
+                return BadRequest(new { success = false, message = "找不到指定的廣告方案" });
+
+            // 步驟5：組成廣告資料物件
+            var now = DateTime.Now;
+            var ad = new HAd
+            {
+                HLandlordId = landlord.HLandlordId,
+                HPropertyId = vm.PropertyId,
+                HAdName = vm.AdName,
+                HCategory = plan.HCategory,
+                HPlanId = plan.HPlanId,
+                HAdPrice = plan.HAdPrice,
+                HStartDate = now,
+                HEndDate = now.AddDays(plan.HDays),
+                HStatus = "進行中",
+                HPriority = plan.HPlanId,
+                HAdTag = vm.AdTag,
+                HTargetRegion = vm.TargetRegion,
+                HLinkUrl = vm.LinkURL,
+                HImageUrl = vm.ImageURL,
+                HCreatedDate = now,
+                HLastUpdated = now,
+                HIsDelete = false
+            };
+
+            // 步驟6：將廣告資料寫入資料庫
+            _db.HAds.Add(ad);
+            _db.SaveChanges();
+
+            // 步驟7：回傳成功訊息與新廣告ID
+            return Ok(new { success = true, adId = ad.HAdId });
+        }
+
+
+        // 步驟2：根據方案ID回傳金額及名稱
+        [HttpGet("plan-info/{planId}")]
+        public IActionResult GetPlanInfo(int planId)
+        {
+            try
+            {
+                // 步驟1：查詢指定方案
+                var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == planId);
+                if (plan == null)
+                    return NotFound(new { success = false, message = "查無此方案" });
+
+                // 步驟2：回傳方案資訊
+                return Ok(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        planId = plan.HPlanId,
+                        name = plan.HName,
+                        category = plan.HCategory,
+                        price = plan.HAdPrice,
+                        days = plan.HDays
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // 步驟3：例外處理
+                return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
+            }
+        }
+        [HttpPost("checkout-params")]
+        public IActionResult GenerateEcpayParams([FromBody] GeeYeangSore.DTO.Commerce.EcpayCheckoutRequest vm)
+        {
+            try
+            {
+                // 步驟1：取得目前登入的租客
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+
+                // 步驟2：產生訂單編號與時間
+                // 訂單編號（你送給綠界的唯一編號，用於 h_Merchant_Trade_No）
+                // 例如：M202505200001
+                string orderId = $"M{DateTime.Now:yyyyMMddHHmmssfff}";
+
+                // 建立時間（符合綠界格式 yyyy/MM/dd HH:mm:ss）
+                string now = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+                string website = "https://e75b-1-175-216-32.ngrok-free.app";
+
+                // 步驟3：組成綠界訂單參數
+                var order = new Dictionary<string, string>
+                {
+                    // 商店代號（測試用為 2000132，正式請換為你平台專屬代號）
+                    { "MerchantID", "2000132" },
+
+                    // 訂單編號，必須唯一且不得超過 20 字元（英數字）
+                    { "MerchantTradeNo", orderId },
+
+                    // 訂單建立時間，格式必須是 yyyy/MM/dd HH:mm:ss（24 小時制）
+                    { "MerchantTradeDate", now }, // e.g., "2025/05/19 15:45:30"
+
+                    // 固定為 aio，表示「全功能支付」
+                    { "PaymentType", "aio" },
+
+                    // 訂單總金額，必須是整數（單位：新台幣）
+                    { "TotalAmount", vm.TotalAmount.ToString() },
+
+                    // 商品描述（建議使用 URL encode 處理中文）
+                    { "TradeDesc", Uri.EscapeDataString("居研所廣告刊登付款") },
+
+                    // 商品名稱（可包含中文，複數商品用 # 分隔，限 200 字元）
+                    { "ItemName", vm.ItemName },
+
+                    // 綠界付款完成通知的接收網址（必須可由綠界主機 POST 存取）
+                    { "ReturnURL", $"{website}/api/ecpay/callback" },
+
+                    // 用戶完成付款後導回的網址（前端接收處）
+                    { "ClientBackURL", $"{website}/frontend/ad-confirm/{orderId}" },
+
+                    // 指定付款方式（此處為信用卡一次付清）
+                    { "ChoosePayment", "Credit" },
+
+                    // 自訂欄位 1，可用來記錄租客 ID（回傳時會帶回）
+                    { "CustomField1", tenant.HTenantId.ToString() },
+
+                    // 自訂欄位 2，可用來記錄廣告 ID 或方案 ID
+                    { "CustomField2", vm.AdId.ToString() },
+
+                    // 使用加密版本：1 表示使用 SHA256 驗證（官方建議值）
+                    { "EncryptType", "1" }
+                };
+
+                // 步驟4：產生加密驗證碼（CheckMacValue）
+                order["CheckMacValue"] = GenerateCheckMacValue(order);
+
+                // 步驟5：回傳綠界訂單參數（前端可用於自行組表單）
+                return Ok(new { success = true, data = order });
+            }
+            catch (Exception ex)
+            {
+                // 步驟6：例外處理
+                return StatusCode(500, new { success = false, message = "綠界參數生成失敗", error = ex.Message });
+            }
+        }
+
+        // 產生自動送出 HTML 表單 API
+        [HttpPost("ecpay-html")]
+        public IActionResult GenerateEcpayHtml([FromBody] GeeYeangSore.DTO.Commerce.EcpayCheckoutRequest vm)
+        {
+            // 步驟1：驗證登入
+            var tenant = GetCurrentTenant();
+            if (tenant == null)
+                return Unauthorized(new { success = false, message = "未登入" });
+
+            // 步驟2：組合訂單參數（同 checkout-params）
+            string orderId = $"M{DateTime.Now:yyyyMMddHHmmssfff}";
+            string now = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            string website = "https://e75b-1-175-216-32.ngrok-free.app/";
+            var order = new Dictionary<string, string>
+            {
+                { "MerchantID", "2000132" },
+                { "MerchantTradeNo", orderId },
+                { "MerchantTradeDate", now },
+                { "PaymentType", "aio" },
+                { "TotalAmount", vm.TotalAmount.ToString() },
+                { "TradeDesc", Uri.EscapeDataString("居研所廣告刊登付款") },
+                { "ItemName", vm.ItemName },
+                { "ReturnURL", $"{website}/api/commerce/ecpay/callback" },
+                { "ClientBackURL", $"http://localhost:5173/frontend/ad-confirm/{orderId}" },
+                { "ChoosePayment", "Credit" },
+                { "CustomField1", tenant.HTenantId.ToString() },
+                { "CustomField2", vm.AdId.ToString() },
+                { "EncryptType", "1" }
+            };
+            // 步驟3：產生自動送出 HTML 表單
+            string html = GenerateAutoSubmitForm(order, true, true);
+            // 步驟4：回傳 HTML 給前端，前端插入後自動跳轉到綠界
+            return Content(html, "text/html");
+        }
+
+        // 產生自動送出 HTML 表單的工具方法
+        private string GenerateAutoSubmitForm(Dictionary<string, string> orderData, bool includeScript = true, bool useStage = true)
+        {
+            // 加入 CheckMacValue
+            var checkMac = GenerateCheckMacValue(orderData);
+            orderData["CheckMacValue"] = checkMac;
+            var form = new StringBuilder();
+            string actionUrl = useStage
+                ? "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+                : "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5";
+            form.Append($"<form id='ecpay-form' method='post' action='{actionUrl}'>");
+            foreach (var kv in orderData)
+            {
+                var key = System.Web.HttpUtility.HtmlEncode(kv.Key);
+                var value = System.Web.HttpUtility.HtmlEncode(kv.Value);
+                form.Append($"<input type='hidden' name='{key}' value='{value}' />");
+            }
+            form.Append("</form>");
+            if (includeScript)
+                form.Append("<script>document.getElementById('ecpay-form').submit();</script>");
+            return form.ToString();
+        }
+
+        // 優化版 CheckMacValue 產生（參考 EcpayHelper）
+        private string GenerateCheckMacValue(Dictionary<string, string> parameters)
+        {
+            const string HashKey = "5294y06JbISpM5x9";
+            const string HashIV = "v77hoKGq4kWxNNIS";
+            var sorted = parameters
+                .Where(kv => kv.Key != "CheckMacValue")
+                .OrderBy(kv => kv.Key)
+                .ToList();
+            var raw = $"HashKey={HashKey}&{string.Join("&", sorted.Select(kv => $"{kv.Key}={kv.Value}"))}&HashIV={HashIV}";
+            raw = System.Web.HttpUtility.UrlEncode(raw).ToLower();
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(raw));
+            return BitConverter.ToString(hash).Replace("-", "").ToUpper();
+        }
+
+        // 綠界付款完成 Callback
+        [HttpPost("ecpay/callback")]
+        public IActionResult EcpayCallback([FromForm] Microsoft.AspNetCore.Http.IFormCollection form)
+        {
+            // 解析綠界回傳欄位
+            var rtnCode = form["RtnCode"].ToString();
+            var customField1 = form["CustomField1"].ToString();
+            var customField2 = form["CustomField2"].ToString();
+
+            // 步驟2：根據 customField2 取得廣告資料，並更新付款狀態
+            if (int.TryParse(customField2, out int adId))
+            {
+                var ad = _db.HAds.FirstOrDefault(a => a.HAdId == adId);
+                if (ad != null)
+                {
+                    ad.HStatus = rtnCode == "1" ? "已付款" : ad.HStatus;
+
+                    // 步驟3：新增交易紀錄
+                    var transaction = new HTransaction
+                    {
+                        HMerchantTradeNo = form["MerchantTradeNo"],
+                        HTradeNo = form["TradeNo"],
+                        HAmount = decimal.Parse(form["TradeAmt"]),
+                        HItemName = form["ItemName"],
+                        HPaymentType = form["PaymentType"],
+                        HPaymentDate = DateTime.Parse(form["PaymentDate"]),
+                        HTradeStatus = rtnCode == "1" ? "Success" : "Failed",
+                        HRtnMsg = form["RtnMsg"],
+                        HIsSimulated = form["SimulatePaid"] == "1" ? 1 : 0,
+                        HCreateTime = DateTime.Now,
+                        HUpdateTime = DateTime.Now,
+                        HRawJson = Newtonsoft.Json.JsonConvert.SerializeObject(form),
+                        HPropertyId = ad.HPropertyId,
+                        HRegion = ad.HTargetRegion,
+                        HAdId = ad.HAdId
+                    };
+
+                    _db.HTransactions.Add(transaction);
+                    _db.SaveChanges();
+                }
+            }
+
+            // 步驟4：回傳給綠界 1|OK 或 0|FAIL
+            if (rtnCode == "1")
+            {
+                return Content("1|OK");
+            }
+            else
+            {
+                return Content("0|FAIL");
+            }
+
+        }
+
+        private string GetSHA256(string value)
+        {
+            // 步驟1：建立 SHA256 實例
+            var result = new StringBuilder();
+            using (var sha256 = SHA256.Create())
+            {
+                var bts = Encoding.UTF8.GetBytes(value);
+                var hash = sha256.ComputeHash(bts);
+                // 步驟2：轉換為十六進位字串
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    result.Append(hash[i].ToString("X2"));
+                }
+            }
+            // 步驟3：回傳結果
+            return result.ToString();
+        }
+        [HttpGet("query-status/{orderId}")]
+        public IActionResult QueryPaymentStatus(string orderId)
+        {
+            // 步驟1：查詢交易紀錄
+            var tx = _db.HTransactions.FirstOrDefault(t => t.HMerchantTradeNo == orderId);
+            if (tx == null)
+                return NotFound(new { success = false, message = "查無交易" });
+
+            // 步驟2：回傳交易狀態
+            return Ok(new { success = tx.HTradeStatus == "Success" });
+        }
+
+    }
+}
