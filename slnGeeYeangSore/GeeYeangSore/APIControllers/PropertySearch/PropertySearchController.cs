@@ -11,31 +11,67 @@ namespace GeeYeangSore.APIControllers.PropertySearch
     public class PropertySearchController : BaseController
     {
         public PropertySearchController(GeeYeangSoreContext db) : base(db) { }
+        public static class PropertyExtensions
+        {
+            public static string? GetBadgeType(HProperty p, GeeYeangSoreContext db)
+            {
+                if (db.HAds.Any(ad => ad.HPropertyId == p.HPropertyId && ad.HCategory == "VIP3" && ad.HStatus == "進行中"))
+                    return "精選";
+                if (db.HAds.Any(ad => ad.HPropertyId == p.HPropertyId && ad.HCategory == "VIP2" && ad.HStatus == "進行中"))
+                    return "推薦";
+                if (p.HPublishedDate >= DateTime.Now.AddDays(-7))
+                    return "New";
+                return null;
+            }
+        }
 
         [HttpGet("propertyList")]
         public IActionResult GetPropertiesList()
         {
-            var result = _db.HProperties
-                        .Include(p => p.HPropertyImages)
-                        .Where(p => p.HAvailabilityStatus == "未出租" && p.HStatus == "已驗證" && p.HIsDelete == false)
-                        .OrderByDescending(p => p.HPublishedDate)
-                        .Select(p => new {
-                            propertyId = p.HPropertyId,
-                            title = p.HPropertyTitle,
-                            rentPrice = p.HRentPrice,
-                            city = p.HCity,
-                            district = p.HDistrict,
-                            address = p.HAddress,
-                            roomCount = p.HRoomCount,
-                            bathroomCount = p.HBathroomCount,
-                            propertyType = p.HPropertyType,
-                            image = p.HPropertyImages
-                                    .Where(i => i.HIsDelete == false)
-                                    .OrderBy(i => i.HUploadedDate)
-                                    .Select(i => "https://localhost:7022" + i.HImageUrl)
-                                    .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg"
-                        })
-                        .ToList();                  
+            var adMap = _db.HAds
+                .Where(ad => ad.HStatus == "進行中" && (ad.HCategory == "VIP2" || ad.HCategory == "VIP3"))
+                .Select(ad => new { ad.HPropertyId, ad.HCategory })
+                .ToList()
+                .GroupBy(ad => ad.HPropertyId)
+                .ToDictionary(g => g.Key, g => g.First().HCategory); 
+
+            var now = DateTime.Now;
+            var weekAgo = now.AddDays(-7);
+
+            var properties = _db.HProperties
+                .Include(p => p.HPropertyImages)
+                .Where(p => p.HAvailabilityStatus == "未出租" && p.HStatus == "已驗證" && p.HIsDelete == false)
+                .OrderByDescending(p => p.HPublishedDate)
+                .ToList();
+
+            var result = properties.Select(p => new PropertyCardDTO
+            {
+                PropertyId = p.HPropertyId,
+                Title = p.HPropertyTitle,
+                RentPrice = p.HRentPrice,
+                City = p.HCity,
+                District = p.HDistrict,
+                Address = p.HAddress,
+                RoomCount = p.HRoomCount ?? 0,
+                BathroomCount = p.HBathroomCount ?? 0,
+                PropertyType = p.HPropertyType,
+                Image = p.HPropertyImages
+                            .Where(i => i.HIsDelete == false)
+                            .OrderBy(i => i.HUploadedDate)
+                            .Select(i => "https://localhost:7022" + i.HImageUrl)
+                            .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg",
+
+                BadgeType = adMap.ContainsKey(p.HPropertyId)
+                    ? (adMap[p.HPropertyId] == "VIP3" ? "精選" : "推薦")
+                    : (p.HPublishedDate >= weekAgo ? "New" : null)
+            }).ToList();
+            result = result
+                     .OrderBy(p =>
+                         p.BadgeType == "精選" ? 1 :
+                         p.BadgeType == "推薦" ? 2 :
+                         p.BadgeType == "New" ? 3 : 4
+                     )
+                     .ToList();
 
             return Ok(result);
         }
@@ -47,7 +83,8 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                 .Include(p => p.HPropertyImages)
                 .Where(p =>
                     p.HAvailabilityStatus == "未出租" &&
-                    p.HStatus == "已驗證" &&
+                    p.HStatus == "已驗證" && 
+                    p.HIsDelete == false &&
                     _db.HAds.Any(ad =>
                         ad.HPropertyId == p.HPropertyId &&
                         ad.HCategory == "VIP3" &&
@@ -70,7 +107,8 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                                 .Where(i => i.HIsDelete == false)
                                 .OrderBy(i => i.HUploadedDate)
                                 .Select(i => "https://localhost:7022" + i.HImageUrl)
-                                .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg"
+                                .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg",
+                    BadgeType = "精選"
                 })
                 .ToList();
 
@@ -117,10 +155,15 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                                     .Where(i => i.HIsDelete == false)
                                     .OrderBy(i => i.HUploadedDate)
                                     .Select(i => "https://localhost:7022" + i.HImageUrl)
-                                    .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg"
+                                    .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg",
+                        badgeType = ad.HCategory == "VIP3" ? "精選" : "推薦"
                     }
                 })
-                .OrderByDescending(x => Guid.NewGuid()) // 隨機
+                .ToList()
+                .OrderBy(x =>
+                    x.property.badgeType == "精選" ? 1 :
+                    x.property.badgeType == "推薦" ? 2 : 3
+                )       
                 .Take(6)
                 .ToList();
 
@@ -273,6 +316,15 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                 return NotFound(new { message = "找不到該房源" });
             }
 
+            var ad = _db.HAds
+                    .Where(ad => ad.HPropertyId == property.HPropertyId && ad.HStatus == "進行中")
+                    .OrderByDescending(ad => ad.HCreatedDate)
+                    .FirstOrDefault();
+
+            var badgeType = ad != null
+                            ? (ad.HCategory == "VIP3" ? "精選" : (ad.HCategory == "VIP2" ? "推薦" : null))
+                            : (property.HPublishedDate >= DateTime.Now.AddDays(-7) ? "New" : null);
+
             var feature = property.HPropertyFeatures.FirstOrDefault(f => f.HIsDelete == false);
             if (feature == null)
             {
@@ -331,7 +383,8 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                     totalFloors = property.HTotalFloors,
                     buildingType = property.HBuildingType,
                     publishedDate = property.HPublishedDate,
-                    features = features
+                    features = features,
+                    badgeType = badgeType
                 },
                 images = property.HPropertyImages
                     .Where(i => i.HIsDelete == false)
@@ -355,39 +408,53 @@ namespace GeeYeangSore.APIControllers.PropertySearch
         [HttpGet("recommendedProperties")]
         public IActionResult GetRecommendedProperties()
         {
-            var data = _db.HProperties
-                .Include(p => p.HPropertyImages)
-                .Where(p =>
-                    p.HAvailabilityStatus == "未出租" &&
-                    p.HStatus == "已驗證" &&
-                    _db.HAds.Any(ad =>
-                        ad.HPropertyId == p.HPropertyId &&
-                        (ad.HCategory == "VIP1" || ad.HCategory == "VIP2" || ad.HCategory == "VIP3") &&
-                        ad.HStatus == "進行中"
-                    )
-                )
-                .OrderByDescending(p => Guid.NewGuid()) // 隨機
-                .Take(6)
-                .Select(p => new
-                {
-                    propertyId = p.HPropertyId,
-                    title = p.HPropertyTitle,
-                    rentPrice = p.HRentPrice,
-                    city = p.HCity,
-                    district = p.HDistrict,
-                    address = p.HAddress,
-                    roomCount = p.HRoomCount,
-                    bathroomCount = p.HBathroomCount,
-                    propertyType = p.HPropertyType,
-                    image = p.HPropertyImages
-                                .Where(i => i.HIsDelete == false)
-                                .OrderBy(i => i.HUploadedDate)
-                                .Select(i => "https://localhost:7022" + i.HImageUrl)
-                                .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg"
-                })
-                .ToList();
+            var adMap = _db.HAds
+                        .Where(ad => ad.HStatus == "進行中" && (ad.HCategory == "VIP1" || ad.HCategory == "VIP2" || ad.HCategory == "VIP3"))
+                        .Select(ad => new { ad.HPropertyId, ad.HCategory })
+                        .ToList()
+                        .GroupBy(ad => ad.HPropertyId)
+                        .ToDictionary(g => g.Key, g => g.First().HCategory);
 
-            return Ok(data);
+            var now = DateTime.Now;
+            var weekAgo = now.AddDays(-7);
+
+            var properties = _db.HProperties
+                            .Include(p => p.HPropertyImages)
+                            .Where(p =>
+                                p.HAvailabilityStatus == "未出租" && 
+                                p.HStatus == "已驗證" &&
+                                p.HIsDelete == false
+                            )
+                            .ToList() 
+                            .Select(p => new
+                            {
+                                propertyId = p.HPropertyId,
+                                title = p.HPropertyTitle,
+                                rentPrice = p.HRentPrice,
+                                city = p.HCity,
+                                district = p.HDistrict,
+                                address = p.HAddress,
+                                roomCount = p.HRoomCount,
+                                bathroomCount = p.HBathroomCount,
+                                propertyType = p.HPropertyType,
+                                image = p.HPropertyImages
+                                    .Where(i => i.HIsDelete == false)
+                                    .OrderBy(i => i.HUploadedDate)
+                                    .Select(i => "https://localhost:7022" + i.HImageUrl)
+                                    .FirstOrDefault() ?? "https://localhost:7022/images/Property/1.jpg",
+                                badgeType = adMap.ContainsKey(p.HPropertyId)
+                                    ? (adMap[p.HPropertyId] == "VIP3" ? "精選" : "推薦")
+                                    : (p.HPublishedDate >= weekAgo ? "New" : null)
+                            })
+                            .OrderBy(p => Guid.NewGuid())
+                            .OrderBy(p =>                       
+                                p.badgeType == "精選" ? 1 :
+                                p.badgeType == "推薦" ? 2 :
+                                p.badgeType == "New" ? 3 : 4
+                            )
+                            .Take(6)
+                            .ToList();
+            return Ok(properties);
         }
     }
 }
