@@ -150,47 +150,71 @@ namespace GeeYeangSore.APIControllers.Auth
                     return Unauthorized(new { success = false, message = "Google 帳號尚未完成 Email 驗證" });
 
                 // Step 3️⃣ 查詢是否已存在對應的 HSso 紀錄
-                var sso = _db.HSsos 
+                var aud = (payload.Audience as IEnumerable<string>)?.FirstOrDefault() ?? "";
+                var sso = _db.HSsos
                     .Include(s => s.HTenant)
-                    .FirstOrDefault(s => s.HSub == payload.Subject && s.HAud == payload.Audience);
+                    .FirstOrDefault(s => s.HSub == payload.Subject && s.HAud == aud);
 
                 HTenant tenant;
 
                 if (sso != null)
                 {
-                    // 已存在帳號
+                    // ✅ 已存在 → 更新 EmailVerified、HIat、HExp
                     tenant = sso.HTenant;
+
+                    sso.HEmailverified = payload.EmailVerified;
+                    sso.HIat = payload.IssuedAtTimeSeconds.HasValue
+                        ? DateTimeOffset.FromUnixTimeSeconds(payload.IssuedAtTimeSeconds.Value).DateTime
+                        : DateTime.Now;
+                    sso.HExp = payload.ExpirationTimeSeconds.HasValue
+                        ? DateTimeOffset.FromUnixTimeSeconds(payload.ExpirationTimeSeconds.Value).DateTime
+                        : DateTime.Now.AddHours(1);
+
+                    _db.HSsos.Update(sso);
+                    await _db.SaveChangesAsync();
                 }
                 else
                 {
-                    // Step 4️⃣ 建立新 HTenant（主會員資料）
-                    tenant = new HTenant
+                    // ✅ 尚未存在 SSO → 確認是否已有帳號
+                    tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == payload.Email && !t.HIsDeleted);
+
+                    if (tenant == null)
                     {
-                        HUserName = payload.Name ?? payload.Email.Split('@')[0],
-                        HEmail = payload.Email,
-                        HPhoneNumber = "未取得", //✅ 改為給預設值而不是空字串，避免格式錯誤或長度不足
-                        HIsTenant = true,
-                        HIsLandlord = false,
-                        HStatus = "已驗證",
-                        HCreatedAt = DateTime.Now,
-                        HUpdateAt = DateTime.Now,
-                        HIsDeleted = false,
-                        HLoginFailCount = 0 // ✅ 明確給初始值
-                    };
+                        // 新增 HTenant
+                        tenant = new HTenant
+                        {
+                            HUserName = payload.Name ?? payload.Email.Split('@')[0],
+                            HEmail = payload.Email,
+                            HPhoneNumber = "0912345678",
+                            HIsTenant = true,
+                            HIsLandlord = false,
+                            HStatus = "已驗證",
+                            HCreatedAt = DateTime.Now,
+                            HUpdateAt = DateTime.Now,
+                            HIsDeleted = false,
+                            HLoginFailCount = 0,
+                            HPassword = "fromGoogle",
+                            HSalt = "fromGoogle"
+                        };
 
-                    _db.HTenants.Add(tenant);
-                    await _db.SaveChangesAsync();
+                        _db.HTenants.Add(tenant);
+                        await _db.SaveChangesAsync();
+                    }
 
-                    // Step 5️⃣ 建立對應的 HSso 紀錄
+                    // 補建一筆 SSO 紀錄
                     sso = new HSso
                     {
                         HTenantId = tenant.HTenantId,
                         HSub = payload.Subject,
-                        HAud = payload.Audience?.ToString(), // ✅ 強制轉型，避免 NULL 或 object 錯誤
+                        HAud = aud,
                         HUserEmail = payload.Email,
                         HEmailverified = payload.EmailVerified,
-                        HIat = DateTimeOffset.FromUnixTimeSeconds(payload.IssuedAtTimeSeconds ?? 0).DateTime,
-                        HExp = DateTimeOffset.FromUnixTimeSeconds(payload.ExpirationTimeSeconds ?? 0).DateTime
+                        HIat = payload.IssuedAtTimeSeconds.HasValue
+                            ? DateTimeOffset.FromUnixTimeSeconds(payload.IssuedAtTimeSeconds.Value).DateTime
+                            : DateTime.Now,
+                        HExp = payload.ExpirationTimeSeconds.HasValue
+                            ? DateTimeOffset.FromUnixTimeSeconds(payload.ExpirationTimeSeconds.Value).DateTime
+                            : DateTime.Now.AddHours(1)
                     };
 
                     _db.HSsos.Add(sso);
@@ -218,14 +242,17 @@ namespace GeeYeangSore.APIControllers.Auth
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Google 登入錯誤: " + ex.ToString());
                 return StatusCode(500, new
                 {
                     success = false,
                     message = "登入失敗",
-                    error = ex.ToString() // 🟡 而不是只印 InnerException
+                    error = ex.ToString()
                 });
             }
         }
+
+
 
         //reCAPTCHA 驗證方法
         private async Task<bool> VerifyRecaptchaAsync(string token)
