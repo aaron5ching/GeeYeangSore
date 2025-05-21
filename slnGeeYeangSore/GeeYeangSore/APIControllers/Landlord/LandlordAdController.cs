@@ -43,7 +43,9 @@ namespace GeeYeangSore.APIControllers.Landlord
                         .Where(i => i.HIsDelete == false)
                         .OrderBy(i => i.HUploadedDate)
                         .Select(i => i.HImageUrl)
-                        .FirstOrDefault() ?? "/images/Property/default.jpg"
+                        .FirstOrDefault() ?? "/images/Property/default.jpg",
+                    startDate = a.HStartDate,   // 新增
+                    endDate = a.HEndDate        // 新增
                 })
                 .ToList();
 

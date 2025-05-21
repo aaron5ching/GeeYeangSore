@@ -607,17 +607,17 @@ namespace GeeYeangSore.APIControllers.Landlord
                     return Unauthorized(new { success = false, message = "您沒有權限操作此物件" });
 
                 // 建立 HAd（廣告）資料
-                var ad = new HAd
-                {
-                    HLandlordId = landlord.HLandlordId,
-                    HPropertyId = id,
-                    HAdName = dto.HAdName,
-                    HCategory = dto.HCategory,
-                    HPlanId = dto.HPlanId,
-                    HCreatedDate = DateTime.Now,
-                    HStatus = "待付款" // 待付款
-                };
-                _db.HAds.Add(ad);
+                //var ad = new HAd
+                //{
+                //    HLandlordId = landlord.HLandlordId,
+                //    HPropertyId = id,
+                //    HAdName = dto.HAdName,
+                //    HCategory = dto.HCategory,
+                //    HPlanId = dto.HPlanId,
+                //    HCreatedDate = DateTime.Now,
+                //    HStatus = "待付款" // 待付款
+                //};
+                //_db.HAds.Add(ad);
                 await _db.SaveChangesAsync();
 
                 // 更新物件狀態為已驗證和未出租
@@ -626,7 +626,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                 property.HLastUpdated = DateTime.Now;
 
                 await _db.SaveChangesAsync();
-                return Ok(new { success = true, message = "物件上架成功", adId = ad.HAdId });
+                return Ok(new { success = true, message = "物件上架成功" });
+                //, adId = ad.HAdId 串到AD資料表 加在物件上架成功後面
             }
             catch (Exception ex)
             {
