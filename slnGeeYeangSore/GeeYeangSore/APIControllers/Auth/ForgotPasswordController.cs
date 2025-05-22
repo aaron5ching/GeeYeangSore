@@ -27,21 +27,19 @@ public class ForgotPasswordController : ControllerBase
     }
 
     // ① 發送驗證碼
-    // ① 發送驗證碼
     [HttpPost("send-code")]
     public async Task<IActionResult> SendCode([FromBody] SendResetCodeDto dto)
     {
         try
         {
-            // ✅ 檢查是否為註冊使用者
             var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
             if (user == null)
                 return NotFound(new { success = false, message = "信箱不存在" });
 
-            // ✅ 產生 6 位數驗證碼
             string code = new Random().Next(100000, 999999).ToString();
+            string salt = GenerateSalt();
+            string hashedCode = HashWithSalt(code, salt);
 
-            // ✅ 查詢是否已有該 email 的 ResetPassword 類型資料
             var existingToken = _context.HEmailTokens
                 .Where(x => x.HUserEmail == dto.Email && x.HTokenType == "ResetPassword")
                 .OrderByDescending(x => x.HCreatedAt)
@@ -49,19 +47,19 @@ public class ForgotPasswordController : ControllerBase
 
             if (existingToken != null)
             {
-                // ✅ 若存在，更新原有資料
-                existingToken.HEmailToken1 = code;
+                existingToken.HEmailToken1 = hashedCode;
+                existingToken.HEmailSalt = salt;
                 existingToken.HResetExpiresAt = DateTime.Now.AddMinutes(10);
                 existingToken.HCreatedAt = DateTime.Now;
-                existingToken.HIsUsed = false; // 重設為未使用
+                existingToken.HIsUsed = false;
             }
             else
             {
-                // ✅ 若不存在，新增一筆新資料
                 _context.HEmailTokens.Add(new HEmailToken
                 {
                     HUserEmail = dto.Email,
-                    HEmailToken1 = code,
+                    HEmailToken1 = hashedCode,
+                    HEmailSalt = salt,
                     HResetExpiresAt = DateTime.Now.AddMinutes(10),
                     HCreatedAt = DateTime.Now,
                     HIsUsed = false,
@@ -69,10 +67,8 @@ public class ForgotPasswordController : ControllerBase
                 });
             }
 
-            // ✅ 儲存資料庫變更
             await _context.SaveChangesAsync();
 
-            // ✅ 寄送驗證信
             using var smtpClient = new SmtpClient(_smtp.Host, _smtp.Port)
             {
                 Credentials = new NetworkCredential(_smtp.FromEmail, _smtp.AppPassword),
@@ -108,74 +104,93 @@ public class ForgotPasswordController : ControllerBase
         }
     }
 
-
     // ② 驗證驗證碼
     [HttpPost("verify-code")]
     public IActionResult VerifyCode([FromBody] VerifyResetCodeDto dto)
     {
-        var token = _context.HEmailTokens
-            .Where(t => t.HUserEmail == dto.Email &&
-                        t.HTokenType == "ResetPassword" &&
-                        !t.HIsUsed &&
-                        t.HResetExpiresAt > DateTime.Now)
-            .OrderByDescending(t => t.HCreatedAt)
-            .FirstOrDefault();
+        try
+        {
+            var token = _context.HEmailTokens
+                .Where(t => t.HUserEmail == dto.Email &&
+                            t.HTokenType == "ResetPassword" &&
+                            !t.HIsUsed &&
+                            t.HResetExpiresAt > DateTime.Now)
+                .OrderByDescending(t => t.HCreatedAt)
+                .FirstOrDefault();
 
-        if (token == null || token.HEmailToken1 != dto.Code)
-            return BadRequest(new { success = false, message = "驗證碼錯誤" });
+            if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
+                return BadRequest(new { success = false, message = "驗證失敗" });
 
-        if (token.HResetExpiresAt < DateTime.Now)
-            return BadRequest(new { success = false, message = "驗證碼已過期" });
+            string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
+            if (token.HEmailToken1 != hashedInput)
+                return BadRequest(new { success = false, message = "驗證碼錯誤" });
 
-        return Ok(new { success = true });
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
+        }
     }
+
 
     // ③ 重設密碼
     [HttpPost("reset")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var token = _context.HEmailTokens
-            .Where(t => t.HUserEmail == dto.Email &&
-                        t.HTokenType == "ResetPassword" &&
-                        !t.HIsUsed &&
-                        t.HResetExpiresAt > DateTime.Now)
-            .OrderByDescending(t => t.HCreatedAt)
-            .FirstOrDefault();
-
-        if (token == null || token.HEmailToken1 != dto.Code || token.HResetExpiresAt < DateTime.Now)
-            return BadRequest(new { success = false, message = "驗證失敗或已過期" });
-
-        var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
-        if (user == null)
-            return NotFound(new { success = false, message = "查無使用者" });
-
-        // 🐥 雜湊密碼方法（同註冊邏輯）
-        string GenerateSalt()
+        try
         {
-            byte[] saltBytes = new byte[16];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(saltBytes);
-            return Convert.ToBase64String(saltBytes);
-        }
+            var token = _context.HEmailTokens
+                .Where(t => t.HUserEmail == dto.Email &&
+                            t.HTokenType == "ResetPassword" &&
+                            !t.HIsUsed &&
+                            t.HResetExpiresAt > DateTime.Now)
+                .OrderByDescending(t => t.HCreatedAt)
+                .FirstOrDefault();
 
-        string HashPassword(string password, string salt)
+            if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
+                return BadRequest(new { success = false, message = "驗證失敗" });
+
+            string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
+            if (token.HEmailToken1 != hashedInput)
+                return BadRequest(new { success = false, message = "驗證碼錯誤" });
+
+            var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
+            if (user == null)
+                return NotFound(new { success = false, message = "查無使用者" });
+
+            string newSalt = PasswordHasher.GenerateSalt();
+            string hashedPassword = PasswordHasher.HashPassword(dto.NewPassword, newSalt);
+
+            user.HPassword = hashedPassword;
+            user.HSalt = newSalt;
+            token.HIsUsed = true;
+            token.HUsedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
         {
-            using var sha256 = SHA256.Create();
-            var combined = Encoding.UTF8.GetBytes(password + salt);
-            var hash = sha256.ComputeHash(combined);
-            return Convert.ToBase64String(hash);
+            return StatusCode(500, new { success = false, message = "重設密碼失敗", error = ex.Message });
         }
-
-        // ✅ 執行密碼重設
-        string newSalt = PasswordHasher.GenerateSalt();
-        string hashedPassword = PasswordHasher.HashPassword(dto.NewPassword, newSalt);
+    }
 
 
-        user.HPassword = hashedPassword;
-        user.HSalt = newSalt;
-        token.HIsUsed = true;
+    // 🔐 雜湊工具
+    private static string GenerateSalt()
+    {
+        byte[] saltBytes = new byte[16];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(saltBytes);
+        return Convert.ToBase64String(saltBytes);
+    }
 
-        await _context.SaveChangesAsync();
-        return Ok(new { success = true });
+    private static string HashWithSalt(string code, string salt)
+    {
+        using var sha256 = SHA256.Create();
+        var combined = Encoding.UTF8.GetBytes(code + salt);
+        var hash = sha256.ComputeHash(combined);
+        return Convert.ToBase64String(hash);
     }
 }

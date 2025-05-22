@@ -15,7 +15,7 @@ public partial class HTenant
 
     public string? HAddress { get; set; }
 
-    public string HPhoneNumber { get; set; } = null!;
+    public string? HPhoneNumber { get; set; }
 
     public string HEmail { get; set; } = null!;
 

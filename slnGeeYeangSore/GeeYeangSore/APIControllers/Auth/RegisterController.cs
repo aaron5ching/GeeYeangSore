@@ -3,6 +3,8 @@ using GeeYeangSore.Models;
 using GeeYeangSore.DTO.User;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace GeeYeangSore.APIControllers.Auth
 {
@@ -24,8 +26,38 @@ namespace GeeYeangSore.APIControllers.Auth
                 if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
                     return BadRequest(new { success = false, message = "請輸入完整資訊" });
 
+                if (!System.Text.RegularExpressions.Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[^\s]{10,}$"))
+                    return BadRequest(new { success = false, message = "密碼需至少10字元，包含大小寫英文字母、數字、特殊符號，且不得包含空白" });
+
                 if (!dto.IsAgreePolicy)
                     return BadRequest(new { success = false, message = "請先勾選同意隱私權政策" });
+
+                // ✅ 驗證碼比對（使用雜湊 + salt）
+                var tokenRecord = _db.HEmailTokens
+                    .Where(t =>
+                        t.HUserEmail == dto.Email &&
+                        t.HTokenType == "Register" &&
+                        t.HResetExpiresAt > DateTime.UtcNow &&
+                        !t.HIsUsed)
+                    .OrderByDescending(t => t.HCreatedAt)
+                    .FirstOrDefault();
+
+                if (tokenRecord == null)
+                {
+                    return BadRequest(new { success = false, message = "驗證碼錯誤、過期或已使用" });
+                }
+
+                // 🐥 雜湊比對輸入的驗證碼
+                string hashedInput = HashToken(dto.VerificationCode + tokenRecord.HEmailSalt);
+                if (hashedInput != tokenRecord.HEmailToken1)
+                {
+                    return BadRequest(new { success = false, message = "驗證碼錯誤" });
+                }
+
+                // ✅ 標記驗證碼為已使用
+                tokenRecord.HIsUsed = true;
+                tokenRecord.HUsedAt = DateTime.UtcNow;
+                _db.SaveChanges();
 
                 // ✅ 信箱重複檢查
                 if (_db.HTenants.Any(t => t.HEmail == dto.Email))
@@ -35,6 +67,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 var salt = PasswordHasher.GenerateSalt();
                 var hash = PasswordHasher.HashPassword(dto.Password, salt);
 
+                // ✅ 建立房客資料
                 HTenant newTenant = new HTenant
                 {
                     HEmail = dto.Email,
@@ -58,7 +91,6 @@ namespace GeeYeangSore.APIControllers.Auth
             }
             catch (Exception ex)
             {
-                // ✅ 回傳詳細錯誤訊息給前端
                 return StatusCode(500, new
                 {
                     success = false,
@@ -68,6 +100,13 @@ namespace GeeYeangSore.APIControllers.Auth
             }
         }
 
-
+        // ✅ 雜湊驗證碼的方法
+        private string HashToken(string input)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
+        }
     }
 }
