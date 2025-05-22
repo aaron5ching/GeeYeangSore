@@ -400,14 +400,31 @@ namespace GeeYeangSore.APIControllers.Commerce
         [HttpGet("query-status/{orderId}")]
         public IActionResult QueryPaymentStatus(string orderId)
         {
-            // 步驟1：查詢交易紀錄
+            // 取得交易紀錄
             var tx = _db.HTransactions.FirstOrDefault(t => t.HMerchantTradeNo == orderId);
             if (tx == null)
                 return NotFound(new { success = false, message = "查無交易" });
 
-            // 步驟2：回傳交易狀態
-            return Ok(new { success = tx.HTradeStatus == "Success" });
-        }
+            // 預設方案天數
+            int? planDays = null;
 
-    }
-}
+            // 若有關聯到廣告，再查出方案天數
+                if (tx.HAdId.HasValue)
+                {
+                    planDays = (from ad in _db.HAds
+                                join plan in _db.HAdPlans on ad.HPlanId equals plan.HPlanId
+                                where ad.HAdId == tx.HAdId.Value
+                                select plan.HDays).FirstOrDefault();
+                }
+                return Ok(new
+                {
+                    success = tx.HRtnMsg == "付款成功",
+                    orderId = tx.HMerchantTradeNo,
+                    itemName = tx.HItemName,
+                    amount = tx.HAmount,
+                    days = planDays ?? 0,
+                    paymentDate = tx.HPaymentDate?.ToString("yyyy-MM-dd HH:mm")
+                });
+            }
+        }
+  }
