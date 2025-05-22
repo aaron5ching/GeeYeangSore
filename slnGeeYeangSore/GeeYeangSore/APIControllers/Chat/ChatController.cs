@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using GeeYeangSore.Models;
+using GeeYeangSore.DTO.Chat;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
@@ -218,6 +219,47 @@ namespace GeeYeangSore.APIControllers.Chat
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = "刪除失敗", error = ex.Message });
+            }
+        }
+
+        [HttpPost("report-message")]
+        public async Task<IActionResult> ReportMessage([FromBody] ReportMessageDto dto)
+        {
+            try
+            {
+                var access = CheckAccess();
+                if (access != null) return access;
+
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+
+                var message = await _db.HMessages.FindAsync(dto.MessageId);
+                if (message == null)
+                    return NotFound(new { success = false, message = "訊息不存在" });
+
+                // h_ReportCount +1
+                message.HReportCount = (message.HReportCount ?? 0) + 1;
+
+                // 新增 HReport
+                var report = new HReport
+                {
+                    HMessageId = dto.MessageId,
+                    HAuthorId = tenant.HTenantId,
+                    HAuthorType = tenant.HIsLandlord ? "房東" : "房客",
+                    HReason = dto.Reason ?? "不當內容",
+                    HStatus = "待處理",
+                    HCreatedAt = DateTime.Now,
+                    HReportType = "私人"
+                };
+                _db.HReports.Add(report);
+
+                await _db.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "檢舉失敗", error = ex.Message });
             }
         }
     }
