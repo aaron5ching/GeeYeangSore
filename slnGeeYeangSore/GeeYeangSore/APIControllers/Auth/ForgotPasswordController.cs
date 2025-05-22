@@ -108,58 +108,74 @@ public class ForgotPasswordController : ControllerBase
     [HttpPost("verify-code")]
     public IActionResult VerifyCode([FromBody] VerifyResetCodeDto dto)
     {
-        var token = _context.HEmailTokens
-            .Where(t => t.HUserEmail == dto.Email &&
-                        t.HTokenType == "ResetPassword" &&
-                        !t.HIsUsed &&
-                        t.HResetExpiresAt > DateTime.Now)
-            .OrderByDescending(t => t.HCreatedAt)
-            .FirstOrDefault();
+        try
+        {
+            var token = _context.HEmailTokens
+                .Where(t => t.HUserEmail == dto.Email &&
+                            t.HTokenType == "ResetPassword" &&
+                            !t.HIsUsed &&
+                            t.HResetExpiresAt > DateTime.Now)
+                .OrderByDescending(t => t.HCreatedAt)
+                .FirstOrDefault();
 
-        if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
-            return BadRequest(new { success = false, message = "驗證失敗" });
+            if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
+                return BadRequest(new { success = false, message = "驗證失敗" });
 
-        string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
-        if (token.HEmailToken1 != hashedInput)
-            return BadRequest(new { success = false, message = "驗證碼錯誤" });
+            string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
+            if (token.HEmailToken1 != hashedInput)
+                return BadRequest(new { success = false, message = "驗證碼錯誤" });
 
-        return Ok(new { success = true });
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "伺服器錯誤", error = ex.Message });
+        }
     }
+
 
     // ③ 重設密碼
     [HttpPost("reset")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var token = _context.HEmailTokens
-            .Where(t => t.HUserEmail == dto.Email &&
-                        t.HTokenType == "ResetPassword" &&
-                        !t.HIsUsed &&
-                        t.HResetExpiresAt > DateTime.Now)
-            .OrderByDescending(t => t.HCreatedAt)
-            .FirstOrDefault();
+        try
+        {
+            var token = _context.HEmailTokens
+                .Where(t => t.HUserEmail == dto.Email &&
+                            t.HTokenType == "ResetPassword" &&
+                            !t.HIsUsed &&
+                            t.HResetExpiresAt > DateTime.Now)
+                .OrderByDescending(t => t.HCreatedAt)
+                .FirstOrDefault();
 
-        if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
-            return BadRequest(new { success = false, message = "驗證失敗" });
+            if (token == null || string.IsNullOrEmpty(token.HEmailSalt))
+                return BadRequest(new { success = false, message = "驗證失敗" });
 
-        string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
-        if (token.HEmailToken1 != hashedInput)
-            return BadRequest(new { success = false, message = "驗證碼錯誤" });
+            string hashedInput = HashWithSalt(dto.Code, token.HEmailSalt);
+            if (token.HEmailToken1 != hashedInput)
+                return BadRequest(new { success = false, message = "驗證碼錯誤" });
 
-        var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
-        if (user == null)
-            return NotFound(new { success = false, message = "查無使用者" });
+            var user = _context.HTenants.FirstOrDefault(u => u.HEmail == dto.Email);
+            if (user == null)
+                return NotFound(new { success = false, message = "查無使用者" });
 
-        string newSalt = PasswordHasher.GenerateSalt();
-        string hashedPassword = PasswordHasher.HashPassword(dto.NewPassword, newSalt);
+            string newSalt = PasswordHasher.GenerateSalt();
+            string hashedPassword = PasswordHasher.HashPassword(dto.NewPassword, newSalt);
 
-        user.HPassword = hashedPassword;
-        user.HSalt = newSalt;
-        token.HIsUsed = true;
-        token.HUsedAt = DateTime.Now;
+            user.HPassword = hashedPassword;
+            user.HSalt = newSalt;
+            token.HIsUsed = true;
+            token.HUsedAt = DateTime.Now;
 
-        await _context.SaveChangesAsync();
-        return Ok(new { success = true });
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "重設密碼失敗", error = ex.Message });
+        }
     }
+
 
     // 🔐 雜湊工具
     private static string GenerateSalt()
