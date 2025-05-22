@@ -26,6 +26,9 @@ namespace GeeYeangSore.APIControllers.Auth
                 if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
                     return BadRequest(new { success = false, message = "請輸入完整資訊" });
 
+                if (!System.Text.RegularExpressions.Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[^\s]{10,}$"))
+                    return BadRequest(new { success = false, message = "密碼需至少10字元，包含大小寫英文字母、數字、特殊符號，且不得包含空白" });
+
                 if (!dto.IsAgreePolicy)
                     return BadRequest(new { success = false, message = "請先勾選同意隱私權政策" });
 
