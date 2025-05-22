@@ -136,6 +136,7 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                         id = l.HLandlordId,
                         name = t.HUserName,
                         phone = t.HPhoneNumber,
+                        email = t.HEmail,
                         avatar = string.IsNullOrEmpty(t.HImages)
                             ? "https://localhost:7022/images/User/default.png"
                             : "https://localhost:7022/images/User/" + t.HImages
@@ -396,6 +397,7 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                     id = property.HLandlord.HLandlordId,
                     name = property.HLandlord.HTenant.HUserName,
                     phone = property.HLandlord.HTenant.HPhoneNumber,
+                    email = property.HLandlord.HTenant.HEmail,
                     avatar = string.IsNullOrEmpty(property.HLandlord.HTenant.HImages)
                         ? "https://localhost:7022/images/User/default.png"
                         : "https://localhost:7022/images/User/" + property.HLandlord.HTenant.HImages
