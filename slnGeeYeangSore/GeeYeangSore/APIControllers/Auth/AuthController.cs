@@ -37,10 +37,10 @@ namespace GeeYeangSore.APIControllers.Auth
             }
 
             // 🛡️ Step 1：驗證 reCAPTCHA Token
-            if (!await VerifyRecaptchaAsync(vm.RecaptchaToken))
-            {
-                return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
-            }
+            // if (!await VerifyRecaptchaAsync(vm.RecaptchaToken))
+            // {
+            //     return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
+            // }
 
             // Step 2：查詢帳號
             var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == vm.txtAccount && !t.HIsDeleted);
