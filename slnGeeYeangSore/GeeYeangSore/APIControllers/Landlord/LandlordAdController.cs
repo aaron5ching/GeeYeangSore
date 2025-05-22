@@ -33,9 +33,11 @@ namespace GeeYeangSore.APIControllers.Landlord
             var ads = _db.HAds
                 .Include(a => a.HProperty)
                 .Include(a => a.HProperty.HPropertyImages)
-                .Where(a => a.HLandlordId == landlord.HLandlordId && a.HIsDelete == false)
-                .Select(a => new {
+                .Where(a => a.HLandlordId == landlord.HLandlordId && a.HIsDelete == false && a.HProperty.HStatus == "已驗證")
+                .Select(a => new
+                {
                     id = a.HAdId,
+                    propertyId = a.HProperty.HPropertyId,
                     propertyTitle = a.HProperty.HPropertyTitle,
                     plan = a.HCategory,
                     status = a.HStatus,
@@ -92,4 +94,4 @@ namespace GeeYeangSore.APIControllers.Landlord
     {
         public string Plan { get; set; }
     }
-} 
+}

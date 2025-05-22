@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace GeeYeangSore.APIControllers.Commerce
 {
@@ -263,103 +264,121 @@ namespace GeeYeangSore.APIControllers.Commerce
 
         // 綠界付款完成 Callback
         [HttpPost("ecpay/callback")]
-        public IActionResult EcpayCallback([FromForm] Microsoft.AspNetCore.Http.IFormCollection form)
+        public IActionResult EcpayCallback([FromForm] IFormCollection form)
         {
-            // 加入 log，記錄 callback 是否有被呼叫及收到的資料
-            System.IO.File.AppendAllText("D:/callback.log", DateTime.Now + " " + Newtonsoft.Json.JsonConvert.SerializeObject(form) + Environment.NewLine);
-            // 解析綠界回傳欄位
-            var rtnCode = form["RtnCode"].ToString();
-            var customField1 = form["CustomField1"].ToString();
-            var customField2 = form["CustomField2"].ToString();
+            var logPath = "D:/callback.log";
+            var now = DateTime.Now;
+            var logPrefix = $"[{now:yyyy-MM-dd HH:mm:ss}]";
 
-            // 步驟2：根據 customField2 取得廣告資料，並更新付款狀態
-            if (int.TryParse(customField2, out int adId))
+            try
             {
-                var ad = _db.HAds.FirstOrDefault(a => a.HAdId == adId);
-                if (ad != null)
+                // Step 1: Log 原始綠界回傳資料
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Callback Received] {JsonConvert.SerializeObject(form)}\n");
+
+                // Step 2: 解析欄位
+                var rtnCode = form["RtnCode"].ToString(); // 1 代表成功
+                var adIdStr = form["CustomField2"].ToString();
+
+                if (!int.TryParse(adIdStr, out int adId))
                 {
-                    if (rtnCode == "1")
-                    {
-                        // 根據 HPlanId 查詢方案天數
-                        int planDays = 30; // 預設30天
-                        decimal adPrice = 0;
-                        string adTag = "無";
-                        int priority = 1;
-                        string targetRegion = "";
-                        string adDescription = "";
-                        if (ad.HPlanId > 0)
-                        {
-                            var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == ad.HPlanId);
-                            if (plan != null)
-                            {
-                                if (plan.HDays > 0)
-                                    planDays = plan.HDays;
-                                adPrice = plan.HAdPrice;
-                                priority = plan.HPlanId;
-                                // 廣告標籤
-                                adTag = plan.HPlanId == 1 ? "無" : plan.HPlanId == 2 ? "推薦" : "精選";
-                            }
-                        }
-                        // 取得 property 物件
-                        var property = _db.HProperties.FirstOrDefault(p => p.HPropertyId == ad.HPropertyId);
-                        if (property != null)
-                        {
-                            targetRegion = property.HCity;
-                            adDescription = property.HDescription;
-                        }
-                        ad.HStatus = "已付款";
-                        ad.HStartDate = DateTime.Now;
-                        ad.HEndDate = DateTime.Now.AddDays(planDays);
-                        ad.HLastUpdated = DateTime.Now;
-                        ad.HAdPrice = adPrice;
-                        ad.HIsDelete = false;
-                        ad.HTargetRegion = targetRegion;
-                        ad.HAdTag = adTag;
-                        ad.HPriority = priority;
-                        ad.HDescription = adDescription;
-                    }
-                    else
-                    {
-                        ad.HStatus = "未付款";
-                        ad.HLastUpdated = DateTime.Now;
-                    }
-
-                    // 步驟3：新增交易紀錄
-                    var transaction = new HTransaction
-                    {
-                        HMerchantTradeNo = form["MerchantTradeNo"],
-                        HTradeNo = form["TradeNo"],
-                        HAmount = decimal.Parse(form["TradeAmt"]),
-                        HItemName = form["ItemName"],
-                        HPaymentType = form["PaymentType"],
-                        HPaymentDate = DateTime.Parse(form["PaymentDate"]),
-                        HTradeStatus = rtnCode == "1" ? "Success" : "Failed",
-                        HRtnMsg = form["RtnMsg"],
-                        HIsSimulated = form["SimulatePaid"] == "1" ? 1 : 0,
-                        HCreateTime = DateTime.Now,
-                        HUpdateTime = DateTime.Now,
-                        HRawJson = Newtonsoft.Json.JsonConvert.SerializeObject(form),
-                        HPropertyId = ad.HPropertyId,
-                        HRegion = ad.HTargetRegion,
-                        HAdId = ad.HAdId
-                    };
-
-                    _db.HTransactions.Add(transaction);
-                    _db.SaveChanges();
+                    System.IO.File.AppendAllText(logPath, $"{logPrefix} [Error] 無法解析 AdId: {adIdStr}\n");
+                    return Content("0|FAIL");
                 }
-            }
 
-            // 步驟4：回傳給綠界 1|OK 或 0|FAIL
-            if (rtnCode == "1")
-            {
+                var ad = _db.HAds.FirstOrDefault(a => a.HAdId == adId);
+                if (ad == null)
+                {
+                    System.IO.File.AppendAllText(logPath, $"{logPrefix} [Error] 找不到 AdId = {adId}\n");
+                    return Content("0|FAIL");
+                }
+
+                // Step 3: 更新廣告資料
+                if (rtnCode == "1")
+                {
+                    // 成功付款
+                    int planDays = 30;
+                    decimal adPrice = 0;
+                    string adTag = "無";
+                    int priority = 1;
+
+                    var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == ad.HPlanId);
+                    if (plan != null)
+                    {
+                        planDays = plan.HDays > 0 ? plan.HDays : 30;
+                        adPrice = plan.HAdPrice;
+                        priority = plan.HPlanId;
+                        adTag = plan.HPlanId switch
+                        {
+                            2 => "推薦",
+                            3 => "精選",
+                            _ => "無"
+                        };
+                    }
+
+                    var property = _db.HProperties.FirstOrDefault(p => p.HPropertyId == ad.HPropertyId);
+                    string region = property?.HCity ?? "";
+                    string description = property?.HDescription ?? "";
+
+                    ad.HStatus = "已付款";
+                    ad.HStartDate = now;
+                    ad.HEndDate = now.AddDays(planDays);
+                    ad.HLastUpdated = now;
+                    ad.HAdPrice = adPrice;
+                    ad.HIsDelete = false;
+                    ad.HTargetRegion = region;
+                    ad.HAdTag = adTag;
+                    ad.HPriority = priority;
+                    ad.HDescription = description;
+                }
+                else
+                {
+                    // 付款失敗或取消
+                    ad.HStatus = "未付款";
+                    ad.HLastUpdated = now;
+                }
+
+                // ✅ 明確告知 EF 這筆資料需要更新
+                _db.Entry(ad).State = EntityState.Modified;
+
+                // Step 4: 建立交易紀錄
+                string paymentType = form["PaymentType"].ToString();
+                string paymentTypeDisplay = paymentType == "Credit_CreditCard" ? "信用卡" : paymentType;
+                string rtnMsg = form["RtnMsg"].ToString();
+                string rtnMsgDisplay = rtnMsg == "交易成功" ? "付款成功" : rtnMsg;
+                string itemName = ad.HAdName ?? "";
+
+                var transaction = new HTransaction
+                {
+                    HMerchantTradeNo = form["MerchantTradeNo"],
+                    HTradeNo = form["TradeNo"],
+                    HAmount = decimal.TryParse(form["TradeAmt"], out var amt) ? amt : 0,
+                    HItemName = itemName,
+                    HPaymentType = paymentTypeDisplay,
+                    HPaymentDate = DateTime.TryParse(form["PaymentDate"], out var payDate) ? payDate : now,
+                    HTradeStatus = rtnCode == "1" ? "Success" : "Failed",
+                    HRtnMsg = rtnMsgDisplay,
+                    HIsSimulated = form["SimulatePaid"] == "1" ? 1 : 0,
+                    HCreateTime = now,
+                    HUpdateTime = now,
+                    HRawJson = JsonConvert.SerializeObject(form),
+                    HPropertyId = ad.HPropertyId,
+                    HRegion = ad.HTargetRegion,
+                    HAdId = ad.HAdId
+                };
+
+                _db.HTransactions.Add(transaction);
+                _db.SaveChanges();
+
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Success] AdId = {ad.HAdId}, Status = {ad.HStatus}\n");
                 return Content("1|OK");
             }
-            else
+            catch (Exception ex)
             {
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Exception] {ex.Message}\n");
                 return Content("0|FAIL");
             }
-
         }
+
 
         private string GetSHA256(string value)
         {
