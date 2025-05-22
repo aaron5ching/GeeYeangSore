@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using GeeYeangSore.Models;
+using GeeYeangSore.DTO.Chat;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
@@ -96,8 +97,10 @@ namespace GeeYeangSore.APIControllers.Chat
                 // 查詢雙向訊息（先抓最新 N 筆，前端再排序成舊到新）
                 var messages = await _db.HMessages
                     .Where(m =>
-                        (m.HSenderId == userId && m.HReceiverId == otherId) ||
-                        (m.HSenderId == otherId && m.HReceiverId == userId))
+                        ((m.HSenderId == userId && m.HReceiverId == otherId) ||
+                        (m.HSenderId == otherId && m.HReceiverId == userId)) &&
+                        (m.HIsDeleted == null || m.HIsDeleted == 0)
+                    )
                     .OrderByDescending(m => m.HTimestamp) // 最新在前
                     .Skip(skipCount)
                     .Take(takeCount)
@@ -190,6 +193,73 @@ namespace GeeYeangSore.APIControllers.Chat
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = "伺服器發生錯誤", error = ex.Message });
+            }
+        }
+
+        [HttpPost("delete-message/{messageId}")]
+        public async Task<IActionResult> DeleteMessage(int messageId)
+        {
+            try
+            {
+                var access = CheckAccess();
+                if (access != null) return access;
+
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+
+                var message = await _db.HMessages.FindAsync(messageId);
+                if (message == null)
+                    return NotFound(new { success = false, message = "訊息不存在" });
+
+                message.HIsDeleted = 1;
+                await _db.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "刪除失敗", error = ex.Message });
+            }
+        }
+
+        [HttpPost("report-message")]
+        public async Task<IActionResult> ReportMessage([FromBody] ReportMessageDto dto)
+        {
+            try
+            {
+                var access = CheckAccess();
+                if (access != null) return access;
+
+                var tenant = GetCurrentTenant();
+                if (tenant == null)
+                    return Unauthorized(new { success = false, message = "未登入" });
+
+                var message = await _db.HMessages.FindAsync(dto.MessageId);
+                if (message == null)
+                    return NotFound(new { success = false, message = "訊息不存在" });
+
+                // h_ReportCount +1
+                message.HReportCount = (message.HReportCount ?? 0) + 1;
+
+                // 新增 HReport
+                var report = new HReport
+                {
+                    HMessageId = dto.MessageId,
+                    HAuthorId = tenant.HTenantId,
+                    HAuthorType = tenant.HIsLandlord ? "房東" : "房客",
+                    HReason = dto.Reason ?? "不當內容",
+                    HStatus = "待處理",
+                    HCreatedAt = DateTime.Now,
+                    HReportType = "私人"
+                };
+                _db.HReports.Add(report);
+
+                await _db.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "檢舉失敗", error = ex.Message });
             }
         }
     }
