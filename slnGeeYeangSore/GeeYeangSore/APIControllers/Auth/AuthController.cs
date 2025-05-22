@@ -185,7 +185,7 @@ namespace GeeYeangSore.APIControllers.Auth
                         {
                             HUserName = payload.Name ?? payload.Email.Split('@')[0],
                             HEmail = payload.Email,
-                            HPhoneNumber = "null",
+                            HPhoneNumber = null,
                             HIsTenant = true,
                             HIsLandlord = false,
                             HStatus = "已驗證",
