@@ -39,7 +39,8 @@ namespace GeeYeangSore.APIControllers.Auth
             // 🛡️ Step 1：驗證 reCAPTCHA Token
             if (!await VerifyRecaptchaAsync(vm.RecaptchaToken))
             {
-                return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
+                //若驗證失敗，就不繼續登入流程
+                //return Unauthorized(new { success = false, message = "reCAPTCHA 驗證失敗" });
             }
 
             // Step 2：查詢帳號
@@ -86,8 +87,13 @@ namespace GeeYeangSore.APIControllers.Auth
         // 密碼驗證封裝
         private bool VerifyTenantPassword(HTenant tenant, string inputPassword)
         {
-            return !string.IsNullOrEmpty(tenant.HSalt) && PasswordHasher.VerifyPassword(inputPassword, tenant.HSalt, tenant.HPassword);
+            // 加強 null 檢查避免警告
+            return
+                !string.IsNullOrEmpty(tenant.HSalt) &&
+                !string.IsNullOrEmpty(tenant.HPassword) &&
+                PasswordHasher.VerifyPassword(inputPassword, tenant.HSalt, tenant.HPassword);
         }
+
 
         // 取得目前登入用戶
         [HttpGet("me")]
@@ -155,7 +161,7 @@ namespace GeeYeangSore.APIControllers.Auth
                     .Include(s => s.HTenant)
                     .FirstOrDefault(s => s.HSub == payload.Subject && s.HAud == aud);
 
-                HTenant tenant;
+                HTenant? tenant;
 
                 if (sso != null)
                 {
@@ -176,7 +182,11 @@ namespace GeeYeangSore.APIControllers.Auth
                 else
                 {
                     // ✅ 尚未存在 SSO → 確認是否已有帳號
-                    tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == payload.Email && !t.HIsDeleted);
+                    if (string.IsNullOrEmpty(payload.Email))
+                        return Unauthorized(new { success = false, message = "無效的 Google 帳號 Email" });
+
+                    tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == payload.Email! && !t.HIsDeleted);
+
 
                     if (tenant == null)
                     {
