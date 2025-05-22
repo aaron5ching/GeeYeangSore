@@ -167,7 +167,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                     .Include(p => p.HPropertyFeatures)
                     .FirstOrDefaultAsync(p => p.HPropertyId == id && p.HLandlordId == landlord.HLandlordId && p.HIsDelete == false);
 
-                if (property == null)
+                if (property == null || property.HIsDelete == true)
                     return NotFound(new { success = false, message = "找不到物件" });
 
                 var feature = property.HPropertyFeatures.FirstOrDefault(f => f.HIsDelete == false);
@@ -238,7 +238,36 @@ namespace GeeYeangSore.APIControllers.Landlord
                 return BadRequest(new { success = false, message = "取得物件詳細資料失敗：" + ex.Message });
             }
         }
+        // 取得指定物件的廣告（可依狀態篩選）
+        [HttpGet("{id}/ads")]
+        public IActionResult GetAdsByPropertyId(int id, [FromQuery] string status)
+        {
+            var access = CheckAccess(requireLandlord: true);
+            if (access != null) return access;
 
+            var tenant = GetCurrentTenant();
+            var landlord = _db.HLandlords.FirstOrDefault(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
+            if (landlord == null)
+                return Unauthorized(new { success = false, message = "找不到房東資料" });
+
+            var ads = _db.HAds
+                .Where(a => a.HPropertyId == id && a.HLandlordId == landlord.HLandlordId && a.HIsDelete == false)
+                .Where(a => string.IsNullOrEmpty(status) || a.HStatus == status)
+                .Select(a => new
+                {
+                    a.HAdId,
+                    a.HAdName,
+                    a.HCategory,
+                    a.HStatus,
+                    a.HStartDate,
+                    a.HEndDate,
+                    a.HCreatedDate,
+                    a.HPlanId
+                })
+                .ToList();
+
+            return Ok(ads);
+        }
         [HttpPost]
         public async Task<IActionResult> CreateProperty([FromForm] string property, [FromForm] string propertyFeature, [FromForm] string ad, List<IFormFile> images)
         {
@@ -278,14 +307,36 @@ namespace GeeYeangSore.APIControllers.Landlord
                 _db.HPropertyFeatures.Add(featureData);
 
                 // 只有 ad 有資料時才建立 HAd
+                HAd adData = null;
                 if (!string.IsNullOrWhiteSpace(ad) && ad != "{}")
                 {
-                    var adData = JsonConvert.DeserializeObject<HAd>(ad);
-                    adData.HLandlordId = landlord.HLandlordId;
-                    adData.HPropertyId = propertyData.HPropertyId;
-                    adData.HCreatedDate = now;
-                    adData.HLastUpdated = now;
+                    var adDto = JsonConvert.DeserializeObject<HAd>(ad);
+                    adData = new HAd
+                    {
+                        HLandlordId = landlord.HLandlordId,
+                        HPropertyId = propertyData.HPropertyId,
+                        HAdName = adDto.HAdName,
+                        HCategory = adDto.HCategory,
+                        HPlanId = adDto.HPlanId,
+                        HCreatedDate = now,
+                        HLastUpdated = now,
+                        HStatus = "稍後付款",  // 預設狀態
+                        HIsDelete = false
+                    };
+
+                    var existingAd = _db.HAds.FirstOrDefault(a =>
+                        a.HPropertyId == propertyData.HPropertyId &&
+                        a.HLandlordId == landlord.HLandlordId &&
+                        a.HStatus == "稍後付款" &&
+                        a.HIsDelete == false);
+                    if (existingAd != null)
+                    {
+                        _logger.LogWarning($"[CreateProperty] 已有待付款廣告 propertyId={propertyData.HPropertyId}, landlordId={landlord.HLandlordId}");
+                        return BadRequest(new { success = false, message = "已有待付款廣告，請勿重複建立。" });
+                    }
+
                     _db.HAds.Add(adData);
+                    await _db.SaveChangesAsync(); // 立即存，確保 adId 有值
                 }
 
                 // 處理圖片上傳
@@ -308,7 +359,13 @@ namespace GeeYeangSore.APIControllers.Landlord
                 }
 
                 await _db.SaveChangesAsync();
-                return Ok(new { success = true, message = "物件建立成功", propertyId = propertyData.HPropertyId });
+                return Ok(new
+                {
+                    success = true,
+                    message = "物件建立成功",
+                    propertyId = propertyData.HPropertyId,
+                    adId = adData?.HAdId // ✅ 加上這行
+                });
             }
             catch (Exception ex)
             {
@@ -316,6 +373,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                 return BadRequest(new { success = false, message = "建立物件失敗：" + ex.Message });
             }
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> EditProperty(int id, [FromForm] string propertyJson, [FromForm] string propertyFeatureJson, List<IFormFile> images)
@@ -524,7 +582,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                 var property = await _db.HProperties
                     .FirstOrDefaultAsync(p => p.HPropertyId == id && p.HIsDelete == false);
 
-                if (property == null)
+                if (property == null || property.HIsDelete == true)
                     return NotFound(new { success = false, message = "找不到物件" });
 
                 if (property.HLandlordId != landlord.HLandlordId)
@@ -562,7 +620,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                 var property = await _db.HProperties
                     .FirstOrDefaultAsync(p => p.HPropertyId == id && p.HIsDelete == false);
 
-                if (property == null)
+                if (property == null || property.HIsDelete == true)
                     return NotFound(new { success = false, message = "找不到物件" });
 
                 if (property.HLandlordId != landlord.HLandlordId)
@@ -585,7 +643,6 @@ namespace GeeYeangSore.APIControllers.Landlord
         [HttpPut("{id}/activate")]
         public async Task<IActionResult> ActivateProperty(int id, [FromBody] ActivatePropertyDto dto)
         {
-            // 使用 BaseController 的 CheckAccess 方法進行權限檢查，要求房東權限
             var accessCheck = CheckAccess(requireLandlord: true);
             if (accessCheck != null)
                 return accessCheck;
@@ -603,21 +660,33 @@ namespace GeeYeangSore.APIControllers.Landlord
                 if (property == null)
                     return NotFound(new { success = false, message = "找不到物件" });
 
-                if (property.HLandlordId != landlord.HLandlordId)
-                    return Unauthorized(new { success = false, message = "您沒有權限操作此物件" });
+                // if (property.HLandlordId != landlord.HLandlordId)
+                //     return Unauthorized(new { success = false, message = "您沒有權限操作此物件" });
+
+                //  檢查是否已有未付款廣告
+                var existingAd = _db.HAds.FirstOrDefault(a =>
+                    a.HPropertyId == id &&
+                    a.HLandlordId == landlord.HLandlordId &&
+                    a.HStatus == "待付款" &&
+                    a.HIsDelete == false);
+
+                if (existingAd != null)
+                {
+                    return BadRequest(new { success = false, message = "已有待付款廣告，請勿重複建立。" });
+                }
 
                 // 建立 HAd（廣告）資料
-                //var ad = new HAd
-                //{
-                //    HLandlordId = landlord.HLandlordId,
-                //    HPropertyId = id,
-                //    HAdName = dto.HAdName,
-                //    HCategory = dto.HCategory,
-                //    HPlanId = dto.HPlanId,
-                //    HCreatedDate = DateTime.Now,
-                //    HStatus = "待付款" // 待付款
-                //};
-                //_db.HAds.Add(ad);
+                var ad = new HAd
+                {
+                    HLandlordId = landlord.HLandlordId,
+                    HPropertyId = id,
+                    HAdName = dto.HAdName,
+                    HCategory = dto.HCategory,
+                    HPlanId = dto.HPlanId,
+                    HCreatedDate = DateTime.Now,
+                    HStatus = "稍後付款"
+                };
+                _db.HAds.Add(ad);
                 await _db.SaveChangesAsync();
 
                 // 更新物件狀態為已驗證和未出租
@@ -626,8 +695,12 @@ namespace GeeYeangSore.APIControllers.Landlord
                 property.HLastUpdated = DateTime.Now;
 
                 await _db.SaveChangesAsync();
-                return Ok(new { success = true, message = "物件上架成功" });
-                //, adId = ad.HAdId 串到AD資料表 加在物件上架成功後面
+                return Ok(new
+                {
+                    success = true,
+                    message = "物件上架成功",
+                    adId = ad.HAdId  //給前端用於串接金流
+                });
             }
             catch (Exception ex)
             {
@@ -656,6 +729,31 @@ namespace GeeYeangSore.APIControllers.Landlord
             }
 
             return $"/images/{folder}/{fileName}";
+        }
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdatePropertyStatus(int id, [FromBody] StatusUpdateDto dto)
+        {
+            var access = CheckAccess(requireLandlord: true);
+            if (access != null) return access;
+
+            var tenant = GetCurrentTenant();
+            var property = await _db.HProperties.FindAsync(id);
+            if (property == null || property.HIsDelete == true) return NotFound(new { success = false, message = "找不到物件" });
+
+            var landlord = await _db.HLandlords.FirstOrDefaultAsync(l => l.HTenantId == tenant.HTenantId);
+            if (landlord == null || property.HLandlordId != landlord.HLandlordId)
+                return Unauthorized(new { success = false, message = "無權限變更此物件" });
+
+            property.HStatus = dto.Status;
+            property.HLastUpdated = DateTime.Now;
+
+            await _db.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+
+        public class StatusUpdateDto
+        {
+            public string Status { get; set; }
         }
     }
 }
