@@ -42,7 +42,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                 .Include(p => p.HPropertyFeatures)
                 .Include(p => p.HAds)
                 .Where(p => p.HLandlordId == landlord.HLandlordId && p.HIsDelete == false)
-                .Select(p => new {
+                .Select(p => new
+                {
                     HPropertyId = p.HPropertyId,
                     HLandlordId = p.HLandlordId,
                     HPropertyTitle = p.HPropertyTitle,
@@ -71,7 +72,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                     HLongitude = p.HLongitude,
                     Feature = p.HPropertyFeatures
                         .Where(f => f.HIsDelete == false)
-                        .Select(f => new {
+                        .Select(f => new
+                        {
                             f.HFeaturePropertyId,
                             f.HLandlordId,
                             f.HPropertyId,
@@ -104,7 +106,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                     Images = p.HPropertyImages
                         .Where(i => i.HIsDelete == false)
                         .OrderBy(i => i.HUploadedDate)
-                        .Select(i => new {
+                        .Select(i => new
+                        {
                             i.HImageId,
                             i.HPropertyId,
                             i.HLandlordId,
@@ -116,7 +119,8 @@ namespace GeeYeangSore.APIControllers.Landlord
                         }).ToList(),
                     Ads = p.HAds
                         .Where(a => a.HIsDelete == false)
-                        .Select(a => new {
+                        .Select(a => new
+                        {
                             a.HAdId,
                             a.HLandlordId,
                             a.HPropertyId,
@@ -253,33 +257,36 @@ namespace GeeYeangSore.APIControllers.Landlord
                 // 解析 JSON 資料
                 var propertyData = JsonConvert.DeserializeObject<HProperty>(property);
                 var featureData = JsonConvert.DeserializeObject<HPropertyFeature>(propertyFeature);
-                var adData = JsonConvert.DeserializeObject<HAd>(ad);
 
                 // 設定房東 ID
                 propertyData.HLandlordId = landlord.HLandlordId;
                 featureData.HLandlordId = landlord.HLandlordId;
-                adData.HLandlordId = landlord.HLandlordId;
 
                 // 設定時間戳記
                 var now = DateTime.Now;
                 propertyData.HPublishedDate = now;
                 propertyData.HLastUpdated = now;
-                adData.HCreatedDate = now;
-                adData.HLastUpdated = now;
 
                 // 儲存物件資料
                 _db.HProperties.Add(propertyData);
                 await _db.SaveChangesAsync();
 
-                // 設定關聯 ID
+                // 設定關聯 ID  
                 featureData.HPropertyId = propertyData.HPropertyId;
-                adData.HPropertyId = propertyData.HPropertyId;
 
                 // 儲存特徵資料
                 _db.HPropertyFeatures.Add(featureData);
 
-                // 儲存廣告資料
-                _db.HAds.Add(adData);
+                // 只有 ad 有資料時才建立 HAd
+                if (!string.IsNullOrWhiteSpace(ad) && ad != "{}")
+                {
+                    var adData = JsonConvert.DeserializeObject<HAd>(ad);
+                    adData.HLandlordId = landlord.HLandlordId;
+                    adData.HPropertyId = propertyData.HPropertyId;
+                    adData.HCreatedDate = now;
+                    adData.HLastUpdated = now;
+                    _db.HAds.Add(adData);
+                }
 
                 // 處理圖片上傳
                 if (images != null && images.Count > 0)
@@ -301,7 +308,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                 }
 
                 await _db.SaveChangesAsync();
-                return Ok(new { success = true, message = "物件建立成功" });
+                return Ok(new { success = true, message = "物件建立成功", propertyId = propertyData.HPropertyId });
             }
             catch (Exception ex)
             {
@@ -576,7 +583,7 @@ namespace GeeYeangSore.APIControllers.Landlord
         }
 
         [HttpPut("{id}/activate")]
-        public async Task<IActionResult> ActivateProperty(int id)
+        public async Task<IActionResult> ActivateProperty(int id, [FromBody] ActivatePropertyDto dto)
         {
             // 使用 BaseController 的 CheckAccess 方法進行權限檢查，要求房東權限
             var accessCheck = CheckAccess(requireLandlord: true);
@@ -599,6 +606,20 @@ namespace GeeYeangSore.APIControllers.Landlord
                 if (property.HLandlordId != landlord.HLandlordId)
                     return Unauthorized(new { success = false, message = "您沒有權限操作此物件" });
 
+                // 建立 HAd（廣告）資料
+                //var ad = new HAd
+                //{
+                //    HLandlordId = landlord.HLandlordId,
+                //    HPropertyId = id,
+                //    HAdName = dto.HAdName,
+                //    HCategory = dto.HCategory,
+                //    HPlanId = dto.HPlanId,
+                //    HCreatedDate = DateTime.Now,
+                //    HStatus = "待付款" // 待付款
+                //};
+                //_db.HAds.Add(ad);
+                await _db.SaveChangesAsync();
+
                 // 更新物件狀態為已驗證和未出租
                 property.HStatus = "已驗證";
                 property.HAvailabilityStatus = "未出租";
@@ -606,6 +627,7 @@ namespace GeeYeangSore.APIControllers.Landlord
 
                 await _db.SaveChangesAsync();
                 return Ok(new { success = true, message = "物件上架成功" });
+                //, adId = ad.HAdId 串到AD資料表 加在物件上架成功後面
             }
             catch (Exception ex)
             {
