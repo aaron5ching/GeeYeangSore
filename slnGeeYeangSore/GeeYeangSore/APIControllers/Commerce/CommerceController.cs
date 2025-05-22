@@ -7,6 +7,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace GeeYeangSore.APIControllers.Commerce
 {
@@ -14,64 +16,69 @@ namespace GeeYeangSore.APIControllers.Commerce
     [ApiController]
     public class CommerceController : BaseController
     {
-        public CommerceController(GeeYeangSoreContext db) : base(db) { }
+        private readonly string _ngrokBaseUrl;
 
-        [HttpPost("create-ad")]
-        public IActionResult CreateAd([FromBody] GeeYeangSore.DTO.Commerce.CreateAdRequest vm)
+        public CommerceController(GeeYeangSoreContext db, IConfiguration config) : base(db)
         {
-            // 步驟0：權限檢查（必須為已驗證房東）
-            var access = CheckAccess(requireLandlord: true); // 含登入 + 黑名單 + 房東身份
-            if (access != null) return access;
-
-            // 步驟1：取得目前登入的租客（房東）
-            var tenant = GetCurrentTenant();
-            if (tenant == null)
-                return Unauthorized(new { success = false, message = "未登入" });
-
-            // 步驟2：確認租客是否已通過房東驗證
-            if (tenant.HIsLandlord != true)
-                return Unauthorized(new { success = false, message = "尚未通過房東驗證" });
-
-            // 步驟3：取得房東資料（抓 landlordId）
-            var landlord = _db.HLandlords.FirstOrDefault(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
-            if (landlord == null)
-                return Unauthorized(new { success = false, message = "房東身份不存在" });
-
-            // 步驟4：撈出廣告方案資料
-            var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == vm.PlanId);
-            if (plan == null)
-                return BadRequest(new { success = false, message = "找不到指定的廣告方案" });
-
-            // 步驟5：組成廣告資料物件
-            var now = DateTime.Now;
-            var ad = new HAd
-            {
-                HLandlordId = landlord.HLandlordId,
-                HPropertyId = vm.PropertyId,
-                HAdName = vm.AdName,
-                HCategory = plan.HCategory,
-                HPlanId = plan.HPlanId,
-                HAdPrice = plan.HAdPrice,
-                HStartDate = now,
-                HEndDate = now.AddDays(plan.HDays),
-                HStatus = "進行中",
-                HPriority = plan.HPlanId,
-                HAdTag = vm.AdTag,
-                HTargetRegion = vm.TargetRegion,
-                HLinkUrl = vm.LinkURL,
-                HImageUrl = vm.ImageURL,
-                HCreatedDate = now,
-                HLastUpdated = now,
-                HIsDelete = false
-            };
-
-            // 步驟6：將廣告資料寫入資料庫
-            _db.HAds.Add(ad);
-            _db.SaveChanges();
-
-            // 步驟7：回傳成功訊息與新廣告ID
-            return Ok(new { success = true, adId = ad.HAdId });
+            _ngrokBaseUrl = config["NgrokBaseUrl"];
         }
+
+        // [HttpPost("create-ad")]
+        // public IActionResult CreateAd([FromBody] GeeYeangSore.DTO.Commerce.CreateAdRequest vm)
+        // {
+        //     // 步驟0：權限檢查（必須為已驗證房東）
+        //     var access = CheckAccess(requireLandlord: true); // 含登入 + 黑名單 + 房東身份
+        //     if (access != null) return access;
+
+        //     // 步驟1：取得目前登入的租客（房東）
+        //     var tenant = GetCurrentTenant();
+        //     if (tenant == null)
+        //         return Unauthorized(new { success = false, message = "未登入" });
+
+        //     // 步驟2：確認租客是否已通過房東驗證
+        //     if (tenant.HIsLandlord != true)
+        //         return Unauthorized(new { success = false, message = "尚未通過房東驗證" });
+
+        //     // 步驟3：取得房東資料（抓 landlordId）
+        //     var landlord = _db.HLandlords.FirstOrDefault(l => l.HTenantId == tenant.HTenantId && !l.HIsDeleted);
+        //     if (landlord == null)
+        //         return Unauthorized(new { success = false, message = "房東身份不存在" });
+
+        //     // 步驟4：撈出廣告方案資料
+        //     var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == vm.PlanId);
+        //     if (plan == null)
+        //         return BadRequest(new { success = false, message = "找不到指定的廣告方案" });
+
+        //     // 步驟5：組成廣告資料物件
+        //     var now = DateTime.Now;
+        //     var ad = new HAd
+        //     {
+        //         HLandlordId = landlord.HLandlordId,
+        //         HPropertyId = vm.PropertyId,
+        //         HAdName = vm.AdName,
+        //         HCategory = plan.HCategory,
+        //         HPlanId = plan.HPlanId,
+        //         HAdPrice = plan.HAdPrice,
+        //         HStartDate = now,
+        //         HEndDate = now.AddDays(plan.HDays),
+        //         HStatus = "進行中",
+        //         HPriority = plan.HPlanId,
+        //         HAdTag = vm.AdTag,
+        //         HTargetRegion = vm.TargetRegion,
+        //         HLinkUrl = vm.LinkURL,
+        //         HImageUrl = vm.ImageURL,
+        //         HCreatedDate = now,
+        //         HLastUpdated = now,
+        //         HIsDelete = false
+        //     };
+
+        //     // 步驟6：將廣告資料寫入資料庫
+        //     _db.HAds.Add(ad);
+        //     _db.SaveChanges();
+
+        //     // 步驟7：回傳成功訊息與新廣告ID
+        //     return Ok(new { success = true, adId = ad.HAdId });
+        // }
 
 
         // 步驟2：根據方案ID回傳金額及名稱
@@ -122,7 +129,8 @@ namespace GeeYeangSore.APIControllers.Commerce
 
                 // 建立時間（符合綠界格式 yyyy/MM/dd HH:mm:ss）
                 string now = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-                string website = "https://e75b-1-175-216-32.ngrok-free.app";
+                // 統一使用設定檔 ngrok 網址
+                string website = _ngrokBaseUrl;
 
                 // 步驟3：組成綠界訂單參數
                 var order = new Dictionary<string, string>
@@ -149,10 +157,10 @@ namespace GeeYeangSore.APIControllers.Commerce
                     { "ItemName", vm.ItemName },
 
                     // 綠界付款完成通知的接收網址（必須可由綠界主機 POST 存取）
-                    { "ReturnURL", $"{website}/api/ecpay/callback" },
+                    { "ReturnURL", $"{website}/api/commerce/ecpay/callback" },
 
                     // 用戶完成付款後導回的網址（前端接收處）
-                    { "ClientBackURL", $"{website}/frontend/ad-confirm/{orderId}" },
+                    { "ClientBackURL", $"http://localhost:5173/frontend/ad-confirm/{orderId}" },
 
                     // 指定付款方式（此處為信用卡一次付清）
                     { "ChoosePayment", "Credit" },
@@ -192,7 +200,7 @@ namespace GeeYeangSore.APIControllers.Commerce
             // 步驟2：組合訂單參數（同 checkout-params）
             string orderId = $"M{DateTime.Now:yyyyMMddHHmmssfff}";
             string now = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-            string website = "https://e75b-1-175-216-32.ngrok-free.app/";
+            string website = _ngrokBaseUrl;
             var order = new Dictionary<string, string>
             {
                 { "MerchantID", "2000132" },
@@ -256,57 +264,121 @@ namespace GeeYeangSore.APIControllers.Commerce
 
         // 綠界付款完成 Callback
         [HttpPost("ecpay/callback")]
-        public IActionResult EcpayCallback([FromForm] Microsoft.AspNetCore.Http.IFormCollection form)
+        public IActionResult EcpayCallback([FromForm] IFormCollection form)
         {
-            // 解析綠界回傳欄位
-            var rtnCode = form["RtnCode"].ToString();
-            var customField1 = form["CustomField1"].ToString();
-            var customField2 = form["CustomField2"].ToString();
+            var logPath = "D:/callback.log";
+            var now = DateTime.Now;
+            var logPrefix = $"[{now:yyyy-MM-dd HH:mm:ss}]";
 
-            // 步驟2：根據 customField2 取得廣告資料，並更新付款狀態
-            if (int.TryParse(customField2, out int adId))
+            try
             {
-                var ad = _db.HAds.FirstOrDefault(a => a.HAdId == adId);
-                if (ad != null)
+                // Step 1: Log 原始綠界回傳資料
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Callback Received] {JsonConvert.SerializeObject(form)}\n");
+
+                // Step 2: 解析欄位
+                var rtnCode = form["RtnCode"].ToString(); // 1 代表成功
+                var adIdStr = form["CustomField2"].ToString();
+
+                if (!int.TryParse(adIdStr, out int adId))
                 {
-                    ad.HStatus = rtnCode == "1" ? "已付款" : ad.HStatus;
-
-                    // 步驟3：新增交易紀錄
-                    var transaction = new HTransaction
-                    {
-                        HMerchantTradeNo = form["MerchantTradeNo"],
-                        HTradeNo = form["TradeNo"],
-                        HAmount = decimal.Parse(form["TradeAmt"]),
-                        HItemName = form["ItemName"],
-                        HPaymentType = form["PaymentType"],
-                        HPaymentDate = DateTime.Parse(form["PaymentDate"]),
-                        HTradeStatus = rtnCode == "1" ? "Success" : "Failed",
-                        HRtnMsg = form["RtnMsg"],
-                        HIsSimulated = form["SimulatePaid"] == "1" ? 1 : 0,
-                        HCreateTime = DateTime.Now,
-                        HUpdateTime = DateTime.Now,
-                        HRawJson = Newtonsoft.Json.JsonConvert.SerializeObject(form),
-                        HPropertyId = ad.HPropertyId,
-                        HRegion = ad.HTargetRegion,
-                        HAdId = ad.HAdId
-                    };
-
-                    _db.HTransactions.Add(transaction);
-                    _db.SaveChanges();
+                    System.IO.File.AppendAllText(logPath, $"{logPrefix} [Error] 無法解析 AdId: {adIdStr}\n");
+                    return Content("0|FAIL");
                 }
-            }
 
-            // 步驟4：回傳給綠界 1|OK 或 0|FAIL
-            if (rtnCode == "1")
-            {
+                var ad = _db.HAds.FirstOrDefault(a => a.HAdId == adId);
+                if (ad == null)
+                {
+                    System.IO.File.AppendAllText(logPath, $"{logPrefix} [Error] 找不到 AdId = {adId}\n");
+                    return Content("0|FAIL");
+                }
+
+                // Step 3: 更新廣告資料
+                if (rtnCode == "1")
+                {
+                    // 成功付款
+                    int planDays = 30;
+                    decimal adPrice = 0;
+                    string adTag = "無";
+                    int priority = 1;
+
+                    var plan = _db.HAdPlans.FirstOrDefault(p => p.HPlanId == ad.HPlanId);
+                    if (plan != null)
+                    {
+                        planDays = plan.HDays > 0 ? plan.HDays : 30;
+                        adPrice = plan.HAdPrice;
+                        priority = plan.HPlanId;
+                        adTag = plan.HPlanId switch
+                        {
+                            2 => "推薦",
+                            3 => "精選",
+                            _ => "無"
+                        };
+                    }
+
+                    var property = _db.HProperties.FirstOrDefault(p => p.HPropertyId == ad.HPropertyId);
+                    string region = property?.HCity ?? "";
+                    string description = property?.HDescription ?? "";
+
+                    ad.HStatus = "已付款";
+                    ad.HStartDate = now;
+                    ad.HEndDate = now.AddDays(planDays);
+                    ad.HLastUpdated = now;
+                    ad.HAdPrice = adPrice;
+                    ad.HIsDelete = false;
+                    ad.HTargetRegion = region;
+                    ad.HAdTag = adTag;
+                    ad.HPriority = priority;
+                    ad.HDescription = description;
+                }
+                else
+                {
+                    // 付款失敗或取消
+                    ad.HStatus = "未付款";
+                    ad.HLastUpdated = now;
+                }
+
+                // ✅ 明確告知 EF 這筆資料需要更新
+                _db.Entry(ad).State = EntityState.Modified;
+
+                // Step 4: 建立交易紀錄
+                string paymentType = form["PaymentType"].ToString();
+                string paymentTypeDisplay = paymentType == "Credit_CreditCard" ? "信用卡" : paymentType;
+                string rtnMsg = form["RtnMsg"].ToString();
+                string rtnMsgDisplay = rtnMsg == "交易成功" ? "付款成功" : rtnMsg;
+                string itemName = ad.HAdName ?? "";
+
+                var transaction = new HTransaction
+                {
+                    HMerchantTradeNo = form["MerchantTradeNo"],
+                    HTradeNo = form["TradeNo"],
+                    HAmount = decimal.TryParse(form["TradeAmt"], out var amt) ? amt : 0,
+                    HItemName = itemName,
+                    HPaymentType = paymentTypeDisplay,
+                    HPaymentDate = DateTime.TryParse(form["PaymentDate"], out var payDate) ? payDate : now,
+                    HTradeStatus = rtnCode == "1" ? "Success" : "Failed",
+                    HRtnMsg = rtnMsgDisplay,
+                    HIsSimulated = form["SimulatePaid"] == "1" ? 1 : 0,
+                    HCreateTime = now,
+                    HUpdateTime = now,
+                    HRawJson = JsonConvert.SerializeObject(form),
+                    HPropertyId = ad.HPropertyId,
+                    HRegion = ad.HTargetRegion,
+                    HAdId = ad.HAdId
+                };
+
+                _db.HTransactions.Add(transaction);
+                _db.SaveChanges();
+
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Success] AdId = {ad.HAdId}, Status = {ad.HStatus}\n");
                 return Content("1|OK");
             }
-            else
+            catch (Exception ex)
             {
+                System.IO.File.AppendAllText(logPath, $"{logPrefix} [Exception] {ex.Message}\n");
                 return Content("0|FAIL");
             }
-
         }
+
 
         private string GetSHA256(string value)
         {
@@ -328,14 +400,31 @@ namespace GeeYeangSore.APIControllers.Commerce
         [HttpGet("query-status/{orderId}")]
         public IActionResult QueryPaymentStatus(string orderId)
         {
-            // 步驟1：查詢交易紀錄
+            // 取得交易紀錄
             var tx = _db.HTransactions.FirstOrDefault(t => t.HMerchantTradeNo == orderId);
             if (tx == null)
                 return NotFound(new { success = false, message = "查無交易" });
 
-            // 步驟2：回傳交易狀態
-            return Ok(new { success = tx.HTradeStatus == "Success" });
-        }
+            // 預設方案天數
+            int? planDays = null;
 
-    }
-}
+            // 若有關聯到廣告，再查出方案天數
+                if (tx.HAdId.HasValue)
+                {
+                    planDays = (from ad in _db.HAds
+                                join plan in _db.HAdPlans on ad.HPlanId equals plan.HPlanId
+                                where ad.HAdId == tx.HAdId.Value
+                                select plan.HDays).FirstOrDefault();
+                }
+                return Ok(new
+                {
+                    success = tx.HRtnMsg == "付款成功",
+                    orderId = tx.HMerchantTradeNo,
+                    itemName = tx.HItemName,
+                    amount = tx.HAmount,
+                    days = planDays ?? 0,
+                    paymentDate = tx.HPaymentDate?.ToString("yyyy-MM-dd HH:mm")
+                });
+            }
+        }
+  }
