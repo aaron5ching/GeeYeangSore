@@ -7,6 +7,9 @@ using System.IO;
 using System;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GeeYeangSore.APIControllers.Landlord
 {
@@ -752,6 +755,84 @@ namespace GeeYeangSore.APIControllers.Landlord
         public class StatusUpdateDto
         {
             public string Status { get; set; }
+        }
+
+        [HttpPost("generate-description")]
+        public async Task<IActionResult> GenerateDescription([FromBody] GenerateDescriptionDto dto)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // 準備提示詞
+                    var prompt = $"請為以下房屋生成一段吸引人的描述文案：\n" +
+                                 $"標題：{dto.Title}\n" +
+                                 $"地點：{dto.City}{dto.District}\n" +
+                                 $"請以專業且吸引人的方式描述這個房屋的特色和優點。";
+
+                    // 準備請求內容
+                    var requestData = new
+                    {
+                        model = "llama3.2",
+                        prompt = prompt,
+                        stream = false
+                    };
+
+                    // 設定請求標頭
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                    // 直接使用完整 URL 發送請求
+                    var jsonContent = JsonConvert.SerializeObject(requestData);
+                    var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                    _logger.LogInformation($"Sending request to Ollama API with data: {jsonContent}");
+
+                    // 區域網路API端點
+                    var response = await client.PostAsync("http://26.135.207.98:11434/api/generate", content);
+                    var responseString = await response.Content.ReadAsStringAsync(); // 修改變數名稱以避免衝突
+
+                    _logger.LogInformation($"Received response from Ollama API: {responseString}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = JObject.Parse(responseString);
+                        var generated = json["response"]?.ToString();
+                        if (!string.IsNullOrEmpty(generated))
+                        {
+                            return Ok(new { success = true, description = generated.Trim() });
+                        }
+                        else
+                        {
+                            _logger.LogError($"無效的 Ollama 回應: {responseString}");
+                            return BadRequest(new { success = false, message = "生成文案失敗：無效的回應" });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "生成文案時發生錯誤");
+                return BadRequest(new { success = false, message = "生成文案失敗：" + ex.Message });
+            }
+
+            // 確保所有程式碼路徑都有傳回值
+            return BadRequest(new { success = false, message = "生成文案失敗：未知錯誤" });
+        }
+
+        public class GenerateDescriptionDto
+        {
+            public string Title { get; set; }
+            public string City { get; set; }
+            public string District { get; set; }
+        }
+
+        public class OllamaResponse
+        {
+            public string response { get; set; }
+            public string model { get; set; }
+            public string created_at { get; set; } // 改成 string
+            public bool done { get; set; }
         }
     }
 }
