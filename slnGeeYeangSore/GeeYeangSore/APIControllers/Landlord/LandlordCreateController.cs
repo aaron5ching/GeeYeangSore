@@ -449,7 +449,7 @@ namespace GeeYeangSore.APIControllers.Landlord
                 existingProperty.HBuildingType = propertyData.HBuildingType;
                 existingProperty.HIsVip = propertyData.HIsVip;
                 existingProperty.HIsShared = propertyData.HIsShared;
-                existingProperty.HStatus = string.IsNullOrEmpty(propertyData.HStatus) ? "已驗證" : propertyData.HStatus;
+                existingProperty.HStatus = propertyData.HStatus ?? existingProperty.HStatus;
                 existingProperty.HLongitude = propertyData.HLongitude?.ToString();
                 existingProperty.HLatitude = propertyData.HLatitude?.ToString();
                 existingProperty.HLastUpdated = DateTime.Now;
@@ -690,8 +690,6 @@ namespace GeeYeangSore.APIControllers.Landlord
                 await _db.SaveChangesAsync();
 
                 // 更新物件狀態為已驗證和未出租
-                property.HStatus = "已驗證";
-                property.HAvailabilityStatus = "未出租";
                 property.HLastUpdated = DateTime.Now;
 
                 await _db.SaveChangesAsync();
