@@ -46,7 +46,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 if (!VerifyTenantPassword(tenant, vm.txtPassword))
                     return Unauthorized(new { success = false, message = "密碼錯誤" });
 
-                SessionManager.SetLogin(HttpContext, tenant);
+                SessionManager.SetFrontLogin(HttpContext, tenant);
 
                 return Ok(new
                 {
@@ -75,7 +75,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 if (!IsLoggedIn())
                     return Unauthorized(new { success = false, message = "尚未登入" });
 
-                SessionManager.Clear(HttpContext);
+                SessionManager.ClearFront(HttpContext);
                 return Ok(new { success = true, message = "登出成功" });
             }
             catch (Exception ex)
@@ -102,10 +102,10 @@ namespace GeeYeangSore.APIControllers.Auth
         {
             try
             {
-                if (!SessionManager.IsLoggedIn(HttpContext))
+                if (!SessionManager.IsFrontLoggedIn(HttpContext))
                     return Unauthorized(new { success = false, message = "未登入" });
                 // 從 Session 取得登入的 Email
-                var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+                var email = HttpContext.Session.GetString(CDictionary.SK_FRONT_LOGINED_USER);
 
                 // 查找租客資料
                 var tenant = _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
@@ -233,7 +233,7 @@ namespace GeeYeangSore.APIControllers.Auth
                 }
 
                 // Step 6️⃣ 寫入登入 Session
-                SessionManager.SetLogin(HttpContext, tenant);
+                SessionManager.SetFrontLogin(HttpContext, tenant);
 
                 // Step 7️⃣ 回傳登入資訊
                 return Ok(new
@@ -268,7 +268,7 @@ namespace GeeYeangSore.APIControllers.Auth
         //reCAPTCHA 驗證方法
         private async Task<bool> VerifyRecaptchaAsync(string token)
         {
-            var secretKey = "6Ldt9T4rAAAAAFGgF9KDgBXyz46god-1q6VVxKtN"; 
+            var secretKey = "6Ldt9T4rAAAAAFGgF9KDgBXyz46god-1q6VVxKtN";
             using var client = new HttpClient();
 
             var parameters = new Dictionary<string, string>
