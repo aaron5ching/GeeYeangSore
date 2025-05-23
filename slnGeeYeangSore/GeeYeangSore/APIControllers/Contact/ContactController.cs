@@ -18,6 +18,8 @@ public class ContactController : BaseController
     [HttpPost("contact")]
     public IActionResult GetContact([FromBody] HContact data)
     {
+        
+        
         data.HCreatedAt=DateTime.UtcNow;
         Console.WriteLine($"Email: {data.HEmail}, Phone: {data.HPhoneNumber}, Title: {data.HTitle}, Message: {data.HReplyContent}");
         
