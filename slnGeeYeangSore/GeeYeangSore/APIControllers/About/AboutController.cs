@@ -5,32 +5,24 @@ namespace GeeYeangSore.APIControllers.About;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AboutController: ControllerBase
+public class AboutController : BaseController
 {
-    private readonly GeeYeangSoreContext _db;
+    public AboutController(GeeYeangSoreContext db) : base(db) { }
 
-    public AboutController(GeeYeangSoreContext db)
-
-    {
-        _db = db;
-    }
-    
     [HttpGet("about")]
     public IActionResult GetNews()
     {
         var about = _db.HAbouts.ToList();
-        
-        var username = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+        // 驗證登入與權限
+        var access = CheckAccess();
+        if (access != null) return access;
 
-        var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
-        var tenantId = HttpContext.Session.GetInt32("TenantId");
+        var tenant = GetCurrentTenant();
+        if (tenant == null)
+            return Unauthorized(new { success = false, message = "未登入" });
 
-        Console.WriteLine(username);
-        
-        Console.WriteLine(email);
-        
-        Console.WriteLine(tenantId);
-        return Ok(new { response = about});
+
+        return Ok(new { response = about });
     }
-    
+
 }

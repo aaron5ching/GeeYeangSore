@@ -19,7 +19,7 @@ namespace GeeYeangSore.APIControllers
         // 取得目前登入房客（依Session Email）
         protected HTenant? GetCurrentTenant()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+            var email = HttpContext.Session.GetString(CDictionary.SK_FRONT_LOGINED_USER);
             if (string.IsNullOrEmpty(email))
                 return null;
             return _db.HTenants.FirstOrDefault(t => t.HEmail == email && !t.HIsDeleted);
@@ -64,7 +64,7 @@ namespace GeeYeangSore.APIControllers
         // 是否已登入
         protected bool IsLoggedIn()
         {
-            var email = HttpContext.Session.GetString(CDictionary.SK_LOGINED_USER);
+            var email = HttpContext.Session.GetString(CDictionary.SK_FRONT_LOGINED_USER);
             return !string.IsNullOrEmpty(email);
         }
 
