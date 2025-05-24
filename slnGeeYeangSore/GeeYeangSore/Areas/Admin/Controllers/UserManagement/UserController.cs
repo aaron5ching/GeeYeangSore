@@ -175,13 +175,14 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
                     Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
 
-                    // 直接更新房東資料，不使用空值合併運算子
-                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName;
-                    existingLandlord.HStatus = updatedLandlord.HStatus;
-                    existingLandlord.HBankName = updatedLandlord.HBankName;
-                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount;
-                    existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl;
-                    existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl;
+                    // 直接更新房東資料
+                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName ?? "";
+                    existingLandlord.HStatus = updatedLandlord.HStatus ?? "";
+                    existingLandlord.HBankName = updatedLandlord.HBankName ?? "";
+                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount ?? "";
+                    existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl ?? "";
+                    existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl ?? "";
+
                     existingLandlord.HUpdateAt = DateTime.Now;  // 更新修改時間
 
                     _context.HLandlords.Update(existingLandlord);
