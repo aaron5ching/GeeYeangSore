@@ -169,14 +169,29 @@
 		}
 
 		function loadPage(page) {
+
 			const formData = {
-				userId: $('input[name="userId"]').val() || null,
-				name: $('input[name="name"]').val() || null,
-				status: $('select[name="status"]').val() || null,
-				startDate: $('input[name="startDate"]').val() || null,
-				endDate: $('input[name="endDate"]').val() || null,
-				isLandlord: $('select[name="isLandlord"]').val() !== "" ? JSON.parse($('select[name="isLandlord"]').val()) : null
+				HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
+				HUserName: userName,
+				HBirthday: $('#editForm').find('input[name="HBirthday"]').val() || null,
+				HGender: $('#editForm').find('select[name="HGender"]').val() === "true",
+				HPhoneNumber: phoneNumber,
+				HEmail: email,
+				HPassword: $('#editForm').find('input[name="HPassword"]').val().trim() || null,
+				HAddress: $('#editForm').find('input[name="HAddress"]').val().trim() || null,
+				HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
+				HImages: photoFileName || $('#HImages').val() || null,
+				HLandlords: [{
+					HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val() || null,
+					HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val() || "未驗證",
+					HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val() || null,
+					HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val() || null,
+					HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val() || null,
+					HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val() || null
+				}]
 			};
+
+
 
 			$.ajax({
 				url: `/Admin/User/SearchUser?page=${page}`,
@@ -380,7 +395,15 @@
 						HPassword: $('#editForm').find('input[name="HPassword"]').val().trim() || null,
 						HAddress: $('#editForm').find('input[name="HAddress"]').val().trim() || null,
 						HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
-						HImages: photoFileName || $('#HImages').val() || null
+						HImages: photoFileName || $('#HImages').val() || null,
+						HLandlords: [{
+							HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val() || null,
+							HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val() || "未驗證",
+							HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val() || null,
+							HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val() || null,
+							HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val() || null,
+							HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val() || null
+						}]
 					};
 					$.ajax({
 						type: 'PUT',
