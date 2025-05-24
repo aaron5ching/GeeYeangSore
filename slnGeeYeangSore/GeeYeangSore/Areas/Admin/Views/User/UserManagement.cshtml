@@ -352,6 +352,24 @@
 				// 不上傳，只預覽
 			});
 
+			// 房東身份證正面上傳（編輯）
+			$(document).on('change', '#uploadIdCardFrontInput', function () {
+				const file = this.files[0];
+				if (!file) return;
+				const previewUrl = URL.createObjectURL(file);
+				$('#idCardFrontPreview').attr('src', previewUrl);
+				// 不上傳，只預覽
+			});
+
+			// 房東身份證反面上傳（編輯）
+			$(document).on('change', '#uploadIdCardBackInput', function () {
+				const file = this.files[0];
+				if (!file) return;
+				const previewUrl = URL.createObjectURL(file);
+				$('#idCardBackPreview').attr('src', previewUrl);
+				// 不上傳，只預覽
+			});
+
 			// 綁定編輯表單送出事件
 			$('#editForm').off('submit').on('submit', function (e) {
 				e.preventDefault();
@@ -393,7 +411,12 @@
 
 				const photoInput = document.getElementById('uploadTenantPhotoInput');
 				const photoFile = photoInput && photoInput.files[0];
-				function submitEdit(photoFileName) {
+				const idCardFrontInput = document.getElementById('uploadIdCardFrontInput');
+				const idCardFrontFile = idCardFrontInput && idCardFrontInput.files[0];
+				const idCardBackInput = document.getElementById('uploadIdCardBackInput');
+				const idCardBackFile = idCardBackInput && idCardBackInput.files[0];
+
+				function submitEdit(photoFileName, idCardFrontFileName, idCardBackFileName) {
 					const formData = {
 						HTenantId: $('#editForm').find('input[name="HTenantId"]').val(),
 						HUserName: userName,
@@ -410,8 +433,8 @@
 							HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val(),
 							HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val(),
 							HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val(),
-							HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val(),
-							HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val()
+							HIdCardFrontUrl: idCardFrontFileName || $('#HIdCardFrontUrl').val(),
+							HIdCardBackUrl: idCardBackFileName || $('#HIdCardBackUrl').val()
 						}]
 					};
 
@@ -438,31 +461,108 @@
 							$('#searchForm').submit();
 						},
 						error: function (xhr) {
-							console.error('更新失敗：', xhr.responseText);
-							showToast('❌ 更新失敗：' + (xhr.responseText || '請稍後再試'), false);
+							showToast('❌ 更新失敗：' + xhr.responseText, false);
 						}
 					});
 				}
+
+				// 處理所有檔案上傳
+				const uploadPromises = [];
+
 				if (photoFile) {
-					const uploadData = new FormData();
-					uploadData.append('photo', photoFile);
-					$.ajax({
-						url: '/Admin/User/UploadTenantPhoto',
-						type: 'POST',
-						data: uploadData,
-						processData: false,
-						contentType: false,
-						success: function (url) {
-							const fileName = url.split('/').pop();
-							submitEdit(fileName);
-						},
-						error: function () {
-							showToast('❌ 照片上傳失敗', false);
-							submitEdit(null);
-						}
-					});
+					uploadPromises.push(
+						new Promise((resolve, reject) => {
+							const uploadData = new FormData();
+							uploadData.append('photo', photoFile);
+							$.ajax({
+								url: '/Admin/User/UploadTenantPhoto',
+								type: 'POST',
+								data: uploadData,
+								processData: false,
+								contentType: false,
+								success: function (url) {
+									resolve({ type: 'photo', fileName: url.split('/').pop() });
+								},
+								error: function () {
+									reject('照片上傳失敗');
+								}
+							});
+						})
+					);
+				}
+
+				if (idCardFrontFile) {
+					uploadPromises.push(
+						new Promise((resolve, reject) => {
+							const uploadData = new FormData();
+							uploadData.append('photo', idCardFrontFile);
+							$.ajax({
+								url: '/Admin/User/UploadLandlordIdFront',
+								type: 'POST',
+								data: uploadData,
+								processData: false,
+								contentType: false,
+								success: function (url) {
+									resolve({ type: 'idCardFront', fileName: url.split('/').pop() });
+								},
+								error: function () {
+									reject('身份證正面上傳失敗');
+								}
+							});
+						})
+					);
+				}
+
+				if (idCardBackFile) {
+					uploadPromises.push(
+						new Promise((resolve, reject) => {
+							const uploadData = new FormData();
+							uploadData.append('photo', idCardBackFile);
+							$.ajax({
+								url: '/Admin/User/UploadLandlordIdBack',
+								type: 'POST',
+								data: uploadData,
+								processData: false,
+								contentType: false,
+								success: function (url) {
+									resolve({ type: 'idCardBack', fileName: url.split('/').pop() });
+								},
+								error: function () {
+									reject('身份證反面上傳失敗');
+								}
+							});
+						})
+					);
+				}
+
+				if (uploadPromises.length > 0) {
+					Promise.all(uploadPromises)
+						.then(results => {
+							let photoFileName = null;
+							let idCardFrontFileName = null;
+							let idCardBackFileName = null;
+
+							results.forEach(result => {
+								switch (result.type) {
+									case 'photo':
+										photoFileName = result.fileName;
+										break;
+									case 'idCardFront':
+										idCardFrontFileName = result.fileName;
+										break;
+									case 'idCardBack':
+										idCardBackFileName = result.fileName;
+										break;
+								}
+							});
+
+							submitEdit(photoFileName, idCardFrontFileName, idCardBackFileName);
+						})
+						.catch(error => {
+							showToast('❌ ' + error, false);
+						});
 				} else {
-					submitEdit($('#HImages').val() || null);
+					submitEdit(null, null, null);
 				}
 			});
 		}
