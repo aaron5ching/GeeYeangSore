@@ -182,16 +182,25 @@
 				HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
 				HImages: photoFileName || $('#HImages').val() || null,
 				HLandlords: [{
-					HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val() || null,
-					HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val() || "未驗證",
-					HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val() || null,
-					HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val() || null,
-					HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val() || null,
-					HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val() || null
+					HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val(),
+					HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val(),
+					HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val(),
+					HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val(),
+					HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val(),
+					HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val()
 				}]
 			};
 
+			// 檢查房東資料是否存在
+			const hasLandlordData = formData.HLandlords[0].HLandlordName || 
+				formData.HLandlords[0].HStatus || 
+				formData.HLandlords[0].HBankName || 
+				formData.HLandlords[0].HBankAccount;
 
+			// 如果沒有房東資料，則不發送房東資料
+			if (!hasLandlordData) {
+				delete formData.HLandlords;
+			}
 
 			$.ajax({
 				url: `/Admin/User/SearchUser?page=${page}`,
@@ -397,14 +406,26 @@
 						HStatus: $('#editForm').find('select[name="HStatus"]').val() || "未驗證",
 						HImages: photoFileName || $('#HImages').val() || null,
 						HLandlords: [{
-							HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val() || null,
-							HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val() || "未驗證",
-							HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val() || null,
-							HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val() || null,
-							HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val() || null,
-							HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val() || null
+							HLandlordName: $('#editForm').find('input[name="HLandlords[0].HLandlordName"]').val(),
+							HStatus: $('#editForm').find('select[name="HLandlords[0].HStatus"]').val(),
+							HBankName: $('#editForm').find('input[name="HLandlords[0].HBankName"]').val(),
+							HBankAccount: $('#editForm').find('input[name="HLandlords[0].HBankAccount"]').val(),
+							HIdCardFrontUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardFrontUrl"]').val(),
+							HIdCardBackUrl: $('#editForm').find('input[name="HLandlords[0].HIdCardBackUrl"]').val()
 						}]
 					};
+
+					// 檢查房東資料是否存在
+					const hasLandlordData = formData.HLandlords[0].HLandlordName || 
+						formData.HLandlords[0].HStatus || 
+						formData.HLandlords[0].HBankName || 
+						formData.HLandlords[0].HBankAccount;
+
+					// 如果沒有房東資料，則不發送房東資料
+					if (!hasLandlordData) {
+						delete formData.HLandlords;
+					}
+
 					$.ajax({
 						type: 'PUT',
 						url: '/Admin/User/Update',
