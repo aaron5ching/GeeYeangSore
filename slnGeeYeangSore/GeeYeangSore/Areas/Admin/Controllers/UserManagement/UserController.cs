@@ -114,7 +114,9 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
 
             try
             {
-                var existing = _context.HTenants.FirstOrDefault(t => t.HTenantId == updated.HTenantId && !t.HIsDeleted);
+                var existing = _context.HTenants
+                    .Include(t => t.HLandlords)
+                    .FirstOrDefault(t => t.HTenantId == updated.HTenantId && !t.HIsDeleted);
                 if (existing == null)
                     return NotFound("找不到此使用者");
 
@@ -173,18 +175,15 @@ namespace GeeYeangSore.Areas.Admin.Controllers.UserManagement
                     Console.WriteLine($"▶️ 正面：{existingLandlord.HIdCardFrontUrl} → {updatedLandlord.HIdCardFrontUrl}");
                     Console.WriteLine($"▶️ 反面：{existingLandlord.HIdCardBackUrl} → {updatedLandlord.HIdCardBackUrl}");
 
-                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName ?? existingLandlord.HLandlordName;
-                    existingLandlord.HStatus = updatedLandlord.HStatus ?? existingLandlord.HStatus;
-                    existingLandlord.HBankName = updatedLandlord.HBankName ?? existingLandlord.HBankName;
-                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount ?? existingLandlord.HBankAccount;
-                    existingLandlord.HIdCardFrontUrl = string.IsNullOrWhiteSpace(updatedLandlord.HIdCardFrontUrl)
-                        ? existingLandlord.HIdCardFrontUrl
-                        : updatedLandlord.HIdCardFrontUrl;
-                    existingLandlord.HIdCardBackUrl = string.IsNullOrWhiteSpace(updatedLandlord.HIdCardBackUrl)
-                        ? existingLandlord.HIdCardBackUrl
-                        : updatedLandlord.HIdCardBackUrl;
+                    // 直接更新房東資料
+                    existingLandlord.HLandlordName = updatedLandlord.HLandlordName ?? "";
+                    existingLandlord.HStatus = updatedLandlord.HStatus ?? "";
+                    existingLandlord.HBankName = updatedLandlord.HBankName ?? "";
+                    existingLandlord.HBankAccount = updatedLandlord.HBankAccount ?? "";
+                    existingLandlord.HIdCardFrontUrl = updatedLandlord.HIdCardFrontUrl ?? "";
+                    existingLandlord.HIdCardBackUrl = updatedLandlord.HIdCardBackUrl ?? "";
 
-
+                    existingLandlord.HUpdateAt = DateTime.Now;  // 更新修改時間
 
                     _context.HLandlords.Update(existingLandlord);
                 }

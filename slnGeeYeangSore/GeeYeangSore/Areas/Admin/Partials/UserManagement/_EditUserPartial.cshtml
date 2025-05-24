@@ -98,11 +98,11 @@
                 <div class="card-body row g-3">
                     <div class="col-md-4">
                         <label class="form-label">房東本名</label>
-                        <input class="form-control" name="HLandlordName" value="@landlord.HLandlordName" />
+                        <input class="form-control" name="HLandlords[0].HLandlordName" value="@landlord.HLandlordName" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">身份狀態</label>
-                        <select class="form-select" name="HLandlordStatus">
+                        <select class="form-select" name="HLandlords[0].HStatus">
                             <option value="未驗證" selected="@(landlord.HStatus == "未驗證")">未驗證</option>
                             <option value="驗證中" selected="@(landlord.HStatus == "驗證中")">驗證中</option>
                             <option value="已驗證" selected="@(landlord.HStatus == "已驗證")">已驗證</option>
@@ -115,11 +115,11 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">銀行名稱</label>
-                        <input class="form-control" name="HBankName" value="@landlord.HBankName" />
+                        <input class="form-control" name="HLandlords[0].HBankName" value="@landlord.HBankName" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">銀行帳戶</label>
-                        <input class="form-control" name="HBankAccount" value="@landlord.HBankAccount" />
+                        <input class="form-control" name="HLandlords[0].HBankAccount" value="@landlord.HBankAccount" />
                     </div>
 
                     <!-- 身份證圖片上傳 -->
