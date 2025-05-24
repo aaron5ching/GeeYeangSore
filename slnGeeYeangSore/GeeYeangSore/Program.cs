@@ -50,10 +50,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueDevServer", policy =>
     {
-        policy.WithOrigins(vueOrigin, "http://localhost:5178", "http://localhost:5176", "http://localhost:5175", "http://localhost:5174", "https://jayceeswlrorobot.win","http://vue.jayceeswlrorobot.win")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.WithOrigins(vueOrigin, "http://localhost:5178", "http://localhost:5176", "http://localhost:5175", "http://localhost:5174")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
     });
 });
 // 添加 Session 服務
@@ -63,8 +63,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.None;
-    // options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 // 添加 SignalR
 builder.Services.AddSignalR();
@@ -126,8 +125,4 @@ app.MapHub<ChatHub>("/hub");
 app.MapControllers();
 app.MapRazorPages();
 
-// 所有非 API 路徑都導向 Vue 的 index.html，讓 Vue Router 處理前端路由
-app.MapFallbackToFile("index.html");
-
-builder.WebHost.UseUrls("http://0.0.0.0:80");
 app.Run();
