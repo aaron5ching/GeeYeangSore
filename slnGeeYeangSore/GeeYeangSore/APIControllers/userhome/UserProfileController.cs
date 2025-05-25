@@ -119,22 +119,14 @@ public class UserProfileController : BaseController
                 if (dto.Password != dto.ConfirmPassword)
                     return BadRequest(new { message = "密碼與確認密碼不一致" });
 
-                // 密碼強度驗證
-                if (dto.Password.Length < 8)
-                    return BadRequest(new { message = "密碼長度必須至少 8 個字元" });
+                // 密碼強度驗證 - 與註冊時相同
+                if (!Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[^\s]{10,}$"))
+                    return BadRequest(new { message = "密碼需至少10字元，包含大小寫英文字母、數字、特殊符號，且不得包含空白" });
 
-                if (!Regex.IsMatch(dto.Password, @"[A-Z]"))
-                    return BadRequest(new { message = "密碼必須包含至少一個大寫字母" });
-
-                if (!Regex.IsMatch(dto.Password, @"[a-z]"))
-                    return BadRequest(new { message = "密碼必須包含至少一個小寫字母" });
-
-                if (!Regex.IsMatch(dto.Password, @"[0-9]"))
-                    return BadRequest(new { message = "密碼必須包含至少一個數字" });
-
-                var salt = Guid.NewGuid().ToString();
-                var hashed = HashPassword(dto.Password, salt);
-                tenant.HPassword = hashed;
+                // 使用與註冊相同的密碼雜湊方法
+                var salt = PasswordHasher.GenerateSalt();
+                var hash = PasswordHasher.HashPassword(dto.Password, salt);
+                tenant.HPassword = hash;
                 tenant.HSalt = salt;
             }
 
@@ -175,15 +167,5 @@ public class UserProfileController : BaseController
         {
             return StatusCode(500, new { message = "刪除帳號時發生錯誤", error = ex.Message });
         }
-    }
-
-    // 密碼雜湊
-    private string HashPassword(string password, string salt)
-    {
-        using var sha256 = SHA256.Create();
-        var salted = $"{salt}{password}";
-        var bytes = Encoding.UTF8.GetBytes(salted);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
     }
 }
