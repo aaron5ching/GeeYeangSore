@@ -95,25 +95,30 @@ public class UserProfileController : BaseController
             var tenant = GetCurrentTenant();
             if (tenant == null) return Unauthorized();
 
-            // 驗證手機號碼格式
-            if (!Regex.IsMatch(dto.Phone, @"^09\d{8}$"))
-                return BadRequest(new { message = "手機號碼格式不正確" });
-
-            // 驗證生日日期
-            if (dto.Birthday.HasValue && DateTime.TryParse(dto.Birthday.Value.ToString("yyyy/MM/dd"), out DateTime birthday))
+            // 驗證手機號碼格式（如果提供了手機號碼）
+            if (!string.IsNullOrEmpty(dto.Phone))
             {
-                if (birthday > DateTime.Now || birthday < DateTime.Now.AddYears(-120))
-                    return BadRequest(new { message = "生日日期不正確" });
-
-                // 將解析後的 DateTime 值賦值給 tenant.HBirthday
-                tenant.HBirthday = birthday;
-            }
-            else
-            {
-                return BadRequest(new { message = "生日日期格式不正確" });
+                if (!Regex.IsMatch(dto.Phone, @"^09\d{8}$"))
+                    return BadRequest(new { message = "手機號碼格式不正確" });
+                tenant.HPhoneNumber = dto.Phone;
             }
 
-            // 密碼驗證
+            // 驗證生日日期（如果提供了生日）
+            if (dto.Birthday.HasValue)
+            {
+                if (DateTime.TryParse(dto.Birthday.Value.ToString("yyyy/MM/dd"), out DateTime birthday))
+                {
+                    if (birthday > DateTime.Now || birthday < DateTime.Now.AddYears(-120))
+                        return BadRequest(new { message = "生日日期不正確" });
+                    tenant.HBirthday = birthday;
+                }
+                else
+                {
+                    return BadRequest(new { message = "生日日期格式不正確" });
+                }
+            }
+
+            // 密碼驗證（如果提供了密碼）
             if (!string.IsNullOrEmpty(dto.Password))
             {
                 if (dto.Password != dto.ConfirmPassword)
@@ -130,12 +135,19 @@ public class UserProfileController : BaseController
                 tenant.HSalt = salt;
             }
 
-            tenant.HUserName = dto.Name;
-            tenant.HBirthday = birthday;
-            tenant.HGender = dto.Gender == "male";
-            tenant.HAddress = $"{dto.Address}".Trim();
-            tenant.HPhoneNumber = dto.Phone;
-            tenant.HImages = dto.Avatar;
+            // 更新其他欄位（如果提供了值）
+            if (!string.IsNullOrEmpty(dto.Name))
+                tenant.HUserName = dto.Name;
+
+            if (!string.IsNullOrEmpty(dto.Gender))
+                tenant.HGender = dto.Gender == "male";
+
+            if (!string.IsNullOrEmpty(dto.Address))
+                tenant.HAddress = dto.Address.Trim();
+
+            if (!string.IsNullOrEmpty(dto.Avatar))
+                tenant.HImages = dto.Avatar;
+
             tenant.HUpdateAt = DateTime.Now;
 
             _db.SaveChanges();
