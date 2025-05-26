@@ -67,8 +67,8 @@ public class UserProfileController : BaseController
             if (file.Length > 5 * 1024 * 1024)
                 return BadRequest(new { message = "檔案大小不能超過 5MB" });
 
-            var fileName = $"temp_{Guid.NewGuid()}{ext}";
-            var folderPath = Path.Combine(_env.WebRootPath, "temp-avatars");
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var folderPath = Path.Combine(_env.WebRootPath, "images", "User");
             Directory.CreateDirectory(folderPath);
 
             var filePath = Path.Combine(folderPath, fileName);
@@ -77,8 +77,7 @@ public class UserProfileController : BaseController
                 await file.CopyToAsync(stream);
             }
 
-            var url = $"/temp-avatars/{fileName}";
-            return Ok(new { avatarUrl = url });
+            return Ok(new { fileName });
         }
         catch (Exception ex)
         {
