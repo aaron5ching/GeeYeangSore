@@ -144,8 +144,13 @@ public class UserProfileController : BaseController
             if (!string.IsNullOrEmpty(dto.Address))
                 tenant.HAddress = dto.Address.Trim();
 
-            if (!string.IsNullOrEmpty(dto.Avatar))
-                tenant.HImages = dto.Avatar;
+            // 只要有傳 avatar，就算是 null 也要處理
+            if (dto.Avatar != null)
+            {
+                // 若是空字串也會變成 null，確保沒有誤塞空白
+                tenant.HImages = string.IsNullOrWhiteSpace(dto.Avatar) ? null : dto.Avatar.Trim();
+            }
+
 
             tenant.HUpdateAt = DateTime.Now;
 
