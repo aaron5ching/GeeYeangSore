@@ -157,10 +157,8 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                         name = t.HUserName,
                         phone = t.HPhoneNumber,
                         email = t.HEmail,
-                        avatar = string.IsNullOrEmpty(t.HImages)
-                            ? "https://localhost:7022/images/User/default.png"
-                            : "https://localhost:7022/images/User/" + t.HImages
-                    },
+                        avatar = string.IsNullOrEmpty(t.HImages) ? null : t.HImages
+                },
                     property = new
                     {
                         propertyId = p.HPropertyId,
@@ -462,10 +460,12 @@ namespace GeeYeangSore.APIControllers.PropertySearch
                             name = property.HLandlord.HTenant.HUserName,
                             phone = property.HLandlord.HTenant.HPhoneNumber,
                             email = property.HLandlord.HTenant.HEmail,
-                            avatar = string.IsNullOrEmpty(property.HLandlord.HTenant.HImages)
-                                ? "https://localhost:7022/images/User/default.png"
-                                : "https://localhost:7022/images/User/" + property.HLandlord.HTenant.HImages
-                        }
+                            avatar = string.IsNullOrWhiteSpace(property.HLandlord.HTenant.HImages) ||
+                                     property.HLandlord.HTenant.HImages.Contains("/") ||
+                                     property.HLandlord.HTenant.HImages.Contains("http")
+                                ? null
+                                : property.HLandlord.HTenant.HImages
+            }
                 };
 
                 return Ok(result);
