@@ -1,7 +1,9 @@
 # 居研所後端系統（ASP.NET Core MVC）
 
+本專案為租屋媒合平台「居研所」的後端系統，採用 ASP.NET Core MVC 架構開發，提供完整的 API 與後台管理功能。系統支援會員註冊登入、房源刊登與審核、聊天室即時通訊、金流付款、數據視覺化等核心功能，並整合 SignalR、EF Core 與 ECPay 等技術。
 
-前端採用 Vue 3 開發，透過 Axios 串接本專案的 API。
+前端則採用 Vue 3 搭配 Pinia 與 Vue Router 開發，透過 Axios 串接本專案所提供的 RESTful API，實作前台使用者介面與互動流程，完整實現房客與房東雙角色的操作體驗。
+
 
 ---
 
@@ -158,14 +160,21 @@ APIControllers 依據業務功能分目錄，對應 RESTful API，前端（Vue 3
 - 共用後台控制器（`Controllers/SuperController.cs`）：後台共用邏輯、權限驗證
 
 ---
+## ⚠️ 注意事項：開發前請確認設定檔與資料庫
+
+為保護敏感資訊，`appsettings.json` 未上傳至 GitHub，請依以下方式準備：
+
+-  請自行建立 `appsettings.json`
+-  若需正式設定檔或測試資料庫（`.bak`），請聯絡作者取得
+-  本專案使用 SQL Server + Entity Framework Core，可透過 Migration 或備份檔還原資料庫
 
 
 開發階段搭配 Swagger 進行測試，可於 `/swagger` 查看 API 文件。
-
+---
 ##  前端對應專案
 
 本專案 API 由前端 Vue 3 專案串接使用，前端包含聊天室 UI、金流流程、會員登入等功能。
 
  [前往前端倉庫（Vue 3）](https://github.com/aaron5ching/GeeYeangSoreVue)
 
-原始專案為團隊共同開發，本版本為個人備份與展示用途。 
+原始專案為團隊共同開發，本版本為個人備份與展示用途，非正式對外服務平台。
