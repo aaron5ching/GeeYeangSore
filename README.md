@@ -1,12 +1,10 @@
 # 居研所後端系統（ASP.NET Core MVC）
 
-本專案為租屋媒合平台「居研所」的後端核心與管理後台系統，使用 ASP.NET Core MVC 架構開發，提供 RESTful API 與完整後台管理介面。整合會員管理、房源管理、即時聊天、金流串接與平台數據分析等核心功能，並透過 MS SQL Server 管理資料。
 
 前端採用 Vue 3 開發，透過 Axios 串接本專案的 API。
 
 ---
 
-##  Areas 分區管理 — 技術架構與功能
 
 ### 1. Admin Area（管理後台）
 
@@ -56,7 +54,6 @@
 
 ---
 
-##  技術架構
 
 - **ASP.NET Core MVC**：採用分層架構，Controller 負責 API 路由與業務邏輯協調，Models/DTO/ViewModels 處理資料結構與前後端交換。
 - **Entity Framework Core**：以 Code First 方式設計資料庫，集中於 GeeYeangSoreContext，支援資料遷移與關聯查詢。
@@ -70,6 +67,19 @@
 - **模組化目錄結構**：APIControllers 依功能分目錄（如 Chat、Commerce、Notice、Landlord 等），利於團隊協作與維護。
 - **Areas 分區管理**：支援管理後台、會員專區等多區域功能擴展。
 - **設定檔集中管理**：如 SMTP、金流等第三方服務設定集中於 Settings 目錄。
+
+---
+
+## 📦 系統模組與功能
+
+| 模組 | 說明 |
+|------|------|
+| 🔐 登入與權限驗證 | 管理三種身分（房東、房客、管理員），使用 Session 儲存登入資訊，區分後台頁面權限 |
+| 💬 聊天管理 | SignalR 即時通訊，含訊息紀錄查詢、圖片上傳預覽、封鎖用戶功能 |
+| 🚨 檢舉管理 | 管理員可查看檢舉紀錄、標記處理狀態、依類型分類與統計 |
+| 💳 金流模組 | 串接綠界金流 API，支援房東購買方案付款、交易紀錄保存、回傳驗證與查詢 |
+| 📈 金流統計 | 管理後台可查看金流報表、付款狀態統計、付款方式比例圖（Chart.js） |
+| 🏠 房源與會員資料管理 | 管理員可修改房源資訊、停權房東／房客帳號、搜尋篩選 |
 
 ---
 
@@ -128,13 +138,12 @@ APIControllers 依據業務功能分目錄，對應 RESTful API，前端（Vue 3
 
 ---
 
-## 🔥 主要功能模組（我負責部分）
 
 以下功能皆由我主導開發，前端串接後端 RESTful API 並實作完整互動流程：
 
 **前台 API（APIControllers）**
-- Chat 模組（`APIControllers/Chat`）：即時聊天室、訊息紀錄、圖片訊息處理、聊天室刪除檢舉機制
 - Commerce 模組（`APIControllers/Commerce`）：金流串接（ECPay）、付款流程、交易紀錄、Callback 寫入、付款查詢驗證
+- 登入與驗證（`APIControllers/AuthController.cs`）：會員登入、註冊、驗證流程
 - 共用基底控制器（`APIControllers/BaseController.cs`）：Session 驗證、權限控管、黑名單判斷等共用邏輯
 
 **即時通訊（SignalR Hubs）**
@@ -146,12 +155,10 @@ APIControllers 依據業務功能分目錄，對應 RESTful API，前端（Vue 3
 **後台管理（Admin Area）**
 - 訊息管理（`Areas/Admin/Controllers/Messages`）：站內私訊、群組訊息管理
 - 金流管理（`Areas/Admin/Controllers/FinanceAdmin`）：金流報表、交易查詢、退款管理
-- 基礎登入管理（`Controllers/LoginController.cs`）：後台基礎登入流程
 - 共用後台控制器（`Controllers/SuperController.cs`）：後台共用邏輯、權限驗證
 
 ---
 
-##  API 測試
 
 開發階段搭配 Swagger 進行測試，可於 `/swagger` 查看 API 文件。
 
@@ -161,4 +168,4 @@ APIControllers 依據業務功能分目錄，對應 RESTful API，前端（Vue 3
 
  [前往前端倉庫（Vue 3）](https://github.com/aaron5ching/GeeYeangSoreVue)
 
-原始專案為團隊共同開發，本版本為個人備份與展示用途。
+原始專案為團隊共同開發，本版本為個人備份與展示用途。 
